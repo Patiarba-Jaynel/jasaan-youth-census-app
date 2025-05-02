@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -32,6 +32,13 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   
+  // Check if user is already logged in
+  useEffect(() => {
+    if (pbClient.auth.isLoggedIn()) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
+  
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -44,6 +51,8 @@ const LoginPage = () => {
     try {
       setIsLoading(true);
       await pbClient.auth.login(data.email, data.password);
+      // Dispatch a custom event to notify components of auth change
+      document.dispatchEvent(new CustomEvent("auth-change"));
       toast.success("Login successful!");
       navigate("/dashboard");
     } catch (error) {

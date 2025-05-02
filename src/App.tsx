@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { pbClient } from "@/lib/pb-client";
 
 import Index from "./pages/Index";
 import CensusPage from "./pages/CensusPage";
@@ -15,6 +16,19 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Auth guard component to handle redirects
+const AuthRoute = ({ element }: { element: JSX.Element }) => {
+  const isAuthenticated = pbClient.auth.isLoggedIn();
+  
+  return isAuthenticated ? element : <Navigate to="/login" replace />;
+};
+
+const LoginRoute = () => {
+  const isAuthenticated = pbClient.auth.isLoggedIn();
+  
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -23,12 +37,12 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/dashboard/census" element={<CensusPage />} />
+          <Route path="/dashboard/census" element={<AuthRoute element={<CensusPage />} />} />
           <Route path="/success" element={<SuccessPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/login" element={<LoginRoute />} />
+          <Route path="/dashboard" element={<AuthRoute element={<DashboardPage />} />} />
           <Route path="/about" element={<AboutPage />} />
-          {/* Redirect census path to dashboard */}
+          {/* Redirect census path to login */}
           <Route path="/census" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

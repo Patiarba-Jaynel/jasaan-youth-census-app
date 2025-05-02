@@ -9,7 +9,7 @@ import { AnalyticsCard } from "@/components/AnalyticsCard";
 import { pbClient, YouthRecord } from "@/lib/pb-client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
-import { Eye } from "lucide-react";
+import { Eye, Plus, LogOut } from "lucide-react";
 
 interface AnalyticsData {
   name: string;
@@ -124,8 +124,14 @@ const DashboardPage = () => {
 
   const handleLogout = () => {
     pbClient.auth.logout();
+    // Dispatch a custom event to notify components of auth change
+    document.dispatchEvent(new CustomEvent("auth-change"));
     toast.success("Logged out successfully");
     navigate("/");
+  };
+
+  const handleAddYouth = () => {
+    navigate("/dashboard/census");
   };
 
   if (isLoading) {
@@ -156,9 +162,16 @@ const DashboardPage = () => {
               <h1 className="text-3xl font-bold">Census Dashboard</h1>
               <p className="text-muted-foreground">Analytics and insights from the Jasaan Youth Census data.</p>
             </div>
-            <Button onClick={handleLogout} variant="outline" className="mt-4 md:mt-0">
-              Logout
-            </Button>
+            <div className="flex flex-col md:flex-row gap-4 mt-4 md:mt-0">
+              <Button onClick={handleAddYouth} variant="default" className="flex items-center gap-2">
+                <Plus size={16} />
+                Add Youth
+              </Button>
+              <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2">
+                <LogOut size={16} />
+                Logout
+              </Button>
+            </div>
           </div>
 
           {/* Stats Overview */}

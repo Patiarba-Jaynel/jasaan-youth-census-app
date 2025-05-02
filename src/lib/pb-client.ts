@@ -41,7 +41,7 @@ export const pbClient = {
   // Authentication methods
   auth: {
     login: async (email: string, password: string) => {
-      return await pb.collection('users').authWithPassword(email, password);
+      return await pb.collection('_superusers').authWithPassword(email, password);
     },
     logout: () => {
       pb.authStore.clear();
@@ -108,7 +108,7 @@ export const pbClient = {
           acc[record.youth_classification] = 0;
         }
         acc[record.youth_classification]++;
-        return acc;
+        return distribution;
       }, {});
       
       return distribution;
