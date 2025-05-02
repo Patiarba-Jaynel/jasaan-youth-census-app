@@ -4,7 +4,7 @@ import PocketBase from 'pocketbase';
 // Create a PocketBase client instance
 const pb = new PocketBase('http://127.0.0.1:8090');
 
-export interface YouthRecord extends Record {
+export interface YouthRecord {
   id: string;
   region: string;
   province: string;
@@ -30,12 +30,12 @@ export interface YouthRecord extends Record {
   updated: string;
 }
 
-interface Record {
+type RecordModel = {
   id: string;
   created: string;
   updated: string;
   [key: string]: any;
-}
+};
 
 export const pbClient = {
   // Authentication methods
@@ -45,6 +45,9 @@ export const pbClient = {
     },
     logout: () => {
       pb.authStore.clear();
+    },
+    get isValid() {
+      return pb.authStore.isValid;
     },
     isLoggedIn: () => {
       return pb.authStore.isValid;
@@ -74,7 +77,7 @@ export const pbClient = {
   analytics: {
     getDistributionByBarangay: async () => {
       const records = await pb.collection('youth').getFullList<YouthRecord>();
-      const distribution = records.reduce((acc: Record<string, number>, record) => {
+      const distribution = records.reduce((acc: { [key: string]: number }, record) => {
         if (!acc[record.barangay]) {
           acc[record.barangay] = 0;
         }
@@ -87,7 +90,7 @@ export const pbClient = {
     
     getDistributionByAge: async () => {
       const records = await pb.collection('youth').getFullList<YouthRecord>();
-      const distribution = records.reduce((acc: Record<string, number>, record) => {
+      const distribution = records.reduce((acc: { [key: string]: number }, record) => {
         if (!acc[record.youth_age_group]) {
           acc[record.youth_age_group] = 0;
         }
@@ -100,7 +103,7 @@ export const pbClient = {
     
     getDistributionByClassification: async () => {
       const records = await pb.collection('youth').getFullList<YouthRecord>();
-      const distribution = records.reduce((acc: Record<string, number>, record) => {
+      const distribution = records.reduce((acc: { [key: string]: number }, record) => {
         if (!acc[record.youth_classification]) {
           acc[record.youth_classification] = 0;
         }
