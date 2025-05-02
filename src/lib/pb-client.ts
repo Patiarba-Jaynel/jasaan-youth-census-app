@@ -108,7 +108,7 @@ export const pbClient = {
           acc[record.youth_classification] = 0;
         }
         acc[record.youth_classification]++;
-        return distribution;
+        return acc;
       }, {});
       
       return distribution;

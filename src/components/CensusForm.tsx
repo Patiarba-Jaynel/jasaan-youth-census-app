@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Import the new component sections
+// Import the component sections
 import { LocationSection } from "./census/LocationSection";
 import { PersonalInfoSection } from "./census/PersonalInfoSection";
 import { ContactSection } from "./census/ContactSection";
@@ -41,10 +41,28 @@ export function CensusForm() {
     try {
       setIsSubmitting(true);
       
-      // Convert date to ISO string for PocketBase
+      // Ensure all required fields are defined before submission
       const formattedData = {
-        ...data,
+        region: data.region,
+        province: data.province,
+        city_municipality: data.city_municipality,
+        barangay: data.barangay,
+        name: data.name,
+        age: data.age,
         birthday: data.birthday.toISOString(),
+        sex: data.sex,
+        civil_status: data.civil_status,
+        youth_classification: data.youth_classification,
+        youth_age_group: data.youth_age_group,
+        email_address: data.email_address,
+        contact_number: data.contact_number,
+        home_address: data.home_address,
+        highest_education: data.highest_education,
+        work_status: data.work_status,
+        registered_voter: data.registered_voter,
+        voted_last_election: data.voted_last_election,
+        attended_kk_assembly: data.attended_kk_assembly,
+        kk_assemblies_attended: data.kk_assemblies_attended,
       };
       
       await pbClient.youth.create(formattedData);
