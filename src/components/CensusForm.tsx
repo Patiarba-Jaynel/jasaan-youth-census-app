@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -42,6 +41,7 @@ export function CensusForm() {
       setIsSubmitting(true);
       
       // Ensure all required fields are defined before submission
+      // Note that we're not converting birthday to string - keeping it as a Date object
       const formattedData = {
         region: data.region,
         province: data.province,
@@ -49,7 +49,7 @@ export function CensusForm() {
         barangay: data.barangay,
         name: data.name,
         age: data.age,
-        birthday: data.birthday.toISOString(),
+        birthday: data.birthday, // Keep as Date object as required by YouthRecord
         sex: data.sex,
         civil_status: data.civil_status,
         youth_classification: data.youth_classification,
