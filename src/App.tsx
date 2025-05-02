@@ -11,6 +11,7 @@ import CensusPage from "./pages/CensusPage";
 import SuccessPage from "./pages/SuccessPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import TableViewPage from "./pages/TableViewPage";
 import AboutPage from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +39,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard/census" element={<AuthRoute element={<CensusPage />} />} />
+          <Route path="/dashboard/table" element={<AuthRoute element={<TableViewPage />} />} />
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/login" element={<LoginRoute />} />
           <Route path="/dashboard" element={<AuthRoute element={<DashboardPage />} />} />

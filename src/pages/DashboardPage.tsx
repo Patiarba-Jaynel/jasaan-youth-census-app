@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -9,7 +8,7 @@ import { AnalyticsCard } from "@/components/AnalyticsCard";
 import { pbClient, YouthRecord } from "@/lib/pb-client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
-import { Eye, Plus, LogOut } from "lucide-react";
+import { Eye, Plus, LogOut, Table } from "lucide-react";
 
 interface AnalyticsData {
   name: string;
@@ -134,6 +133,10 @@ const DashboardPage = () => {
     navigate("/dashboard/census");
   };
 
+  const handleViewTable = () => {
+    navigate("/dashboard/table");
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -163,6 +166,10 @@ const DashboardPage = () => {
               <p className="text-muted-foreground">Analytics and insights from the Jasaan Youth Census data.</p>
             </div>
             <div className="flex flex-col md:flex-row gap-4 mt-4 md:mt-0">
+              <Button onClick={handleViewTable} variant="outline" className="flex items-center gap-2">
+                <Table size={16} />
+                View Table
+              </Button>
               <Button onClick={handleAddYouth} variant="default" className="flex items-center gap-2">
                 <Plus size={16} />
                 Add Youth
