@@ -16,11 +16,8 @@ export const NavBar = () => {
           <Link to="/">
             <Button variant="ghost">Home</Button>
           </Link>
-          <Link to="/census">
-            <Button variant="ghost">Register</Button>
-          </Link>
-          <Link to="/dashboard">
-            <Button variant="outline">Dashboard</Button>
+          <Link to="/about">
+            <Button variant="ghost">About</Button>
           </Link>
           <Link to="/login">
             <Button>Login</Button>

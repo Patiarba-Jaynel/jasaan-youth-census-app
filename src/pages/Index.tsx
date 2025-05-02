@@ -24,7 +24,7 @@ const Index = () => {
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" asChild>
-                  <Link to="/census">Register Now</Link>
+                  <Link to="/login">Admin Access</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                   <Link to="/about">Learn More</Link>
@@ -97,13 +97,13 @@ const Index = () => {
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Register Today</h2>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Admin Access</h2>
                 <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Join thousands of young Jasaanons who have already registered. Your participation matters.
+                  Youth census registration is managed by authorized administrators. If you are an admin, please login to access the system.
                 </p>
               </div>
               <Button size="lg" asChild>
-                <Link to="/census">Register Now</Link>
+                <Link to="/login">Admin Login</Link>
               </Button>
             </div>
           </div>
