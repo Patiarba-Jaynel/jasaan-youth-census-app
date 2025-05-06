@@ -2,7 +2,7 @@
 import PocketBase from 'pocketbase';
 
 // Create a PocketBase client instance
-const pb = new PocketBase('http://127.0.0.1:8090');
+const pb = new PocketBase('https://pocket.jwisnetwork.com');
 
 export interface YouthRecord {
   id: string;
