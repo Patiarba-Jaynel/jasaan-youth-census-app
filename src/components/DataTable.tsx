@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { YouthRecord } from "@/lib/pb-client";
 import { Button } from "@/components/ui/button";
@@ -413,7 +414,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                     <h4 className="font-medium text-sm">Barangay</h4>
                     <div className="grid gap-2 max-h-[200px] overflow-auto">
                       {barangayOptions.map((barangay) => (
-                        <div key={barangay} className="flex items-center space-x-2">
+                        <div key={`barangay-${barangay}`} className="flex items-center space-x-2">
                           <Checkbox 
                             id={`barangay-${barangay}`}
                             checked={selectedBarangays.includes(barangay)}
@@ -452,7 +453,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                     <h4 className="font-medium text-sm">Classification</h4>
                     <div className="grid gap-2">
                       {youthClassificationOptions.map((classification) => (
-                        <div key={classification} className="flex items-center space-x-2">
+                        <div key={`classification-${classification}`} className="flex items-center space-x-2">
                           <Checkbox 
                             id={`classification-${classification}`}
                             checked={selectedClassifications.includes(classification)}
@@ -491,7 +492,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                     <h4 className="font-medium text-sm">Age Group</h4>
                     <div className="grid gap-2">
                       {youthAgeGroupOptions.map((ageGroup) => (
-                        <div key={ageGroup} className="flex items-center space-x-2">
+                        <div key={`age-group-${ageGroup}`} className="flex items-center space-x-2">
                           <Checkbox 
                             id={`age-group-${ageGroup}`}
                             checked={selectedAgeGroups.includes(ageGroup)}
@@ -530,7 +531,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                     <h4 className="font-medium text-sm">Work Status</h4>
                     <div className="grid gap-2">
                       {workStatusOptions.map((status) => (
-                        <div key={status} className="flex items-center space-x-2">
+                        <div key={`work-status-${status}`} className="flex items-center space-x-2">
                           <Checkbox 
                             id={`work-status-${status}`}
                             checked={selectedWorkStatus.includes(status)}
@@ -890,3 +891,206 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Age Group filters */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Age Group</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {youthAgeGroupOptions.map((ageGroup) => (
+                  <div key={`export-age-${ageGroup}`} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`export-age-${ageGroup}`}
+                      checked={exportFilters.ageGroups.includes(ageGroup)}
+                      onCheckedChange={() => toggleExportFilter(ageGroup, 'ageGroups')}
+                    />
+                    <label
+                      htmlFor={`export-age-${ageGroup}`}
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {ageGroup}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Work Status filters */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Work Status</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {workStatusOptions.map((status) => (
+                  <div key={`export-work-${status}`} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`export-work-${status}`}
+                      checked={exportFilters.workStatus.includes(status)}
+                      onCheckedChange={() => toggleExportFilter(status, 'workStatus')}
+                    />
+                    <label
+                      htmlFor={`export-work-${status}`}
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {status}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Education filters */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Highest Education</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {educationOptions.map((education) => (
+                  <div key={`export-edu-${education}`} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`export-edu-${education}`}
+                      checked={exportFilters.education.includes(education)}
+                      onCheckedChange={() => toggleExportFilter(education, 'education')}
+                    />
+                    <label
+                      htmlFor={`export-edu-${education}`}
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {education}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Sex filters */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Sex</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {sexOptions.map((sex) => (
+                  <div key={`export-sex-${sex}`} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`export-sex-${sex}`}
+                      checked={exportFilters.sex.includes(sex)}
+                      onCheckedChange={() => toggleExportFilter(sex, 'sex')}
+                    />
+                    <label
+                      htmlFor={`export-sex-${sex}`}
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {sex}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Civil Status filters */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Civil Status</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {civilStatusOptions.map((status) => (
+                  <div key={`export-civil-${status}`} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`export-civil-${status}`}
+                      checked={exportFilters.civilStatus.includes(status)}
+                      onCheckedChange={() => toggleExportFilter(status, 'civilStatus')}
+                    />
+                    <label
+                      htmlFor={`export-civil-${status}`}
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {status}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Registered Voter filters */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Registered Voter</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {voterOptions.map((option) => (
+                  <div key={`export-voter-${option}`} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`export-voter-${option}`}
+                      checked={exportFilters.registeredVoter.includes(option)}
+                      onCheckedChange={() => toggleExportFilter(option, 'registeredVoter')}
+                    />
+                    <label
+                      htmlFor={`export-voter-${option}`}
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {option}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Voted Last Election filters */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Voted Last Election</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {votedOptions.map((option) => (
+                  <div key={`export-voted-${option}`} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`export-voted-${option}`}
+                      checked={exportFilters.votedLastElection.includes(option)}
+                      onCheckedChange={() => toggleExportFilter(option, 'votedLastElection')}
+                    />
+                    <label
+                      htmlFor={`export-voted-${option}`}
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {option}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Attended KK Assembly filters */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Attended KK Assembly</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {assemblyOptions.map((option) => (
+                  <div key={`export-assembly-${option}`} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`export-assembly-${option}`}
+                      checked={exportFilters.attendedAssembly.includes(option)}
+                      onCheckedChange={() => toggleExportFilter(option, 'attendedAssembly')}
+                    />
+                    <label
+                      htmlFor={`export-assembly-${option}`}
+                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {option}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Clear Export Filters button */}
+            <Button 
+              variant="outline" 
+              onClick={clearExportFilters} 
+              className="w-full mt-4"
+            >
+              Clear All Filters
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsExportFilterDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => {
+              setIsExportFilterDialogOpen(false);
+              toast.success(`Export filters applied (${getExportCount()} records selected)`);
+            }}>
+              Apply Filters
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
