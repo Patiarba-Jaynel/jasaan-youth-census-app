@@ -8,12 +8,24 @@ import { Footer } from "@/components/Footer";
 import { DataTable } from "@/components/DataTable";
 import { pbClient, YouthRecord } from "@/lib/pb-client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Download } from "lucide-react";
 
 const TableViewPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [youthRecords, setYouthRecords] = useState<YouthRecord[]>([]);
   const navigate = useNavigate();
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const records = await pbClient.youth.getAll();
+      setYouthRecords(records);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast.error("Failed to load youth records");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -27,15 +39,7 @@ const TableViewPage = () => {
         return;
       }
       
-      try {
-        const records = await pbClient.youth.getAll();
-        setYouthRecords(records);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast.error("Failed to load youth records");
-      } finally {
-        setIsLoading(false);
-      }
+      fetchData();
     };
     
     checkAuth();
@@ -67,7 +71,7 @@ const TableViewPage = () => {
           ) : (
             <Card>
               <CardContent className="pt-6">
-                <DataTable data={youthRecords} />
+                <DataTable data={youthRecords} onDataChange={fetchData} />
               </CardContent>
             </Card>
           )}
