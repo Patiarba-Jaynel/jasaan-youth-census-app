@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
@@ -45,15 +44,15 @@ export const ImportDialog = ({
 
     setFile(selectedFile);
     setIsProcessing(true);
-    
+
     // Reset states
     setParsedData([]);
     setValidRecords([]);
     setInvalidRecords([]);
 
-    const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
+    const fileExt = selectedFile.name.split(".").pop()?.toLowerCase();
 
-    if (fileExt === 'csv') {
+    if (fileExt === "csv") {
       // Parse CSV
       Papa.parse(selectedFile, {
         header: true,
@@ -62,18 +61,18 @@ export const ImportDialog = ({
         },
         error: (error) => {
           toast.error("Error parsing CSV file", {
-            description: error.message
+            description: error.message,
           });
           setIsProcessing(false);
-        }
+        },
       });
-    } else if (fileExt === 'xlsx' || fileExt === 'xls') {
+    } else if (fileExt === "xlsx" || fileExt === "xls") {
       // Parse Excel
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
           const data = e.target?.result;
-          const workbook = XLSX.read(data, { type: 'binary' });
+          const workbook = XLSX.read(data, { type: "binary" });
           const sheetName = workbook.SheetNames[0];
           const sheet = workbook.Sheets[sheetName];
           const jsonData = XLSX.utils.sheet_to_json(sheet);
@@ -87,7 +86,7 @@ export const ImportDialog = ({
       reader.readAsBinaryString(selectedFile);
     } else {
       toast.error("Invalid file format", {
-        description: "Please upload a CSV or Excel file."
+        description: "Please upload a CSV or Excel file.",
       });
       setIsProcessing(false);
       setFile(null);
@@ -123,7 +122,9 @@ export const ImportDialog = ({
         if (processedRow.kk_assemblies_attended !== undefined) {
           const numValue = Number(processedRow.kk_assemblies_attended);
           if (isNaN(numValue)) {
-            throw new Error(`Invalid kk_assemblies_attended at row ${index + 1}`);
+            throw new Error(
+              `Invalid kk_assemblies_attended at row ${index + 1}`
+            );
           }
           processedRow.kk_assemblies_attended = numValue;
         }
@@ -133,7 +134,11 @@ export const ImportDialog = ({
         valid.push(processedRow);
       } catch (error) {
         console.error(`Validation error at row ${index + 1}:`, error);
-        invalid.push({ row, index, error: error instanceof Error ? error.message : 'Unknown error' });
+        invalid.push({
+          row,
+          index,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
       }
     });
 
@@ -149,7 +154,7 @@ export const ImportDialog = ({
     }
 
     setIsUploading(true);
-    
+
     try {
       let successCount = 0;
       let errorCount = 0;
@@ -166,7 +171,10 @@ export const ImportDialog = ({
 
       if (successCount > 0) {
         toast.success(`Successfully imported ${successCount} records`, {
-          description: errorCount > 0 ? `Failed to import ${errorCount} records.` : undefined
+          description:
+            errorCount > 0
+              ? `Failed to import ${errorCount} records.`
+              : undefined,
         });
         onImportComplete();
         onClose();
@@ -181,31 +189,33 @@ export const ImportDialog = ({
     }
   };
 
-  const downloadTemplate = (format: 'csv' | 'xlsx') => {
+  const downloadTemplate = (format: "csv" | "xlsx") => {
     const { headers, sampleRow } = generateTemplateData();
-    
-    if (format === 'csv') {
+
+    if (format === "csv") {
       // Generate CSV
       const csvData = Papa.unparse({
         fields: headers,
-        data: [Object.values(sampleRow)]
+        data: [Object.values(sampleRow)],
       });
-      
+
       // Create download link
-      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', 'youth-census-template.csv');
+      link.setAttribute("download", "youth-census-template.csv");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } else {
       // Generate Excel
-      const worksheet = XLSX.utils.json_to_sheet([sampleRow], { header: headers });
+      const worksheet = XLSX.utils.json_to_sheet([sampleRow], {
+        header: headers,
+      });
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
-      XLSX.writeFile(workbook, 'youth-census-template.xlsx');
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Template");
+      XLSX.writeFile(workbook, "youth-census-template.xlsx");
     }
 
     toast.success("Template downloaded successfully");
@@ -217,7 +227,8 @@ export const ImportDialog = ({
         <DialogHeader>
           <DialogTitle>Import Youth Records</DialogTitle>
           <DialogDescription>
-            Upload a CSV or Excel file with youth records data. Download a template to see the required format.
+            Upload a CSV or Excel file with youth records data. Download a
+            template to see the required format.
           </DialogDescription>
         </DialogHeader>
 
@@ -228,7 +239,7 @@ export const ImportDialog = ({
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
-                onClick={() => downloadTemplate('csv')}
+                onClick={() => downloadTemplate("csv")}
                 className="flex items-center gap-2"
               >
                 <Download size={16} />
@@ -236,7 +247,7 @@ export const ImportDialog = ({
               </Button>
               <Button
                 variant="outline"
-                onClick={() => downloadTemplate('xlsx')}
+                onClick={() => downloadTemplate("xlsx")}
                 className="flex items-center gap-2"
               >
                 <Download size={16} />
@@ -305,7 +316,7 @@ export const ImportDialog = ({
                   <h4 className="font-medium text-green-700">Valid Records</h4>
                   <p className="text-2xl font-bold">{validRecords.length}</p>
                 </div>
-                
+
                 <div className="flex-1 p-4 border rounded-md bg-red-50">
                   <h4 className="font-medium text-red-700">Invalid Records</h4>
                   <p className="text-2xl font-bold">{invalidRecords.length}</p>
@@ -318,7 +329,10 @@ export const ImportDialog = ({
                   <div className="max-h-40 overflow-y-auto border rounded-md p-2">
                     {invalidRecords.map((item, idx) => (
                       <div key={idx} className="text-sm text-red-600 mb-1">
-                        <span className="font-medium">Row {item.index + 1}:</span> {item.error}
+                        <span className="font-medium">
+                          Row {item.index + 1}:
+                        </span>{" "}
+                        {item.error}
                       </div>
                     ))}
                   </div>
@@ -345,13 +359,15 @@ export const ImportDialog = ({
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleImport} 
+          <Button
+            onClick={handleImport}
             disabled={validRecords.length === 0 || isUploading}
             className="flex items-center gap-1"
           >
             <Upload size={16} />
-            {isUploading ? "Importing..." : `Import ${validRecords.length} Records`}
+            {isUploading
+              ? "Importing..."
+              : `Import ${validRecords.length} Records`}
           </Button>
         </DialogFooter>
       </DialogContent>

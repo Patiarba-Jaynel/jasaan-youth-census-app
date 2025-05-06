@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { YouthRecord } from "@/lib/pb-client";
 import { Button } from "@/components/ui/button";
@@ -24,12 +23,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
 import { pbClient } from "@/lib/pb-client";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { formSchema } from "@/lib/schema";
 import {
@@ -49,15 +48,19 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isExportFilterDialogOpen, setIsExportFilterDialogOpen] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<YouthRecord | null>(null);
+  const [isExportFilterDialogOpen, setIsExportFilterDialogOpen] =
+    useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<YouthRecord | null>(
+    null
+  );
   const [editFormData, setEditFormData] = useState<Partial<YouthRecord>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const itemsPerPage = 10;
-  
+
   // Get options from schema
   const barangayOptions = formSchema.shape.barangay.options;
-  const youthClassificationOptions = formSchema.shape.youth_classification.options;
+  const youthClassificationOptions =
+    formSchema.shape.youth_classification.options;
   const youthAgeGroupOptions = formSchema.shape.youth_age_group.options;
   const workStatusOptions = formSchema.shape.work_status.options;
   const educationOptions = formSchema.shape.highest_education.options;
@@ -66,13 +69,15 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   const voterOptions = formSchema.shape.registered_voter.options;
   const votedOptions = formSchema.shape.voted_last_election.options;
   const assemblyOptions = formSchema.shape.attended_kk_assembly.options;
-  
+
   // Filter states
   const [selectedBarangays, setSelectedBarangays] = useState<string[]>([]);
-  const [selectedClassifications, setSelectedClassifications] = useState<string[]>([]);
+  const [selectedClassifications, setSelectedClassifications] = useState<
+    string[]
+  >([]);
   const [selectedAgeGroups, setSelectedAgeGroups] = useState<string[]>([]);
   const [selectedWorkStatus, setSelectedWorkStatus] = useState<string[]>([]);
-  
+
   // Export filter states
   const [exportFilters, setExportFilters] = useState({
     barangays: [] as string[],
@@ -84,24 +89,41 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     civilStatus: [] as string[],
     registeredVoter: [] as string[],
     votedLastElection: [] as string[],
-    attendedAssembly: [] as string[]
+    attendedAssembly: [] as string[],
   });
 
   // Apply filters to data
-  const filteredData = data.filter(record => {
+  const filteredData = data.filter((record) => {
     // Search term filter
-    const matchesSearch = searchTerm === "" ||
+    const matchesSearch =
+      searchTerm === "" ||
       record.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.barangay.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.youth_classification.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      record.youth_classification
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+
     // Dropdown filters
-    const matchesBarangay = selectedBarangays.length === 0 || selectedBarangays.includes(record.barangay);
-    const matchesClassification = selectedClassifications.length === 0 || selectedClassifications.includes(record.youth_classification);
-    const matchesAgeGroup = selectedAgeGroups.length === 0 || selectedAgeGroups.includes(record.youth_age_group);
-    const matchesWorkStatus = selectedWorkStatus.length === 0 || selectedWorkStatus.includes(record.work_status);
-    
-    return matchesSearch && matchesBarangay && matchesClassification && matchesAgeGroup && matchesWorkStatus;
+    const matchesBarangay =
+      selectedBarangays.length === 0 ||
+      selectedBarangays.includes(record.barangay);
+    const matchesClassification =
+      selectedClassifications.length === 0 ||
+      selectedClassifications.includes(record.youth_classification);
+    const matchesAgeGroup =
+      selectedAgeGroups.length === 0 ||
+      selectedAgeGroups.includes(record.youth_age_group);
+    const matchesWorkStatus =
+      selectedWorkStatus.length === 0 ||
+      selectedWorkStatus.includes(record.work_status);
+
+    return (
+      matchesSearch &&
+      matchesBarangay &&
+      matchesClassification &&
+      matchesAgeGroup &&
+      matchesWorkStatus
+    );
   });
 
   // Calculate pagination
@@ -109,11 +131,17 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  
+
   // Reset pagination when filters or search change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedBarangays, selectedClassifications, selectedAgeGroups, selectedWorkStatus]);
+  }, [
+    searchTerm,
+    selectedBarangays,
+    selectedClassifications,
+    selectedAgeGroups,
+    selectedWorkStatus,
+  ]);
 
   // Handle opening edit dialog
   const handleEdit = (record: YouthRecord) => {
@@ -150,7 +178,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   // Handle save edited record
   const handleSaveEdit = async () => {
     if (!selectedRecord) return;
-    
+
     try {
       await pbClient.youth.update(selectedRecord.id, editFormData);
       toast.success("Record updated successfully");
@@ -165,7 +193,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   // Handle confirm delete
   const handleConfirmDelete = async () => {
     if (!selectedRecord) return;
-    
+
     try {
       await pbClient.youth.delete(selectedRecord.id);
       toast.success("Record deleted successfully");
@@ -178,66 +206,108 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   };
 
   // Toggle filter selection
-  const toggleFilter = (value: string, filterType: 'barangays' | 'classifications' | 'ageGroups' | 'workStatus') => {
+  const toggleFilter = (
+    value: string,
+    filterType: "barangays" | "classifications" | "ageGroups" | "workStatus"
+  ) => {
     switch (filterType) {
-      case 'barangays':
-        setSelectedBarangays(prev => 
-          prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]
+      case "barangays":
+        setSelectedBarangays((prev) =>
+          prev.includes(value)
+            ? prev.filter((item) => item !== value)
+            : [...prev, value]
         );
         break;
-      case 'classifications':
-        setSelectedClassifications(prev => 
-          prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]
+      case "classifications":
+        setSelectedClassifications((prev) =>
+          prev.includes(value)
+            ? prev.filter((item) => item !== value)
+            : [...prev, value]
         );
         break;
-      case 'ageGroups':
-        setSelectedAgeGroups(prev => 
-          prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]
+      case "ageGroups":
+        setSelectedAgeGroups((prev) =>
+          prev.includes(value)
+            ? prev.filter((item) => item !== value)
+            : [...prev, value]
         );
         break;
-      case 'workStatus':
-        setSelectedWorkStatus(prev => 
-          prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]
+      case "workStatus":
+        setSelectedWorkStatus((prev) =>
+          prev.includes(value)
+            ? prev.filter((item) => item !== value)
+            : [...prev, value]
         );
         break;
     }
   };
 
   // Toggle export filter selection
-  const toggleExportFilter = (value: string, filterType: keyof typeof exportFilters) => {
-    setExportFilters(prev => ({
+  const toggleExportFilter = (
+    value: string,
+    filterType: keyof typeof exportFilters
+  ) => {
+    setExportFilters((prev) => ({
       ...prev,
-      [filterType]: prev[filterType].includes(value) 
-        ? prev[filterType].filter(item => item !== value) 
-        : [...prev[filterType], value]
+      [filterType]: prev[filterType].includes(value)
+        ? prev[filterType].filter((item) => item !== value)
+        : [...prev[filterType], value],
     }));
   };
 
   // Filter data for export
   const getExportData = () => {
-    return data.filter(record => {
-      const matchesBarangay = exportFilters.barangays.length === 0 || exportFilters.barangays.includes(record.barangay);
-      const matchesClassification = exportFilters.classifications.length === 0 || exportFilters.classifications.includes(record.youth_classification);
-      const matchesAgeGroup = exportFilters.ageGroups.length === 0 || exportFilters.ageGroups.includes(record.youth_age_group);
-      const matchesWorkStatus = exportFilters.workStatus.length === 0 || exportFilters.workStatus.includes(record.work_status);
-      const matchesEducation = exportFilters.education.length === 0 || exportFilters.education.includes(record.highest_education);
-      const matchesSex = exportFilters.sex.length === 0 || exportFilters.sex.includes(record.sex);
-      const matchesCivilStatus = exportFilters.civilStatus.length === 0 || exportFilters.civilStatus.includes(record.civil_status);
-      const matchesRegisteredVoter = exportFilters.registeredVoter.length === 0 || exportFilters.registeredVoter.includes(record.registered_voter);
-      const matchesVotedLastElection = exportFilters.votedLastElection.length === 0 || exportFilters.votedLastElection.includes(record.voted_last_election);
-      const matchesAttendedAssembly = exportFilters.attendedAssembly.length === 0 || exportFilters.attendedAssembly.includes(record.attended_kk_assembly);
-      
-      return matchesBarangay && matchesClassification && matchesAgeGroup && 
-             matchesWorkStatus && matchesEducation && matchesSex && 
-             matchesCivilStatus && matchesRegisteredVoter && 
-             matchesVotedLastElection && matchesAttendedAssembly;
+    return data.filter((record) => {
+      const matchesBarangay =
+        exportFilters.barangays.length === 0 ||
+        exportFilters.barangays.includes(record.barangay);
+      const matchesClassification =
+        exportFilters.classifications.length === 0 ||
+        exportFilters.classifications.includes(record.youth_classification);
+      const matchesAgeGroup =
+        exportFilters.ageGroups.length === 0 ||
+        exportFilters.ageGroups.includes(record.youth_age_group);
+      const matchesWorkStatus =
+        exportFilters.workStatus.length === 0 ||
+        exportFilters.workStatus.includes(record.work_status);
+      const matchesEducation =
+        exportFilters.education.length === 0 ||
+        exportFilters.education.includes(record.highest_education);
+      const matchesSex =
+        exportFilters.sex.length === 0 ||
+        exportFilters.sex.includes(record.sex);
+      const matchesCivilStatus =
+        exportFilters.civilStatus.length === 0 ||
+        exportFilters.civilStatus.includes(record.civil_status);
+      const matchesRegisteredVoter =
+        exportFilters.registeredVoter.length === 0 ||
+        exportFilters.registeredVoter.includes(record.registered_voter);
+      const matchesVotedLastElection =
+        exportFilters.votedLastElection.length === 0 ||
+        exportFilters.votedLastElection.includes(record.voted_last_election);
+      const matchesAttendedAssembly =
+        exportFilters.attendedAssembly.length === 0 ||
+        exportFilters.attendedAssembly.includes(record.attended_kk_assembly);
+
+      return (
+        matchesBarangay &&
+        matchesClassification &&
+        matchesAgeGroup &&
+        matchesWorkStatus &&
+        matchesEducation &&
+        matchesSex &&
+        matchesCivilStatus &&
+        matchesRegisteredVoter &&
+        matchesVotedLastElection &&
+        matchesAttendedAssembly
+      );
     });
   };
 
   // Export to CSV
   const exportToCSV = () => {
     const dataToExport = getExportData();
-    
+
     const headers = [
       "Name",
       "Age",
@@ -284,7 +354,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     // Show toast with export count
     toast.success(`Exported ${dataToExport.length} records to CSV`);
   };
@@ -294,9 +364,11 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     const dataToExport = getExportData();
     // This is a placeholder for PDF export functionality
     // In a real implementation, you would use a library like jspdf
-    toast.info(`PDF export for ${dataToExport.length} records would be implemented here`);
+    toast.info(
+      `PDF export for ${dataToExport.length} records would be implemented here`
+    );
   };
-  
+
   // Clear all filters
   const clearFilters = () => {
     setSearchTerm("");
@@ -305,7 +377,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     setSelectedAgeGroups([]);
     setSelectedWorkStatus([]);
   };
-  
+
   // Clear export filters
   const clearExportFilters = () => {
     setExportFilters({
@@ -318,7 +390,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       civilStatus: [],
       registeredVoter: [],
       votedLastElection: [],
-      attendedAssembly: []
+      attendedAssembly: [],
     });
   };
 
@@ -348,9 +420,9 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                     <p className="text-sm text-muted-foreground">
                       Selected records: {getExportCount()} of {data.length}
                     </p>
-                    <Button 
-                      variant="link" 
-                      className="text-xs h-auto p-0" 
+                    <Button
+                      variant="link"
+                      className="text-xs h-auto p-0"
                       onClick={() => setIsExportFilterDialogOpen(true)}
                     >
                       Filter Data
@@ -381,7 +453,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
             </Popover>
           </div>
         </div>
-        
+
         {/* Search and filters */}
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
@@ -393,12 +465,16 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
               className="pl-10"
             />
           </div>
-          
+
           <div className="flex gap-2 flex-wrap md:flex-nowrap">
             {/* Barangay filter */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1"
+                >
                   <Filter size={14} />
                   Barangay
                   {selectedBarangays.length > 0 && (
@@ -414,11 +490,16 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                     <h4 className="font-medium text-sm">Barangay</h4>
                     <div className="grid gap-2 max-h-[200px] overflow-auto">
                       {barangayOptions.map((barangay) => (
-                        <div key={`barangay-${barangay}`} className="flex items-center space-x-2">
-                          <Checkbox 
+                        <div
+                          key={`barangay-${barangay}`}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
                             id={`barangay-${barangay}`}
                             checked={selectedBarangays.includes(barangay)}
-                            onCheckedChange={() => toggleFilter(barangay, 'barangays')}
+                            onCheckedChange={() =>
+                              toggleFilter(barangay, "barangays")
+                            }
                           />
                           <label
                             htmlFor={`barangay-${barangay}`}
@@ -433,11 +514,15 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                 </div>
               </PopoverContent>
             </Popover>
-            
+
             {/* Classification filter */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1"
+                >
                   <Filter size={14} />
                   Classification
                   {selectedClassifications.length > 0 && (
@@ -453,11 +538,18 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                     <h4 className="font-medium text-sm">Classification</h4>
                     <div className="grid gap-2">
                       {youthClassificationOptions.map((classification) => (
-                        <div key={`classification-${classification}`} className="flex items-center space-x-2">
-                          <Checkbox 
+                        <div
+                          key={`classification-${classification}`}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
                             id={`classification-${classification}`}
-                            checked={selectedClassifications.includes(classification)}
-                            onCheckedChange={() => toggleFilter(classification, 'classifications')}
+                            checked={selectedClassifications.includes(
+                              classification
+                            )}
+                            onCheckedChange={() =>
+                              toggleFilter(classification, "classifications")
+                            }
                           />
                           <label
                             htmlFor={`classification-${classification}`}
@@ -472,11 +564,15 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                 </div>
               </PopoverContent>
             </Popover>
-            
+
             {/* Age Group filter */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1"
+                >
                   <Filter size={14} />
                   Age Group
                   {selectedAgeGroups.length > 0 && (
@@ -492,11 +588,16 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                     <h4 className="font-medium text-sm">Age Group</h4>
                     <div className="grid gap-2">
                       {youthAgeGroupOptions.map((ageGroup) => (
-                        <div key={`age-group-${ageGroup}`} className="flex items-center space-x-2">
-                          <Checkbox 
+                        <div
+                          key={`age-group-${ageGroup}`}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
                             id={`age-group-${ageGroup}`}
                             checked={selectedAgeGroups.includes(ageGroup)}
-                            onCheckedChange={() => toggleFilter(ageGroup, 'ageGroups')}
+                            onCheckedChange={() =>
+                              toggleFilter(ageGroup, "ageGroups")
+                            }
                           />
                           <label
                             htmlFor={`age-group-${ageGroup}`}
@@ -511,11 +612,15 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                 </div>
               </PopoverContent>
             </Popover>
-            
+
             {/* Work Status filter */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1"
+                >
                   <Filter size={14} />
                   Work Status
                   {selectedWorkStatus.length > 0 && (
@@ -531,11 +636,16 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                     <h4 className="font-medium text-sm">Work Status</h4>
                     <div className="grid gap-2">
                       {workStatusOptions.map((status) => (
-                        <div key={`work-status-${status}`} className="flex items-center space-x-2">
-                          <Checkbox 
+                        <div
+                          key={`work-status-${status}`}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
                             id={`work-status-${status}`}
                             checked={selectedWorkStatus.includes(status)}
-                            onCheckedChange={() => toggleFilter(status, 'workStatus')}
+                            onCheckedChange={() =>
+                              toggleFilter(status, "workStatus")
+                            }
                           />
                           <label
                             htmlFor={`work-status-${status}`}
@@ -550,60 +660,83 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                 </div>
               </PopoverContent>
             </Popover>
-            
+
             {/* Clear filters button */}
-            {(selectedBarangays.length > 0 || selectedClassifications.length > 0 || 
-              selectedAgeGroups.length > 0 || selectedWorkStatus.length > 0 || searchTerm) && (
+            {(selectedBarangays.length > 0 ||
+              selectedClassifications.length > 0 ||
+              selectedAgeGroups.length > 0 ||
+              selectedWorkStatus.length > 0 ||
+              searchTerm) && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
                 Clear Filters
               </Button>
             )}
           </div>
         </div>
-        
+
         {/* Active filters display */}
-        {(selectedBarangays.length > 0 || selectedClassifications.length > 0 || 
-          selectedAgeGroups.length > 0 || selectedWorkStatus.length > 0) && (
+        {(selectedBarangays.length > 0 ||
+          selectedClassifications.length > 0 ||
+          selectedAgeGroups.length > 0 ||
+          selectedWorkStatus.length > 0) && (
           <div className="flex flex-wrap gap-2">
-            {selectedBarangays.map(barangay => (
-              <Badge key={`badge-barangay-${barangay}`} variant="outline" className="px-3 py-1">
+            {selectedBarangays.map((barangay) => (
+              <Badge
+                key={`badge-barangay-${barangay}`}
+                variant="outline"
+                className="px-3 py-1"
+              >
                 {barangay}
-                <button 
-                  className="ml-2 text-muted-foreground hover:text-foreground" 
-                  onClick={() => toggleFilter(barangay, 'barangays')}
+                <button
+                  className="ml-2 text-muted-foreground hover:text-foreground"
+                  onClick={() => toggleFilter(barangay, "barangays")}
                 >
                   ×
                 </button>
               </Badge>
             ))}
-            {selectedClassifications.map(classification => (
-              <Badge key={`badge-class-${classification}`} variant="outline" className="px-3 py-1">
+            {selectedClassifications.map((classification) => (
+              <Badge
+                key={`badge-class-${classification}`}
+                variant="outline"
+                className="px-3 py-1"
+              >
                 {classification}
-                <button 
-                  className="ml-2 text-muted-foreground hover:text-foreground" 
-                  onClick={() => toggleFilter(classification, 'classifications')}
+                <button
+                  className="ml-2 text-muted-foreground hover:text-foreground"
+                  onClick={() =>
+                    toggleFilter(classification, "classifications")
+                  }
                 >
                   ×
                 </button>
               </Badge>
             ))}
-            {selectedAgeGroups.map(ageGroup => (
-              <Badge key={`badge-age-${ageGroup}`} variant="outline" className="px-3 py-1">
+            {selectedAgeGroups.map((ageGroup) => (
+              <Badge
+                key={`badge-age-${ageGroup}`}
+                variant="outline"
+                className="px-3 py-1"
+              >
                 {ageGroup}
-                <button 
-                  className="ml-2 text-muted-foreground hover:text-foreground" 
-                  onClick={() => toggleFilter(ageGroup, 'ageGroups')}
+                <button
+                  className="ml-2 text-muted-foreground hover:text-foreground"
+                  onClick={() => toggleFilter(ageGroup, "ageGroups")}
                 >
                   ×
                 </button>
               </Badge>
             ))}
-            {selectedWorkStatus.map(status => (
-              <Badge key={`badge-work-${status}`} variant="outline" className="px-3 py-1">
+            {selectedWorkStatus.map((status) => (
+              <Badge
+                key={`badge-work-${status}`}
+                variant="outline"
+                className="px-3 py-1"
+              >
                 {status}
-                <button 
-                  className="ml-2 text-muted-foreground hover:text-foreground" 
-                  onClick={() => toggleFilter(status, 'workStatus')}
+                <button
+                  className="ml-2 text-muted-foreground hover:text-foreground"
+                  onClick={() => toggleFilter(status, "workStatus")}
                 >
                   ×
                 </button>
@@ -665,11 +798,9 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-4">
-                  {filteredData.length === 0 && data.length > 0 ? (
-                    "No records match the current filters"
-                  ) : (
-                    "No records found"
-                  )}
+                  {filteredData.length === 0 && data.length > 0
+                    ? "No records match the current filters"
+                    : "No records found"}
                 </TableCell>
               </TableRow>
             )}
@@ -681,8 +812,10 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       <div className="flex justify-between items-center mt-4">
         <div className="text-sm text-gray-500">
           Showing {filteredData.length > 0 ? indexOfFirstItem + 1 : 0}-
-          {Math.min(indexOfLastItem, filteredData.length)} of {filteredData.length} records
-          {data.length !== filteredData.length && ` (filtered from ${data.length} total)`}
+          {Math.min(indexOfLastItem, filteredData.length)} of{" "}
+          {filteredData.length} records
+          {data.length !== filteredData.length &&
+            ` (filtered from ${data.length} total)`}
         </div>
         {totalPages > 1 && (
           <div className="flex gap-2">
@@ -772,7 +905,9 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
               <div className="col-span-3">
                 <Select
                   value={editFormData.barangay || ""}
-                  onValueChange={(value) => handleSelectChange(value, "barangay")}
+                  onValueChange={(value) =>
+                    handleSelectChange(value, "barangay")
+                  }
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select barangay" />
@@ -794,7 +929,9 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
               <div className="col-span-3">
                 <Select
                   value={editFormData.youth_classification || ""}
-                  onValueChange={(value) => handleSelectChange(value, "youth_classification")}
+                  onValueChange={(value) =>
+                    handleSelectChange(value, "youth_classification")
+                  }
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select classification" />
@@ -811,7 +948,10 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button onClick={handleSaveEdit}>Save changes</Button>
@@ -825,11 +965,15 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
           <DialogHeader>
             <DialogTitle>Delete Record</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this record? This action cannot be undone.
+              Are you sure you want to delete this record? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleConfirmDelete}>
@@ -838,9 +982,12 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Export Filter Dialog */}
-      <Dialog open={isExportFilterDialogOpen} onOpenChange={setIsExportFilterDialogOpen}>
+      <Dialog
+        open={isExportFilterDialogOpen}
+        onOpenChange={setIsExportFilterDialogOpen}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Filter Export Data</DialogTitle>
@@ -854,11 +1001,16 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
               <h4 className="text-sm font-medium">Barangay</h4>
               <div className="grid grid-cols-2 gap-2">
                 {barangayOptions.map((barangay) => (
-                  <div key={`export-barangay-${barangay}`} className="flex items-center space-x-2">
-                    <Checkbox 
+                  <div
+                    key={`export-barangay-${barangay}`}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
                       id={`export-barangay-${barangay}`}
                       checked={exportFilters.barangays.includes(barangay)}
-                      onCheckedChange={() => toggleExportFilter(barangay, 'barangays')}
+                      onCheckedChange={() =>
+                        toggleExportFilter(barangay, "barangays")
+                      }
                     />
                     <label
                       htmlFor={`export-barangay-${barangay}`}
@@ -870,17 +1022,24 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                 ))}
               </div>
             </div>
-            
+
             {/* Classification filters */}
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Classification</h4>
               <div className="grid grid-cols-2 gap-2">
                 {youthClassificationOptions.map((classification) => (
-                  <div key={`export-class-${classification}`} className="flex items-center space-x-2">
-                    <Checkbox 
+                  <div
+                    key={`export-class-${classification}`}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
                       id={`export-class-${classification}`}
-                      checked={exportFilters.classifications.includes(classification)}
-                      onCheckedChange={() => toggleExportFilter(classification, 'classifications')}
+                      checked={exportFilters.classifications.includes(
+                        classification
+                      )}
+                      onCheckedChange={() =>
+                        toggleExportFilter(classification, "classifications")
+                      }
                     />
                     <label
                       htmlFor={`export-class-${classification}`}
@@ -898,11 +1057,16 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
               <h4 className="text-sm font-medium">Age Group</h4>
               <div className="grid grid-cols-2 gap-2">
                 {youthAgeGroupOptions.map((ageGroup) => (
-                  <div key={`export-age-${ageGroup}`} className="flex items-center space-x-2">
-                    <Checkbox 
+                  <div
+                    key={`export-age-${ageGroup}`}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
                       id={`export-age-${ageGroup}`}
                       checked={exportFilters.ageGroups.includes(ageGroup)}
-                      onCheckedChange={() => toggleExportFilter(ageGroup, 'ageGroups')}
+                      onCheckedChange={() =>
+                        toggleExportFilter(ageGroup, "ageGroups")
+                      }
                     />
                     <label
                       htmlFor={`export-age-${ageGroup}`}
@@ -920,11 +1084,16 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
               <h4 className="text-sm font-medium">Work Status</h4>
               <div className="grid grid-cols-2 gap-2">
                 {workStatusOptions.map((status) => (
-                  <div key={`export-work-${status}`} className="flex items-center space-x-2">
-                    <Checkbox 
+                  <div
+                    key={`export-work-${status}`}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
                       id={`export-work-${status}`}
                       checked={exportFilters.workStatus.includes(status)}
-                      onCheckedChange={() => toggleExportFilter(status, 'workStatus')}
+                      onCheckedChange={() =>
+                        toggleExportFilter(status, "workStatus")
+                      }
                     />
                     <label
                       htmlFor={`export-work-${status}`}
@@ -936,17 +1105,22 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                 ))}
               </div>
             </div>
-            
+
             {/* Education filters */}
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Highest Education</h4>
               <div className="grid grid-cols-2 gap-2">
                 {educationOptions.map((education) => (
-                  <div key={`export-edu-${education}`} className="flex items-center space-x-2">
-                    <Checkbox 
+                  <div
+                    key={`export-edu-${education}`}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
                       id={`export-edu-${education}`}
                       checked={exportFilters.education.includes(education)}
-                      onCheckedChange={() => toggleExportFilter(education, 'education')}
+                      onCheckedChange={() =>
+                        toggleExportFilter(education, "education")
+                      }
                     />
                     <label
                       htmlFor={`export-edu-${education}`}
@@ -958,17 +1132,20 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                 ))}
               </div>
             </div>
-            
+
             {/* Sex filters */}
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Sex</h4>
               <div className="grid grid-cols-2 gap-2">
                 {sexOptions.map((sex) => (
-                  <div key={`export-sex-${sex}`} className="flex items-center space-x-2">
-                    <Checkbox 
+                  <div
+                    key={`export-sex-${sex}`}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
                       id={`export-sex-${sex}`}
                       checked={exportFilters.sex.includes(sex)}
-                      onCheckedChange={() => toggleExportFilter(sex, 'sex')}
+                      onCheckedChange={() => toggleExportFilter(sex, "sex")}
                     />
                     <label
                       htmlFor={`export-sex-${sex}`}
@@ -980,17 +1157,22 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                 ))}
               </div>
             </div>
-            
+
             {/* Civil Status filters */}
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Civil Status</h4>
               <div className="grid grid-cols-2 gap-2">
                 {civilStatusOptions.map((status) => (
-                  <div key={`export-civil-${status}`} className="flex items-center space-x-2">
-                    <Checkbox 
+                  <div
+                    key={`export-civil-${status}`}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
                       id={`export-civil-${status}`}
                       checked={exportFilters.civilStatus.includes(status)}
-                      onCheckedChange={() => toggleExportFilter(status, 'civilStatus')}
+                      onCheckedChange={() =>
+                        toggleExportFilter(status, "civilStatus")
+                      }
                     />
                     <label
                       htmlFor={`export-civil-${status}`}
@@ -1002,17 +1184,22 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                 ))}
               </div>
             </div>
-            
+
             {/* Registered Voter filters */}
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Registered Voter</h4>
               <div className="grid grid-cols-2 gap-2">
                 {voterOptions.map((option) => (
-                  <div key={`export-voter-${option}`} className="flex items-center space-x-2">
-                    <Checkbox 
+                  <div
+                    key={`export-voter-${option}`}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
                       id={`export-voter-${option}`}
                       checked={exportFilters.registeredVoter.includes(option)}
-                      onCheckedChange={() => toggleExportFilter(option, 'registeredVoter')}
+                      onCheckedChange={() =>
+                        toggleExportFilter(option, "registeredVoter")
+                      }
                     />
                     <label
                       htmlFor={`export-voter-${option}`}
@@ -1024,17 +1211,22 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                 ))}
               </div>
             </div>
-            
+
             {/* Voted Last Election filters */}
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Voted Last Election</h4>
               <div className="grid grid-cols-2 gap-2">
                 {votedOptions.map((option) => (
-                  <div key={`export-voted-${option}`} className="flex items-center space-x-2">
-                    <Checkbox 
+                  <div
+                    key={`export-voted-${option}`}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
                       id={`export-voted-${option}`}
                       checked={exportFilters.votedLastElection.includes(option)}
-                      onCheckedChange={() => toggleExportFilter(option, 'votedLastElection')}
+                      onCheckedChange={() =>
+                        toggleExportFilter(option, "votedLastElection")
+                      }
                     />
                     <label
                       htmlFor={`export-voted-${option}`}
@@ -1046,17 +1238,22 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                 ))}
               </div>
             </div>
-            
+
             {/* Attended KK Assembly filters */}
             <div className="space-y-2">
               <h4 className="text-sm font-medium">Attended KK Assembly</h4>
               <div className="grid grid-cols-2 gap-2">
                 {assemblyOptions.map((option) => (
-                  <div key={`export-assembly-${option}`} className="flex items-center space-x-2">
-                    <Checkbox 
+                  <div
+                    key={`export-assembly-${option}`}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
                       id={`export-assembly-${option}`}
                       checked={exportFilters.attendedAssembly.includes(option)}
-                      onCheckedChange={() => toggleExportFilter(option, 'attendedAssembly')}
+                      onCheckedChange={() =>
+                        toggleExportFilter(option, "attendedAssembly")
+                      }
                     />
                     <label
                       htmlFor={`export-assembly-${option}`}
@@ -1068,24 +1265,31 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
                 ))}
               </div>
             </div>
-            
+
             {/* Clear Export Filters button */}
-            <Button 
-              variant="outline" 
-              onClick={clearExportFilters} 
+            <Button
+              variant="outline"
+              onClick={clearExportFilters}
               className="w-full mt-4"
             >
               Clear All Filters
             </Button>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsExportFilterDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsExportFilterDialogOpen(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={() => {
-              setIsExportFilterDialogOpen(false);
-              toast.success(`Export filters applied (${getExportCount()} records selected)`);
-            }}>
+            <Button
+              onClick={() => {
+                setIsExportFilterDialogOpen(false);
+                toast.success(
+                  `Export filters applied (${getExportCount()} records selected)`
+                );
+              }}
+            >
               Apply Filters
             </Button>
           </DialogFooter>
