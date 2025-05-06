@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 80% 10%;
+    --background: 0 0% 100%;          /* white */
+    --foreground: 0 0% 10%;           /* dark gray (almost black) */
 
     --card: 0 0% 100%;
-    --card-foreground: 0 80% 10%;
+    --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 80% 10%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 0 100% 50%;
-    --primary-foreground: 0 40% 98%;
+    --primary: 0 83% 45%;             /* red from the banner (#D7262C) */
+    --primary-foreground: 0 0% 100%;  /* white text on red */
 
-    --secondary: 0 50% 30%;
-    --secondary-foreground: 0 40% 98%;
+    --secondary: 48 90% 55%;          /* yellow from the seal (#F0C808) */
+    --secondary-foreground: 0 0% 10%; /* dark text on yellow */
 
-    --muted: 0 40% 90%;
-    --muted-foreground: 0 20% 40%;
+    --muted: 0 0% 95%;                /* light gray */
+    --muted-foreground: 0 0% 40%;     /* medium gray */
 
-    --accent: 0 100% 40%;
-    --accent-foreground: 0 50% 95%;
+    --accent: 218 49% 24%;            /* navy blue from the seal (#1B365D) */
+    --accent-foreground: 0 0% 100%;   /* white text on dark blue */
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 40% 98%;
+    --destructive: 0 70% 50%;         /* standard red */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 30% 85%;
-    --input: 0 30% 85%;
-    --ring: 0 70% 50%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 83% 45%;                /* match primary */
 
     --radius: 0.5rem;
   }

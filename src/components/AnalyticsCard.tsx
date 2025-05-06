@@ -1,19 +1,24 @@
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Area, 
-  AreaChart, 
-  Bar, 
-  BarChart, 
-  CartesianGrid, 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
   Cell,
-  Legend, 
-  Pie, 
-  PieChart, 
-  ResponsiveContainer, 
-  Tooltip, 
-  XAxis, 
-  YAxis 
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
 
 interface AnalyticsCardProps {
@@ -35,7 +40,7 @@ export function AnalyticsCard({
   dataKey,
   nameKey,
   className,
-  colors = ['#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#f59e0b', '#6366f1'],
+  colors = ["#D7262C", "#F0C808", "#1B365D", "#FFFFFF", "#000000", "#F5F5F5"],
 }: AnalyticsCardProps) {
   return (
     <Card className={className}>
@@ -55,7 +60,10 @@ export function AnalyticsCard({
                 <Legend />
                 <Bar dataKey={dataKey} fill="#3b82f6">
                   {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={colors[index % colors.length]}
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -70,10 +78,15 @@ export function AnalyticsCard({
                   fill="#8884d8"
                   dataKey={dataKey}
                   nameKey={nameKey}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) =>
+                    `${name}: ${(percent * 100).toFixed(0)}%`
+                  }
                 >
                   {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={colors[index % colors.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />

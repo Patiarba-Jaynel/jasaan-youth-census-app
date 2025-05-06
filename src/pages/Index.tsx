@@ -1,6 +1,12 @@
-
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
@@ -22,14 +28,6 @@ const Index = () => {
                   Be counted. Be heard. Shape the future of Jasaan.
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" asChild>
-                  <Link to="/login">Admin Access</Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link to="/about">Learn More</Link>
-                </Button>
-              </div>
             </div>
           </div>
         </section>
@@ -43,7 +41,11 @@ const Index = () => {
                   <CardTitle>Why Register?</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p>Your registration helps local government understand the needs of the youth in Jasaan, enabling better programs and services for you.</p>
+                  <p>
+                    Your registration helps local government understand the
+                    needs of the youth in Jasaan, enabling better programs and
+                    services for you.
+                  </p>
                 </CardContent>
               </Card>
               <Card>
@@ -51,7 +53,11 @@ const Index = () => {
                   <CardTitle>Quick & Easy</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p>Our census form takes just a few minutes to complete. Your information is secure and will only be used for planning purposes.</p>
+                  <p>
+                    Our census form takes just a few minutes to complete. Your
+                    information is secure and will only be used for planning
+                    purposes.
+                  </p>
                 </CardContent>
               </Card>
               <Card>
@@ -59,7 +65,10 @@ const Index = () => {
                   <CardTitle>Make an Impact</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p>Your participation directly impacts resource allocation and youth programs in your barangay and throughout Jasaan.</p>
+                  <p>
+                    Your participation directly impacts resource allocation and
+                    youth programs in your barangay and throughout Jasaan.
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -71,22 +80,19 @@ const Index = () => {
           <div className="container px-4 md:px-6">
             <div className="grid gap-10 md:grid-cols-2">
               <div className="space-y-4">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">About the Census</h2>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                  About the Census
+                </h2>
                 <p className="text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                  The Jasaan Youth Census is a comprehensive initiative to collect data about the youth 
-                  population in our municipality. This data helps in planning and implementing youth 
-                  development programs, allocating resources, and addressing the specific needs of 
-                  young people in different barangays.
+                  The Jasaan Youth Census is a comprehensive initiative to
+                  collect data about the youth population in our municipality.
+                  This data helps in planning and implementing youth development
+                  programs, allocating resources, and addressing the specific
+                  needs of young people in different barangays.
                 </p>
                 <Button asChild>
                   <Link to="/about">Learn More</Link>
                 </Button>
-              </div>
-              <div className="flex items-center justify-center">
-                <div className="relative h-[300px] w-full md:h-[400px] rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 overflow-hidden flex items-center justify-center text-white text-4xl font-bold">
-                  <div className="absolute inset-0 bg-black/20" />
-                  <div className="z-10">Youth of Jasaan</div>
-                </div>
               </div>
             </div>
           </div>
@@ -97,9 +103,13 @@ const Index = () => {
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Admin Access</h2>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
+                  Admin Access
+                </h2>
                 <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Youth census registration is managed by authorized administrators. If you are an admin, please login to access the system.
+                  Youth census registration is managed by authorized
+                  administrators. If you are an admin, please login to access
+                  the system.
                 </p>
               </div>
               <Button size="lg" asChild>
