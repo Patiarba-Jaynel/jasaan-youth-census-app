@@ -1,14 +1,29 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { Control } from "react-hook-form";
+import { Control, useWatch } from "react-hook-form";
 import { FormValues } from "@/lib/schema";
 import { cn } from "@/lib/utils";
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -18,6 +33,22 @@ interface PersonalInfoSectionProps {
 }
 
 export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
+  const birthday = useWatch({ control, name: "birthday" });
+  const [calculatedAge, setCalculatedAge] = useState<number | undefined>();
+
+  useEffect(() => {
+    if (birthday) {
+      const today = new Date();
+      const birthDate = new Date(birthday);
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      setCalculatedAge(age);
+    }
+  }, [birthday]);
+
   return (
     <div className="md:col-span-2">
       <h3 className="text-lg font-medium mb-4">Personal Information</h3>
@@ -35,7 +66,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={control}
           name="age"
@@ -43,13 +74,13 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
             <FormItem>
               <FormLabel>Age</FormLabel>
               <FormControl>
-                <Input type="number" {...field} />
+                <Input type="number" {...field} value={calculatedAge} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={control}
           name="birthday"
@@ -80,6 +111,9 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                     mode="single"
                     selected={field.value}
                     onSelect={field.onChange}
+                    captionLayout="dropdown"
+                    fromYear={1980}
+                    toYear={new Date().getFullYear()}
                     disabled={(date) =>
                       date > new Date() || date < new Date("1980-01-01")
                     }
@@ -92,7 +126,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={control}
           name="sex"
@@ -147,7 +181,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={control}
           name="youth_classification"
@@ -164,14 +198,16 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                   <SelectItem value="ISY">In-School Youth (ISY)</SelectItem>
                   <SelectItem value="OSY">Out-of-School Youth (OSY)</SelectItem>
                   <SelectItem value="WY">Working Youth (WY)</SelectItem>
-                  <SelectItem value="YSN">Youth with Special Needs (YSN)</SelectItem>
+                  <SelectItem value="YSN">
+                    Youth with Special Needs (YSN)
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={control}
           name="youth_age_group"
@@ -185,9 +221,15 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="CHILD YOUTH (15-17)">Child Youth (15-17)</SelectItem>
-                  <SelectItem value="CORE YOUTH (18-24)">Core Youth (18-24)</SelectItem>
-                  <SelectItem value="YOUNG ADULT (25-30)">Young Adult (25-30)</SelectItem>
+                  <SelectItem value="CHILD YOUTH (15-17)">
+                    Child Youth (15-17)
+                  </SelectItem>
+                  <SelectItem value="CORE YOUTH (18-24)">
+                    Core Youth (18-24)
+                  </SelectItem>
+                  <SelectItem value="YOUNG ADULT (25-30)">
+                    Young Adult (25-30)
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

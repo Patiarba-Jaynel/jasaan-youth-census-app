@@ -19,7 +19,9 @@ const DashboardPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [youthRecords, setYouthRecords] = useState<YouthRecord[]>([]);
   const [barangayData, setBarangayData] = useState<AnalyticsData[]>([]);
-  const [classificationData, setClassificationData] = useState<AnalyticsData[]>([]);
+  const [classificationData, setClassificationData] = useState<AnalyticsData[]>(
+    []
+  );
   const [ageGroupData, setAgeGroupData] = useState<AnalyticsData[]>([]);
   const [voterData, setVoterData] = useState<AnalyticsData[]>([]);
   const navigate = useNavigate();
@@ -27,7 +29,7 @@ const DashboardPage = () => {
   useEffect(() => {
     const checkAuth = async () => {
       const isLoggedIn = pbClient.auth.isLoggedIn();
-      
+
       if (!isLoggedIn) {
         toast.error("Authentication required", {
           description: "Please log in to access the dashboard.",
@@ -35,11 +37,11 @@ const DashboardPage = () => {
         navigate("/login");
         return;
       }
-      
+
       try {
         const records = await pbClient.youth.getAll();
         setYouthRecords(records);
-        
+
         // Process data for analytics
         processData(records);
       } catch (error) {
@@ -49,76 +51,96 @@ const DashboardPage = () => {
         setIsLoading(false);
       }
     };
-    
+
     checkAuth();
   }, [navigate]);
 
   const processData = (records: YouthRecord[]) => {
     // Group by barangay
-    const barangayDistribution = records.reduce((acc: {[key: string]: number}, record) => {
-      if (!acc[record.barangay]) {
-        acc[record.barangay] = 0;
-      }
-      acc[record.barangay]++;
-      return acc;
-    }, {});
-    
+    const barangayDistribution = records.reduce(
+      (acc: { [key: string]: number }, record) => {
+        if (!acc[record.barangay]) {
+          acc[record.barangay] = 0;
+        }
+        acc[record.barangay]++;
+        return acc;
+      },
+      {}
+    );
+
     // Group by classification
-    const classificationDistribution = records.reduce((acc: {[key: string]: number}, record) => {
-      if (!acc[record.youth_classification]) {
-        acc[record.youth_classification] = 0;
-      }
-      acc[record.youth_classification]++;
-      return acc;
-    }, {});
-    
+    const classificationDistribution = records.reduce(
+      (acc: { [key: string]: number }, record) => {
+        if (!acc[record.youth_classification]) {
+          acc[record.youth_classification] = 0;
+        }
+        acc[record.youth_classification]++;
+        return acc;
+      },
+      {}
+    );
+
     // Group by age group
-    const ageGroupDistribution = records.reduce((acc: {[key: string]: number}, record) => {
-      if (!acc[record.youth_age_group]) {
-        acc[record.youth_age_group] = 0;
-      }
-      acc[record.youth_age_group]++;
-      return acc;
-    }, {});
-    
+    const ageGroupDistribution = records.reduce(
+      (acc: { [key: string]: number }, record) => {
+        if (!acc[record.youth_age_group]) {
+          acc[record.youth_age_group] = 0;
+        }
+        acc[record.youth_age_group]++;
+        return acc;
+      },
+      {}
+    );
+
     // Group by voter status
-    const voterDistribution = records.reduce((acc: {[key: string]: number}, record) => {
-      if (!acc[record.registered_voter]) {
-        acc[record.registered_voter] = 0;
-      }
-      acc[record.registered_voter]++;
-      return acc;
-    }, {});
-    
+    const voterDistribution = records.reduce(
+      (acc: { [key: string]: number }, record) => {
+        if (!acc[record.registered_voter]) {
+          acc[record.registered_voter] = 0;
+        }
+        acc[record.registered_voter]++;
+        return acc;
+      },
+      {}
+    );
+
     // Convert to chart data format
-    setBarangayData(Object.keys(barangayDistribution).map(key => ({
-      name: key,
-      value: barangayDistribution[key]
-    })));
-    
-    setClassificationData(Object.keys(classificationDistribution).map(key => {
-      const labels: {[key: string]: string} = {
-        "ISY": "In-School Youth",
-        "OSY": "Out-of-School Youth",
-        "WY": "Working Youth",
-        "YSN": "Youth with Special Needs"
-      };
-      
-      return {
-        name: labels[key] || key,
-        value: classificationDistribution[key]
-      };
-    }));
-    
-    setAgeGroupData(Object.keys(ageGroupDistribution).map(key => ({
-      name: key,
-      value: ageGroupDistribution[key]
-    })));
-    
-    setVoterData(Object.keys(voterDistribution).map(key => ({
-      name: key,
-      value: voterDistribution[key]
-    })));
+    setBarangayData(
+      Object.keys(barangayDistribution).map((key) => ({
+        name: key,
+        value: barangayDistribution[key],
+      }))
+    );
+
+    setClassificationData(
+      Object.keys(classificationDistribution).map((key) => {
+        const labels: { [key: string]: string } = {
+          ISY: "In-School Youth",
+          OSY: "Out-of-School Youth",
+          WY: "Working Youth",
+          YSN: "Youth with Special Needs",
+        };
+
+        return {
+          name: labels[key] || key,
+          value: classificationDistribution[key],
+        };
+      })
+    );
+
+    setAgeGroupData(
+      Object.keys(ageGroupDistribution).map((key) => ({
+        name: key,
+        value: ageGroupDistribution[key],
+      }))
+    );
+
+    setVoterData(
+      Object.keys(voterDistribution).map((key) => ({
+        name: key,
+        value: voterDistribution[key],
+      }))
+    );
   };
 
   const handleLogout = () => {
@@ -163,18 +185,32 @@ const DashboardPage = () => {
           <div className="flex flex-col md:flex-row justify-between items-center mb-8">
             <div>
               <h1 className="text-3xl font-bold">Census Dashboard</h1>
-              <p className="text-muted-foreground">Analytics and insights from the Jasaan Youth Census data.</p>
+              <p className="text-muted-foreground">
+                Analytics and insights from the Jasaan Youth Census data.
+              </p>
             </div>
             <div className="flex flex-col md:flex-row gap-4 mt-4 md:mt-0">
-              <Button onClick={handleViewTable} variant="outline" className="flex items-center gap-2">
+              <Button
+                onClick={handleViewTable}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
                 <Table size={16} />
                 View Table
               </Button>
-              <Button onClick={handleAddYouth} variant="default" className="flex items-center gap-2">
+              <Button
+                onClick={handleAddYouth}
+                variant="default"
+                className="flex items-center gap-2"
+              >
                 <Plus size={16} />
                 Add Youth
               </Button>
-              <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2">
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
                 <LogOut size={16} />
                 Logout
               </Button>
@@ -191,19 +227,32 @@ const DashboardPage = () => {
             />
             <StatCard
               title="Registered Voters"
-              value={youthRecords.filter(r => r.registered_voter === "Yes").length}
+              value={
+                youthRecords.filter((r) => r.registered_voter === "Yes").length
+              }
               description="Youth who are registered to vote"
               icon={<Eye />}
             />
             <StatCard
               title="In-School Youth"
-              value={youthRecords.filter(r => r.youth_classification === "ISY").length}
+              value={
+                youthRecords.filter((r) => r.youth_classification === "ISY")
+                  .length
+              }
               description="Currently enrolled in school"
               icon={<Eye />}
             />
             <StatCard
               title="Employment Rate"
-              value={`${Math.round((youthRecords.filter(r => r.work_status === "Employed" || r.work_status === "Self-Employed").length / youthRecords.length) * 100)}%`}
+              value={`${Math.round(
+                (youthRecords.filter(
+                  (r) =>
+                    r.work_status === "Employed" ||
+                    r.work_status === "Self-Employed"
+                ).length /
+                  youthRecords.length) *
+                  100
+              )}%`}
               description="Youth who are employed or self-employed"
               icon={<Eye />}
             />
@@ -223,12 +272,12 @@ const DashboardPage = () => {
               title="Youth Classification"
               description="Distribution by youth classification type"
               data={classificationData}
-              type="pie"
+              type="area"
               nameKey="name"
               dataKey="value"
             />
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <AnalyticsCard
               title="Distribution by Age Group"

@@ -1,4 +1,3 @@
-
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -15,16 +14,10 @@ const SuccessPage = () => {
             <div className="rounded-full bg-green-100 p-4">
               <Check className="h-12 w-12 text-green-600" />
             </div>
-            <h1 className="text-3xl font-bold">Registration Successful!</h1>
-            <p className="text-muted-foreground">
-              Thank you for registering with the Jasaan Youth Census. Your contribution helps us better understand and address the needs of the youth in our community.
-            </p>
+            <h1 className="text-3xl font-bold">New Youth Added!</h1>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button asChild>
-                <Link to="/">Return to Home</Link>
-              </Button>
-              <Button variant="outline" asChild>
-                <Link to="/about">Learn More</Link>
+                <Link to="/dashboard">Return to Dashboard</Link>
               </Button>
             </div>
           </div>
