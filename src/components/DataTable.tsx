@@ -24,6 +24,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
 import { pbClient } from "@/lib/pb-client";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { formSchema } from "@/lib/schema";
 
 interface DataTableProps {
   data: YouthRecord[];
@@ -37,6 +45,10 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   const [selectedRecord, setSelectedRecord] = useState<YouthRecord | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<YouthRecord>>({});
   const itemsPerPage = 10;
+  
+  // Get barangays and youth classifications from schema
+  const barangayOptions = formSchema.shape.barangay.options;
+  const youthClassificationOptions = formSchema.shape.youth_classification.options;
 
   // Calculate pagination
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -69,6 +81,11 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setEditFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle select change for dropdowns
+  const handleSelectChange = (value: string, fieldName: string) => {
+    setEditFormData((prev) => ({ ...prev, [fieldName]: value }));
   };
 
   // Handle save edited record
@@ -328,25 +345,45 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
               <Label htmlFor="barangay" className="text-right">
                 Barangay
               </Label>
-              <Input
-                id="barangay"
-                name="barangay"
-                value={editFormData.barangay || ""}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Select
+                  value={editFormData.barangay || ""}
+                  onValueChange={(value) => handleSelectChange(value, "barangay")}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select barangay" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {barangayOptions.map((barangay) => (
+                      <SelectItem key={barangay} value={barangay}>
+                        {barangay}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="classification" className="text-right">
                 Classification
               </Label>
-              <Input
-                id="classification"
-                name="youth_classification"
-                value={editFormData.youth_classification || ""}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Select
+                  value={editFormData.youth_classification || ""}
+                  onValueChange={(value) => handleSelectChange(value, "youth_classification")}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select classification" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {youthClassificationOptions.map((classification) => (
+                      <SelectItem key={classification} value={classification}>
+                        {classification}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
           <DialogFooter>
