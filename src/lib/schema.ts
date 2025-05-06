@@ -47,3 +47,44 @@ export const formSchema = z.object({
 });
 
 export type FormValues = z.infer<typeof formSchema>;
+
+// Helper function to get enum values from schema
+export const getSchemaEnumValues = (field: keyof FormValues): string[] => {
+  const fieldSchema = formSchema.shape[field];
+  if (fieldSchema instanceof z.ZodEnum) {
+    return fieldSchema.options;
+  }
+  return [];
+};
+
+// Generate template data for CSV/Excel export
+export const generateTemplateData = () => {
+  // Get all field definitions from the schema
+  const fields = Object.keys(formSchema.shape);
+  
+  // Sample row with placeholder values
+  const sampleRow = fields.reduce((acc, field) => {
+    const fieldSchema = formSchema.shape[field as keyof typeof formSchema.shape];
+    
+    if (fieldSchema instanceof z.ZodEnum) {
+      // For enum fields, provide the first valid option
+      acc[field] = fieldSchema.options[0];
+    } else if (field === "birthday") {
+      // Format date as YYYY-MM-DD
+      acc[field] = "2000-01-01";
+    } else if (field === "kk_assemblies_attended") {
+      acc[field] = "0";
+    } else {
+      // For other fields, provide a descriptive placeholder
+      acc[field] = `Enter ${field.replace(/_/g, " ")}`;
+    }
+    
+    return acc;
+  }, {} as Record<string, string>);
+  
+  return {
+    headers: fields,
+    sampleRow
+  };
+};
+
