@@ -1,4 +1,3 @@
-
 import PocketBase from 'pocketbase';
 
 // Create a PocketBase client instance
@@ -58,6 +57,19 @@ export const pbClient = {
   youth: {
     create: async (data: Omit<YouthRecord, 'id' | 'created' | 'updated'>) => {
       return await pb.collection('youth').create(data);
+    },
+    createMany: async (records: Omit<YouthRecord, 'id' | 'created' | 'updated'>[]) => {
+      const createdRecords = [];
+      for (const record of records) {
+        try {
+          const createdRecord = await pb.collection('youth').create(record);
+          createdRecords.push(createdRecord);
+        } catch (error) {
+          console.error("Error creating record:", error);
+          throw error;
+        }
+      }
+      return createdRecords;
     },
     getAll: async () => {
       return await pb.collection('youth').getFullList<YouthRecord>();

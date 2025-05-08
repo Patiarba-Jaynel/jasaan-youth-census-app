@@ -8,10 +8,14 @@ import { Footer } from "@/components/Footer";
 import { DataTable } from "@/components/DataTable";
 import { pbClient, YouthRecord } from "@/lib/pb-client";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Import } from "lucide-react";
+import { ImportDialog } from "@/components/ImportDialog";
 
 const TableViewPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [youthRecords, setYouthRecords] = useState<YouthRecord[]>([]);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchData = async () => {
@@ -25,6 +29,12 @@ const TableViewPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleImportSuccess = () => {
+    fetchData();
+    setIsImportDialogOpen(false);
+    toast.success("Data imported successfully");
   };
 
   useEffect(() => {
@@ -52,13 +62,23 @@ const TableViewPage = () => {
         <div className="container px-4 md:px-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">Census Records</h1>
-            <div>
-              <button 
-                className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => setIsImportDialogOpen(true)}
+                className="flex items-center gap-1"
+              >
+                <Import size={16} />
+                Import Data
+              </Button>
+              <Button 
+                variant="secondary" 
+                size="sm"
                 onClick={() => navigate("/dashboard")}
               >
                 Back to Dashboard
-              </button>
+              </Button>
             </div>
           </div>
           
@@ -78,6 +98,12 @@ const TableViewPage = () => {
         </div>
       </main>
       <Footer />
+
+      <ImportDialog 
+        open={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
+        onImportSuccess={handleImportSuccess}
+      />
     </div>
   );
 };

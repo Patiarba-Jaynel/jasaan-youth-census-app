@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { YouthRecord } from "@/lib/pb-client";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, File, Edit, Trash2, Search, Filter } from "lucide-react";
+import { FileText, File, Edit, Trash2, Search } from "lucide-react";
 import { format } from "date-fns";
 import {
   Dialog,
@@ -36,8 +37,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { ColumnVisibilityToggle } from "./ColumnVisibilityToggle";
+import { AdvancedFilters } from "./AdvancedFilters";
 
 interface DataTableProps {
   data: YouthRecord[];
@@ -48,19 +50,15 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isExportFilterDialogOpen, setIsExportFilterDialogOpen] =
-    useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<YouthRecord | null>(
-    null
-  );
+  const [isExportFilterDialogOpen, setIsExportFilterDialogOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<YouthRecord | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<YouthRecord>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const itemsPerPage = 10;
 
   // Get options from schema
   const barangayOptions = formSchema.shape.barangay.options;
-  const youthClassificationOptions =
-    formSchema.shape.youth_classification.options;
+  const youthClassificationOptions = formSchema.shape.youth_classification.options;
   const youthAgeGroupOptions = formSchema.shape.youth_age_group.options;
   const workStatusOptions = formSchema.shape.work_status.options;
   const educationOptions = formSchema.shape.highest_education.options;
@@ -72,11 +70,41 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
 
   // Filter states
   const [selectedBarangays, setSelectedBarangays] = useState<string[]>([]);
-  const [selectedClassifications, setSelectedClassifications] = useState<
-    string[]
-  >([]);
+  const [selectedClassifications, setSelectedClassifications] = useState<string[]>([]);
   const [selectedAgeGroups, setSelectedAgeGroups] = useState<string[]>([]);
   const [selectedWorkStatus, setSelectedWorkStatus] = useState<string[]>([]);
+
+  // Advanced filter states
+  const [advancedFilters, setAdvancedFilters] = useState({
+    ageRange: [15, 30],
+    gender: [] as string[],
+    votedLastElection: [] as string[],
+    attendedAssembly: [] as string[],
+    highestEducation: [] as string[],
+  });
+
+  // Column visibility
+  const [columns, setColumns] = useState([
+    { key: "name", title: "Name", visible: true },
+    { key: "age", title: "Age", visible: true },
+    { key: "sex", title: "Sex/Gender", visible: true },
+    { key: "barangay", title: "Barangay", visible: true },
+    { key: "classification", title: "Classification", visible: true },
+    { key: "ageGroup", title: "Age Group", visible: true },
+    { key: "education", title: "Highest Education", visible: false },
+    { key: "work", title: "Work Status", visible: false },
+    { key: "registeredVoter", title: "Registered Voter", visible: true },
+    { key: "votedLastElection", title: "Voted Last Election", visible: false },
+    { key: "attendedAssembly", title: "Attended Assembly", visible: false },
+    { key: "civilStatus", title: "Civil Status", visible: false },
+  ]);
+
+  // Toggle column visibility
+  const toggleColumnVisibility = (key: string) => {
+    setColumns(cols => cols.map(col => 
+      col.key === key ? { ...col, visible: !col.visible } : col
+    ));
+  };
 
   // Export filter states
   const [exportFilters, setExportFilters] = useState({
@@ -92,6 +120,25 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     attendedAssembly: [] as string[],
   });
 
+  // Handle advanced filter changes
+  const handleAdvancedFilterChange = (filterType: string, value: any) => {
+    setAdvancedFilters(prev => ({
+      ...prev,
+      [filterType]: value
+    }));
+  };
+
+  // Clear advanced filters
+  const clearAdvancedFilters = () => {
+    setAdvancedFilters({
+      ageRange: [15, 30],
+      gender: [],
+      votedLastElection: [],
+      attendedAssembly: [],
+      highestEducation: [],
+    });
+  };
+
   // Apply filters to data
   const filteredData = data.filter((record) => {
     // Search term filter
@@ -103,7 +150,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
 
-    // Dropdown filters
+    // Basic Dropdown filters
     const matchesBarangay =
       selectedBarangays.length === 0 ||
       selectedBarangays.includes(record.barangay);
@@ -116,13 +163,40 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     const matchesWorkStatus =
       selectedWorkStatus.length === 0 ||
       selectedWorkStatus.includes(record.work_status);
+      
+    // Advanced filters
+    const age = parseInt(record.age);
+    const matchesAgeRange = 
+      isNaN(age) || 
+      (age >= advancedFilters.ageRange[0] && age <= advancedFilters.ageRange[1]);
+      
+    const matchesGender = 
+      advancedFilters.gender.length === 0 ||
+      advancedFilters.gender.includes(record.sex);
+      
+    const matchesVotedLastElection =
+      advancedFilters.votedLastElection.length === 0 ||
+      advancedFilters.votedLastElection.includes(record.voted_last_election);
+      
+    const matchesAttendedAssembly =
+      advancedFilters.attendedAssembly.length === 0 ||
+      advancedFilters.attendedAssembly.includes(record.attended_kk_assembly);
+      
+    const matchesEducation =
+      advancedFilters.highestEducation.length === 0 ||
+      advancedFilters.highestEducation.includes(record.highest_education);
 
     return (
       matchesSearch &&
       matchesBarangay &&
       matchesClassification &&
       matchesAgeGroup &&
-      matchesWorkStatus
+      matchesWorkStatus &&
+      matchesAgeRange &&
+      matchesGender &&
+      matchesVotedLastElection &&
+      matchesAttendedAssembly &&
+      matchesEducation
     );
   });
 
@@ -141,6 +215,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     selectedClassifications,
     selectedAgeGroups,
     selectedWorkStatus,
+    advancedFilters
   ]);
 
   // Handle opening edit dialog
@@ -376,6 +451,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     setSelectedClassifications([]);
     setSelectedAgeGroups([]);
     setSelectedWorkStatus([]);
+    clearAdvancedFilters();
   };
 
   // Clear export filters
@@ -467,296 +543,159 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
           </div>
 
           <div className="flex gap-2 flex-wrap md:flex-nowrap">
-            {/* Barangay filter */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1"
-                >
-                  <Filter size={14} />
-                  Barangay
-                  {selectedBarangays.length > 0 && (
-                    <Badge variant="secondary" className="ml-1">
-                      {selectedBarangays.length}
-                    </Badge>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-60 p-0" align="start">
-                <div className="p-4">
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-sm">Barangay</h4>
-                    <div className="grid gap-2 max-h-[200px] overflow-auto">
-                      {barangayOptions.map((barangay) => (
-                        <div
-                          key={`barangay-${barangay}`}
-                          className="flex items-center space-x-2"
-                        >
-                          <Checkbox
-                            id={`barangay-${barangay}`}
-                            checked={selectedBarangays.includes(barangay)}
-                            onCheckedChange={() =>
-                              toggleFilter(barangay, "barangays")
-                            }
-                          />
-                          <label
-                            htmlFor={`barangay-${barangay}`}
-                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {barangay}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Classification filter */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1"
-                >
-                  <Filter size={14} />
-                  Classification
-                  {selectedClassifications.length > 0 && (
-                    <Badge variant="secondary" className="ml-1">
-                      {selectedClassifications.length}
-                    </Badge>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-60 p-0" align="start">
-                <div className="p-4">
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-sm">Classification</h4>
-                    <div className="grid gap-2">
-                      {youthClassificationOptions.map((classification) => (
-                        <div
-                          key={`classification-${classification}`}
-                          className="flex items-center space-x-2"
-                        >
-                          <Checkbox
-                            id={`classification-${classification}`}
-                            checked={selectedClassifications.includes(
-                              classification
-                            )}
-                            onCheckedChange={() =>
-                              toggleFilter(classification, "classifications")
-                            }
-                          />
-                          <label
-                            htmlFor={`classification-${classification}`}
-                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {classification}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Age Group filter */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1"
-                >
-                  <Filter size={14} />
-                  Age Group
-                  {selectedAgeGroups.length > 0 && (
-                    <Badge variant="secondary" className="ml-1">
-                      {selectedAgeGroups.length}
-                    </Badge>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-60 p-0" align="start">
-                <div className="p-4">
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-sm">Age Group</h4>
-                    <div className="grid gap-2">
-                      {youthAgeGroupOptions.map((ageGroup) => (
-                        <div
-                          key={`age-group-${ageGroup}`}
-                          className="flex items-center space-x-2"
-                        >
-                          <Checkbox
-                            id={`age-group-${ageGroup}`}
-                            checked={selectedAgeGroups.includes(ageGroup)}
-                            onCheckedChange={() =>
-                              toggleFilter(ageGroup, "ageGroups")
-                            }
-                          />
-                          <label
-                            htmlFor={`age-group-${ageGroup}`}
-                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {ageGroup}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Work Status filter */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1"
-                >
-                  <Filter size={14} />
-                  Work Status
-                  {selectedWorkStatus.length > 0 && (
-                    <Badge variant="secondary" className="ml-1">
-                      {selectedWorkStatus.length}
-                    </Badge>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-60 p-0" align="start">
-                <div className="p-4">
-                  <div className="space-y-4">
-                    <h4 className="font-medium text-sm">Work Status</h4>
-                    <div className="grid gap-2">
-                      {workStatusOptions.map((status) => (
-                        <div
-                          key={`work-status-${status}`}
-                          className="flex items-center space-x-2"
-                        >
-                          <Checkbox
-                            id={`work-status-${status}`}
-                            checked={selectedWorkStatus.includes(status)}
-                            onCheckedChange={() =>
-                              toggleFilter(status, "workStatus")
-                            }
-                          />
-                          <label
-                            htmlFor={`work-status-${status}`}
-                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {status}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+            {/* Advanced filters */}
+            <AdvancedFilters
+              selectedFilters={advancedFilters}
+              onFilterChange={handleAdvancedFilterChange}
+              onClearFilters={clearAdvancedFilters}
+            />
+            
+            {/* Column visibility */}
+            <ColumnVisibilityToggle
+              columns={columns}
+              onToggleColumn={toggleColumnVisibility}
+            />
 
             {/* Clear filters button */}
             {(selectedBarangays.length > 0 ||
               selectedClassifications.length > 0 ||
               selectedAgeGroups.length > 0 ||
               selectedWorkStatus.length > 0 ||
-              searchTerm) && (
+              searchTerm ||
+              advancedFilters.gender.length > 0 ||
+              advancedFilters.votedLastElection.length > 0 ||
+              advancedFilters.attendedAssembly.length > 0 ||
+              advancedFilters.highestEducation.length > 0 ||
+              advancedFilters.ageRange[0] !== 15 ||
+              advancedFilters.ageRange[1] !== 30) && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
-                Clear Filters
+                Clear All Filters
               </Button>
             )}
           </div>
         </div>
 
         {/* Active filters display */}
-        {(selectedBarangays.length > 0 ||
-          selectedClassifications.length > 0 ||
-          selectedAgeGroups.length > 0 ||
-          selectedWorkStatus.length > 0) && (
-          <div className="flex flex-wrap gap-2">
-            {selectedBarangays.map((barangay) => (
-              <Badge
-                key={`badge-barangay-${barangay}`}
-                variant="outline"
-                className="px-3 py-1"
+        <div className="flex flex-wrap gap-2">
+          {/* Age range badge */}
+          {(advancedFilters.ageRange[0] !== 15 || advancedFilters.ageRange[1] !== 30) && (
+            <Badge variant="outline" className="px-3 py-1">
+              Age: {advancedFilters.ageRange[0]}-{advancedFilters.ageRange[1]}
+              <button
+                className="ml-2 text-muted-foreground hover:text-foreground"
+                onClick={() => handleAdvancedFilterChange('ageRange', [15, 30])}
               >
-                {barangay}
-                <button
-                  className="ml-2 text-muted-foreground hover:text-foreground"
-                  onClick={() => toggleFilter(barangay, "barangays")}
-                >
-                  ×
-                </button>
-              </Badge>
-            ))}
-            {selectedClassifications.map((classification) => (
-              <Badge
-                key={`badge-class-${classification}`}
-                variant="outline"
-                className="px-3 py-1"
+                ×
+              </button>
+            </Badge>
+          )}
+          
+          {/* Gender badges */}
+          {advancedFilters.gender.map((gender) => (
+            <Badge key={`badge-gender-${gender}`} variant="outline" className="px-3 py-1">
+              {gender}
+              <button
+                className="ml-2 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  const newGenders = advancedFilters.gender.filter(g => g !== gender);
+                  handleAdvancedFilterChange('gender', newGenders);
+                }}
               >
-                {classification}
-                <button
-                  className="ml-2 text-muted-foreground hover:text-foreground"
-                  onClick={() =>
-                    toggleFilter(classification, "classifications")
-                  }
-                >
-                  ×
-                </button>
-              </Badge>
-            ))}
-            {selectedAgeGroups.map((ageGroup) => (
-              <Badge
-                key={`badge-age-${ageGroup}`}
-                variant="outline"
-                className="px-3 py-1"
+                ×
+              </button>
+            </Badge>
+          ))}
+          
+          {/* Voted badges */}
+          {advancedFilters.votedLastElection.map((value) => (
+            <Badge key={`badge-voted-${value}`} variant="outline" className="px-3 py-1">
+              Voted: {value}
+              <button
+                className="ml-2 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  const newValues = advancedFilters.votedLastElection.filter(v => v !== value);
+                  handleAdvancedFilterChange('votedLastElection', newValues);
+                }}
               >
-                {ageGroup}
-                <button
-                  className="ml-2 text-muted-foreground hover:text-foreground"
-                  onClick={() => toggleFilter(ageGroup, "ageGroups")}
-                >
-                  ×
-                </button>
-              </Badge>
-            ))}
-            {selectedWorkStatus.map((status) => (
-              <Badge
-                key={`badge-work-${status}`}
-                variant="outline"
-                className="px-3 py-1"
+                ×
+              </button>
+            </Badge>
+          ))}
+          
+          {/* Assembly badges */}
+          {advancedFilters.attendedAssembly.map((value) => (
+            <Badge key={`badge-assembly-${value}`} variant="outline" className="px-3 py-1">
+              Assembly: {value}
+              <button
+                className="ml-2 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  const newValues = advancedFilters.attendedAssembly.filter(v => v !== value);
+                  handleAdvancedFilterChange('attendedAssembly', newValues);
+                }}
               >
-                {status}
-                <button
-                  className="ml-2 text-muted-foreground hover:text-foreground"
-                  onClick={() => toggleFilter(status, "workStatus")}
-                >
-                  ×
-                </button>
-              </Badge>
-            ))}
-          </div>
-        )}
+                ×
+              </button>
+            </Badge>
+          ))}
+          
+          {/* Education badges */}
+          {advancedFilters.highestEducation.map((value) => (
+            <Badge key={`badge-edu-${value}`} variant="outline" className="px-3 py-1">
+              Education: {value}
+              <button
+                className="ml-2 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  const newValues = advancedFilters.highestEducation.filter(v => v !== value);
+                  handleAdvancedFilterChange('highestEducation', newValues);
+                }}
+              >
+                ×
+              </button>
+            </Badge>
+          ))}
+        </div>
       </div>
 
       <div className="border rounded-md">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Age</TableHead>
-              <TableHead>Sex</TableHead>
-              <TableHead>Barangay</TableHead>
-              <TableHead>Classification</TableHead>
-              <TableHead>Age Group</TableHead>
-              <TableHead>Registered Voter</TableHead>
+              {columns.find(col => col.key === "name")?.visible && (
+                <TableHead>Name</TableHead>
+              )}
+              {columns.find(col => col.key === "age")?.visible && (
+                <TableHead>Age</TableHead>
+              )}
+              {columns.find(col => col.key === "sex")?.visible && (
+                <TableHead>Sex</TableHead>
+              )}
+              {columns.find(col => col.key === "barangay")?.visible && (
+                <TableHead>Barangay</TableHead>
+              )}
+              {columns.find(col => col.key === "classification")?.visible && (
+                <TableHead>Classification</TableHead>
+              )}
+              {columns.find(col => col.key === "ageGroup")?.visible && (
+                <TableHead>Age Group</TableHead>
+              )}
+              {columns.find(col => col.key === "education")?.visible && (
+                <TableHead>Education</TableHead>
+              )}
+              {columns.find(col => col.key === "work")?.visible && (
+                <TableHead>Work Status</TableHead>
+              )}
+              {columns.find(col => col.key === "registeredVoter")?.visible && (
+                <TableHead>Registered Voter</TableHead>
+              )}
+              {columns.find(col => col.key === "votedLastElection")?.visible && (
+                <TableHead>Voted</TableHead>
+              )}
+              {columns.find(col => col.key === "attendedAssembly")?.visible && (
+                <TableHead>Assembly</TableHead>
+              )}
+              {columns.find(col => col.key === "civilStatus")?.visible && (
+                <TableHead>Civil Status</TableHead>
+              )}
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -764,13 +703,42 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
             {currentItems.length > 0 ? (
               currentItems.map((record) => (
                 <TableRow key={record.id}>
-                  <TableCell className="font-medium">{record.name}</TableCell>
-                  <TableCell>{record.age}</TableCell>
-                  <TableCell>{record.sex}</TableCell>
-                  <TableCell>{record.barangay}</TableCell>
-                  <TableCell>{record.youth_classification}</TableCell>
-                  <TableCell>{record.youth_age_group}</TableCell>
-                  <TableCell>{record.registered_voter}</TableCell>
+                  {columns.find(col => col.key === "name")?.visible && (
+                    <TableCell className="font-medium">{record.name}</TableCell>
+                  )}
+                  {columns.find(col => col.key === "age")?.visible && (
+                    <TableCell>{record.age}</TableCell>
+                  )}
+                  {columns.find(col => col.key === "sex")?.visible && (
+                    <TableCell>{record.sex}</TableCell>
+                  )}
+                  {columns.find(col => col.key === "barangay")?.visible && (
+                    <TableCell>{record.barangay}</TableCell>
+                  )}
+                  {columns.find(col => col.key === "classification")?.visible && (
+                    <TableCell>{record.youth_classification}</TableCell>
+                  )}
+                  {columns.find(col => col.key === "ageGroup")?.visible && (
+                    <TableCell>{record.youth_age_group}</TableCell>
+                  )}
+                  {columns.find(col => col.key === "education")?.visible && (
+                    <TableCell>{record.highest_education}</TableCell>
+                  )}
+                  {columns.find(col => col.key === "work")?.visible && (
+                    <TableCell>{record.work_status}</TableCell>
+                  )}
+                  {columns.find(col => col.key === "registeredVoter")?.visible && (
+                    <TableCell>{record.registered_voter}</TableCell>
+                  )}
+                  {columns.find(col => col.key === "votedLastElection")?.visible && (
+                    <TableCell>{record.voted_last_election}</TableCell>
+                  )}
+                  {columns.find(col => col.key === "attendedAssembly")?.visible && (
+                    <TableCell>{record.attended_kk_assembly}</TableCell>
+                  )}
+                  {columns.find(col => col.key === "civilStatus")?.visible && (
+                    <TableCell>{record.civil_status}</TableCell>
+                  )}
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
@@ -797,7 +765,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-4">
+                <TableCell colSpan={12} className="text-center py-4">
                   {filteredData.length === 0 && data.length > 0
                     ? "No records match the current filters"
                     : "No records found"}
@@ -889,14 +857,23 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
               <Label htmlFor="sex" className="text-right">
                 Sex
               </Label>
-              <Input
-                id="sex"
-                name="sex"
-                value={editFormData.sex || ""}
-                onChange={handleInputChange}
-                className="col-span-3"
-                disabled
-              />
+              <div className="col-span-3">
+                <Select
+                  value={editFormData.sex || ""}
+                  onValueChange={(value) => handleSelectChange(value, "sex")}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select sex" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sexOptions.map((sex) => (
+                      <SelectItem key={sex} value={sex}>
+                        {sex}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="barangay" className="text-right">
