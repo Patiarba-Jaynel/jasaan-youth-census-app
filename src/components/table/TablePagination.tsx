@@ -1,5 +1,13 @@
 
-import { Button } from "@/components/ui/button";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink,
+  PaginationNext, 
+  PaginationPrevious,
+  PaginationEllipsis
+} from "@/components/ui/pagination";
 
 interface TablePaginationProps {
   currentPage: number;
@@ -20,43 +28,90 @@ export function TablePagination({
   indexOfLastItem,
   onPageChange,
 }: TablePaginationProps) {
+  // Function to generate page numbers with ellipsis for better UX
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    
+    // Always show first page
+    pageNumbers.push(1);
+    
+    // Current page neighborhood
+    const beforeCurrent = Math.max(2, currentPage - 1);
+    const afterCurrent = Math.min(totalPages - 1, currentPage + 1);
+    
+    // Add ellipsis after first page if needed
+    if (beforeCurrent > 2) {
+      pageNumbers.push("ellipsis1");
+    }
+    
+    // Add pages around current
+    for (let i = beforeCurrent; i <= afterCurrent; i++) {
+      if (i !== 1 && i !== totalPages) {
+        pageNumbers.push(i);
+      }
+    }
+    
+    // Add ellipsis before last page if needed
+    if (afterCurrent < totalPages - 1) {
+      pageNumbers.push("ellipsis2");
+    }
+    
+    // Always show last page if there's more than one page
+    if (totalPages > 1) {
+      pageNumbers.push(totalPages);
+    }
+    
+    return pageNumbers;
+  };
+
   return (
-    <div className="flex justify-between items-center mt-4">
-      <div className="text-sm text-gray-500">
+    <div className="flex flex-col md:flex-row md:justify-between items-center gap-4 mt-4">
+      <div className="text-sm text-muted-foreground">
         Showing {filteredRecords > 0 ? indexOfFirstItem + 1 : 0}-
         {Math.min(indexOfLastItem, filteredRecords)} of {filteredRecords} records
         {totalRecords !== filteredRecords &&
           ` (filtered from ${totalRecords} total)`}
       </div>
+      
       {totalPages > 1 && (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <Button
-              key={page}
-              variant={currentPage === page ? "default" : "outline"}
-              size="sm"
-              onClick={() => onPageChange(page)}
-            >
-              {page}
-            </Button>
-          ))}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
-        </div>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
+                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+
+            {getPageNumbers().map((page, index) => {
+              if (page === "ellipsis1" || page === "ellipsis2") {
+                return (
+                  <PaginationItem key={`ellipsis-${index}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                );
+              }
+              
+              return (
+                <PaginationItem key={`page-${page}`}>
+                  <PaginationLink 
+                    isActive={currentPage === page}
+                    onClick={() => onPageChange(page as number)}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            })}
+
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
+                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       )}
     </div>
   );
