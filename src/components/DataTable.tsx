@@ -41,6 +41,20 @@ import { Badge } from "@/components/ui/badge";
 import { ColumnVisibilityToggle } from "./ColumnVisibilityToggle";
 import { AdvancedFilters } from "./AdvancedFilters";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 interface DataTableProps {
   data: YouthRecord[];
@@ -68,6 +82,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   const voterOptions = formSchema.shape.registered_voter.options;
   const votedOptions = formSchema.shape.voted_last_election.options;
   const assemblyOptions = formSchema.shape.attended_kk_assembly.options;
+  const homeAddressOptions = formSchema.shape.home_address.options;
 
   // Filter states
   const [selectedBarangays, setSelectedBarangays] = useState<string[]>([]);
@@ -219,18 +234,79 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     advancedFilters
   ]);
 
+  // Create a zod schema specifically for the edit form
+  const editFormSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    age: z.string().min(1, "Age is required"),
+    birthday: z.date({
+      required_error: "Birthday is required",
+    }),
+    sex: z.enum(sexOptions),
+    civil_status: z.enum(civilStatusOptions),
+    barangay: z.enum(barangayOptions),
+    youth_classification: z.enum(youthClassificationOptions),
+    youth_age_group: z.enum(youthAgeGroupOptions),
+    highest_education: z.enum(educationOptions),
+    work_status: z.enum(workStatusOptions),
+    registered_voter: z.enum(voterOptions),
+    voted_last_election: z.enum(votedOptions),
+    attended_kk_assembly: z.enum(assemblyOptions),
+    home_address: z.enum(homeAddressOptions),
+    email_address: z.string().email("Invalid email address"),
+    contact_number: z.string().min(7, "Contact number must be at least 7 characters"),
+    kk_assemblies_attended: z.coerce.number().int().nonnegative()
+  });
+
+  type EditFormValues = z.infer<typeof editFormSchema>;
+  
+  const form = useForm<EditFormValues>({
+    resolver: zodResolver(editFormSchema),
+    defaultValues: {
+      name: "",
+      age: "",
+      birthday: new Date(),
+      sex: "MALE",
+      civil_status: "SINGLE",
+      barangay: "Aplaya",
+      youth_classification: "ISY",
+      youth_age_group: "CORE YOUTH (18-24)",
+      highest_education: "High School",
+      work_status: "Employed",
+      registered_voter: "Yes",
+      voted_last_election: "Yes",
+      attended_kk_assembly: "Yes",
+      home_address: "ZONE 1",
+      email_address: "",
+      contact_number: "",
+      kk_assemblies_attended: 0
+    }
+  });
+
   // Handle opening edit dialog
   const handleEdit = (record: YouthRecord) => {
     setSelectedRecord(record);
-    setEditFormData({
+    
+    // Set default values for form
+    form.reset({
       name: record.name,
       age: record.age,
+      birthday: new Date(record.birthday),
       sex: record.sex,
+      civil_status: record.civil_status,
       barangay: record.barangay,
       youth_classification: record.youth_classification,
       youth_age_group: record.youth_age_group,
+      highest_education: record.highest_education,
+      work_status: record.work_status,
       registered_voter: record.registered_voter,
+      voted_last_election: record.voted_last_election,
+      attended_kk_assembly: record.attended_kk_assembly,
+      home_address: record.home_address,
+      email_address: record.email_address,
+      contact_number: record.contact_number,
+      kk_assemblies_attended: record.kk_assemblies_attended
     });
+    
     setIsEditDialogOpen(true);
   };
 
@@ -240,23 +316,12 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     setIsDeleteDialogOpen(true);
   };
 
-  // Handle input change for edit form
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setEditFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Handle select change for dropdowns
-  const handleSelectChange = (value: string, fieldName: string) => {
-    setEditFormData((prev) => ({ ...prev, [fieldName]: value }));
-  };
-
   // Handle save edited record
-  const handleSaveEdit = async () => {
+  const handleSaveEdit = async (data: EditFormValues) => {
     if (!selectedRecord) return;
 
     try {
-      await pbClient.youth.update(selectedRecord.id, editFormData);
+      await pbClient.youth.update(selectedRecord.id, data);
       toast.success("Record updated successfully");
       setIsEditDialogOpen(false);
       onDataChange(); // Refresh data after update
@@ -822,118 +887,492 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-[700px]">
           <DialogHeader>
             <DialogTitle>Edit Youth Record</DialogTitle>
             <DialogDescription>
-              Update the information for this youth record.
+              Update the information for this youth record. All fields can be edited.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="name"
-                name="name"
-                value={editFormData.name || ""}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="age" className="text-right">
-                Age
-              </Label>
-              <Input
-                id="age"
-                name="age"
-                value={editFormData.age || ""}
-                onChange={handleInputChange}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="sex" className="text-right">
-                Sex
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={editFormData.sex || ""}
-                  onValueChange={(value) => handleSelectChange(value, "sex")}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select sex" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sexOptions.map((sex) => (
-                      <SelectItem key={sex} value={sex}>
-                        {sex}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="barangay" className="text-right">
-                Barangay
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={editFormData.barangay || ""}
-                  onValueChange={(value) =>
-                    handleSelectChange(value, "barangay")
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select barangay" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {barangayOptions.map((barangay) => (
-                      <SelectItem key={barangay} value={barangay}>
-                        {barangay}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="classification" className="text-right">
-                Classification
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={editFormData.youth_classification || ""}
-                  onValueChange={(value) =>
-                    handleSelectChange(value, "youth_classification")
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select classification" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {youthClassificationOptions.map((classification) => (
-                      <SelectItem key={classification} value={classification}>
-                        {classification}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSaveEdit}>Save changes</Button>
-          </DialogFooter>
+          
+          <ScrollArea className="max-h-[70vh] pr-4">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSaveEdit)} className="space-y-6 py-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Personal Information Section */}
+                  <div className="space-y-4 col-span-2">
+                    <h3 className="text-lg font-medium border-b pb-2">Personal Information</h3>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Full Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="age"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Age</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="sex"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Sex</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select sex" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {sexOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="civil_status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Civil Status</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select civil status" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {civilStatusOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="birthday"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Birthday</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={`w-full justify-start text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="youth_age_group"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Youth Age Group</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select age group" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {youthAgeGroupOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Location Information */}
+                  <div className="space-y-4 col-span-2">
+                    <h3 className="text-lg font-medium border-b pb-2">Location Information</h3>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="barangay"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Barangay</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select barangay" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {barangayOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="home_address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Home Address</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select zone" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {homeAddressOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Contact Information */}
+                  <div className="space-y-4 col-span-2">
+                    <h3 className="text-lg font-medium border-b pb-2">Contact Information</h3>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="email_address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email Address</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="contact_number"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Contact Number</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Education and Work */}
+                  <div className="space-y-4 col-span-2">
+                    <h3 className="text-lg font-medium border-b pb-2">Education & Work</h3>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="youth_classification"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Youth Classification</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select classification" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {youthClassificationOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="highest_education"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Highest Education</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select education level" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {educationOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="work_status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Work Status</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select work status" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {workStatusOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Civic Engagement */}
+                  <div className="space-y-4 col-span-2">
+                    <h3 className="text-lg font-medium border-b pb-2">Civic Engagement</h3>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="registered_voter"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Registered Voter</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select option" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {voterOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="voted_last_election"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Voted Last Election</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select option" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {votedOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="attended_kk_assembly"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Attended KK Assembly</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select option" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {assemblyOptions.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="kk_assemblies_attended"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Number of KK Assemblies Attended</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                {...field} 
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} 
+                                value={field.value.toString()}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Save changes</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
 
