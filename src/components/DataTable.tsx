@@ -40,6 +40,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ColumnVisibilityToggle } from "./ColumnVisibilityToggle";
 import { AdvancedFilters } from "./AdvancedFilters";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface DataTableProps {
   data: YouthRecord[];
@@ -74,9 +75,9 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   const [selectedAgeGroups, setSelectedAgeGroups] = useState<string[]>([]);
   const [selectedWorkStatus, setSelectedWorkStatus] = useState<string[]>([]);
 
-  // Advanced filter states
+  // Advanced filter states - Fix the ageRange to be a tuple of [number, number]
   const [advancedFilters, setAdvancedFilters] = useState({
-    ageRange: [15, 30],
+    ageRange: [15, 30] as [number, number],
     gender: [] as string[],
     votedLastElection: [] as string[],
     attendedAssembly: [] as string[],
@@ -131,7 +132,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   // Clear advanced filters
   const clearAdvancedFilters = () => {
     setAdvancedFilters({
-      ageRange: [15, 30],
+      ageRange: [15, 30] as [number, number],
       gender: [],
       votedLastElection: [],
       attendedAssembly: [],
@@ -583,7 +584,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
               Age: {advancedFilters.ageRange[0]}-{advancedFilters.ageRange[1]}
               <button
                 className="ml-2 text-muted-foreground hover:text-foreground"
-                onClick={() => handleAdvancedFilterChange('ageRange', [15, 30])}
+                onClick={() => handleAdvancedFilterChange('ageRange', [15, 30] as [number, number])}
               >
                 ×
               </button>
