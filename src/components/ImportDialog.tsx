@@ -17,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Download, FileSpreadsheet, FileUp, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { Badge } from "@/components/ui/badge";
+import { generateTemplateData } from "@/lib/schema";
 
 interface ImportDialogProps {
   open: boolean;
@@ -184,49 +185,179 @@ export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDial
     }
   };
 
-  // Create and download template file
+  // Create and download beautiful template file
   const downloadTemplate = () => {
-    // Define template headers and example row
-    const headers = [
-      'name', 'age', 'birthday', 'sex', 'civil_status', 'barangay',
-      'region', 'province', 'city_municipality',
-      'youth_classification', 'youth_age_group',
-      'email_address', 'contact_number', 'home_address',
-      'highest_education', 'work_status',
-      'registered_voter', 'voted_last_election', 
-      'attended_kk_assembly', 'kk_assemblies_attended'
-    ];
+    // Get template data from schema
+    const { headers, sampleRow } = generateTemplateData();
     
-    const exampleRow = {
-      name: 'Juan Dela Cruz',
-      age: '21',
-      birthday: '2003-05-15',
-      sex: 'MALE',
-      civil_status: 'SINGLE',
-      barangay: 'San Antonio',
-      region: 'REGION IV-A',
-      province: 'LAGUNA',
-      city_municipality: 'SAN PEDRO',
-      youth_classification: 'ISY',
-      youth_age_group: 'CORE YOUTH (18-24)',
-      email_address: 'juan@example.com',
-      contact_number: '09123456789',
-      home_address: '123 Main St.',
-      highest_education: 'COLLEGE GRADUATE',
-      work_status: 'EMPLOYED',
-      registered_voter: 'YES',
-      voted_last_election: 'YES',
-      attended_kk_assembly: 'YES',
-      kk_assemblies_attended: '2'
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet([sampleRow]);
+    
+    // Set column widths
+    const colWidths = [
+      {wch: 20}, // name
+      {wch: 5},  // age
+      {wch: 12}, // birthday
+      {wch: 8},  // sex
+      {wch: 12}, // civil_status
+      {wch: 15}, // barangay
+      {wch: 15}, // region
+      {wch: 15}, // province
+      {wch: 18}, // city_municipality
+      {wch: 10}, // youth_classification
+      {wch: 20}, // youth_age_group
+      {wch: 25}, // email_address
+      {wch: 15}, // contact_number
+      {wch: 20}, // home_address
+      {wch: 20}, // highest_education
+      {wch: 15}, // work_status
+      {wch: 15}, // registered_voter
+      {wch: 15}, // voted_last_election
+      {wch: 15}, // attended_kk_assembly
+      {wch: 15}  // kk_assemblies_attended
+    ];
+    ws['!cols'] = colWidths;
+
+    // Apply styling and formatting
+    const range = XLSX.utils.decode_range(ws['!ref'] || "A1:T2");
+    
+    // Create styles for different cell types
+    const headerStyle = {
+      fill: { fgColor: { rgb: "8B5CF6" } }, // Header background (Purple)
+      font: { color: { rgb: "FFFFFF" }, bold: true, sz: 12 },
+      alignment: { horizontal: "center", vertical: "center", wrapText: true },
+      border: {
+        top: { style: "thin", color: { rgb: "D3D3D3" } },
+        bottom: { style: "thin", color: { rgb: "D3D3D3" } },
+        left: { style: "thin", color: { rgb: "D3D3D3" } },
+        right: { style: "thin", color: { rgb: "D3D3D3" } }
+      }
     };
     
-    // Create worksheet
-    const ws = XLSX.utils.json_to_sheet([exampleRow]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    const requiredFieldStyle = {
+      fill: { fgColor: { rgb: "F2FCE2" } }, // Light green for required fields
+      font: { color: { rgb: "000000" } },
+      border: {
+        top: { style: "thin", color: { rgb: "D3D3D3" } },
+        bottom: { style: "thin", color: { rgb: "D3D3D3" } },
+        left: { style: "thin", color: { rgb: "D3D3D3" } },
+        right: { style: "thin", color: { rgb: "D3D3D3" } }
+      }
+    };
+    
+    const optionalFieldStyle = {
+      fill: { fgColor: { rgb: "F1F0FB" } }, // Light purple for optional fields
+      font: { color: { rgb: "000000" } },
+      border: {
+        top: { style: "thin", color: { rgb: "D3D3D3" } },
+        bottom: { style: "thin", color: { rgb: "D3D3D3" } },
+        left: { style: "thin", color: { rgb: "D3D3D3" } },
+        right: { style: "thin", color: { rgb: "D3D3D3" } }
+      }
+    };
+    
+    // Required fields
+    const requiredFields = ['name', 'age', 'sex', 'barangay', 'youth_classification', 'youth_age_group'];
+    
+    // Apply styles to each cell
+    for (let R = range.s.r; R <= range.e.r; R++) {
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!ws[cellAddress]) continue;
+        
+        // Apply appropriate styles
+        if (R === 0) {
+          // Header row
+          ws[cellAddress].s = headerStyle;
+        } else {
+          // Data row - check if it's a required field
+          const columnHeader = headers[C];
+          if (requiredFields.includes(columnHeader)) {
+            ws[cellAddress].s = requiredFieldStyle;
+          } else {
+            ws[cellAddress].s = optionalFieldStyle;
+          }
+        }
+      }
+    }
+    
+    // Add instructions sheet
+    const instructionsData = [
+      ["Youth Census Data Import Template Instructions"],
+      [""],
+      ["1. Required Fields (highlighted in light green)"],
+      ["   - name: Full name of the youth"],
+      ["   - age: Numeric age (15-30)"],
+      ["   - sex: Must be one of: MALE, FEMALE"],
+      ["   - barangay: Must be one of the valid barangays"],
+      ["   - youth_classification: Must be one of: ISY, OSY, WY, YSN"],
+      ["   - youth_age_group: Must be one of: CHILD YOUTH (15-17), CORE YOUTH (18-24), YOUNG ADULT (25-30)"],
+      [""],
+      ["2. Optional Fields (highlighted in light purple)"],
+      ["   - birthday: Date in YYYY-MM-DD format"],
+      ["   - civil_status: Must be one of: SINGLE, MARRIED, LIVED-IN, WIDOWED"],
+      ["   - email_address: Valid email address"],
+      ["   - contact_number: Phone number"],
+      ["   - home_address: Home address details"],
+      ["   - region: Geographic region"],
+      ["   - province: Province name"],
+      ["   - city_municipality: City or municipality name"],
+      ["   - highest_education: Educational attainment"],
+      ["   - work_status: Employment status"],
+      ["   - registered_voter: YES or NO"],
+      ["   - voted_last_election: YES or NO"],
+      ["   - attended_kk_assembly: YES or NO"],
+      ["   - kk_assemblies_attended: Number of assemblies attended (0 or more)"],
+      [""],
+      ["3. Valid Barangay Values:"],
+      ["   Aplaya, Bobontugan, Corrales, Danao, Jampason, Kimaya, Lower Jasaan (Pob.), Luz Banzon,"],
+      ["   Natubo, San Antonio, San Isidro, San Nicolas, Upper Jasaan (Pob.), I. S. Cruz"],
+    ];
+    
+    const instructionsWs = XLSX.utils.aoa_to_sheet(instructionsData);
+    
+    // Style the instructions sheet
+    const instructionsRange = XLSX.utils.decode_range(instructionsWs['!ref'] || "A1:A30");
+    
+    const titleStyle = {
+      font: { bold: true, sz: 14, color: { rgb: "8B5CF6" } },
+      alignment: { horizontal: "left" }
+    };
+    
+    const headingStyle = {
+      font: { bold: true, sz: 12, color: { rgb: "000000" } },
+      alignment: { horizontal: "left" }
+    };
+    
+    const textStyle = {
+      font: { sz: 11, color: { rgb: "333333" } },
+      alignment: { horizontal: "left" }
+    };
+    
+    // Apply styles to instructions sheet
+    for (let R = instructionsRange.s.r; R <= instructionsRange.e.r; R++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: R, c: 0 });
+      if (!instructionsWs[cellAddress]) continue;
+      
+      if (R === 0) {
+        instructionsWs[cellAddress].s = titleStyle; // Title
+      } else if ([2, 11, 26].includes(R)) {
+        instructionsWs[cellAddress].s = headingStyle; // Section headings
+      } else {
+        instructionsWs[cellAddress].s = textStyle; // Regular text
+      }
+    }
+    
+    // Set column widths for instructions
+    instructionsWs['!cols'] = [{ wch: 100 }];
+    
+    // Add both sheets to the workbook
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.utils.book_append_sheet(wb, instructionsWs, "Instructions");
     
     // Generate file and trigger download
-    XLSX.writeFile(wb, 'youth_census_template.xlsx');
+    XLSX.writeFile(wb, "youth_census_template.xlsx", { bookType: "xlsx", bookSST: false, type: "binary" });
   };
 
   return (
