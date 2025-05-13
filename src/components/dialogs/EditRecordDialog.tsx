@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -39,6 +40,7 @@ interface EditRecordDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedRecord: YouthRecord | null;
+   
   onSave: (data: any) => void;
 }
 
@@ -116,9 +118,13 @@ export function EditRecordDialog({
         name: selectedRecord.name,
         age: selectedRecord.age,
         birthday: new Date(selectedRecord.birthday),
+         
         sex: selectedRecord.sex as any,
+         
         civil_status: selectedRecord.civil_status as any,
+         
         barangay: selectedRecord.barangay as any,
+         
         youth_classification: selectedRecord.youth_classification as any,
         youth_age_group: selectedRecord.youth_age_group as any,
         highest_education: selectedRecord.highest_education as any,

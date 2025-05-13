@@ -92,13 +92,20 @@ const DashboardPage = () => {
       {}
     );
 
-    // Group by voter status
+    // Group by voter status with normalization
     const voterDistribution = records.reduce(
       (acc: { [key: string]: number }, record) => {
-        if (!acc[record.registered_voter]) {
-          acc[record.registered_voter] = 0;
+        // Normalize the value to uppercase
+        const normalizedValue = record.registered_voter?.toUpperCase() || "UNKNOWN";
+
+        // Only consider valid values ("YES" or "NO")
+        if (["YES", "NO"].includes(normalizedValue)) {
+          if (!acc[normalizedValue]) {
+            acc[normalizedValue] = 0;
+          }
+          acc[normalizedValue]++;
         }
-        acc[record.registered_voter]++;
+
         return acc;
       },
       {}
@@ -137,7 +144,7 @@ const DashboardPage = () => {
 
     setVoterData(
       Object.keys(voterDistribution).map((key) => ({
-        name: key,
+        name: key === "YES" ? "Yes" : "No", // Ensure consistent label names
         value: voterDistribution[key],
       }))
     );

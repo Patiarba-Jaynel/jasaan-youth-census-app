@@ -35,7 +35,7 @@ interface ExportFilterDialogProps {
 export function ExportFilterDialog({
   open,
   onOpenChange,
-  exportFilters,
+  exportFilters: filters, // Rename destructured variable
   toggleFilter,
   clearFilters,
   getExportCount,
@@ -74,7 +74,7 @@ export function ExportFilterDialog({
                 >
                   <Checkbox
                     id={`export-barangay-${barangay}`}
-                    checked={exportFilters.barangays.includes(barangay)}
+                    checked={filters.barangays.includes(barangay)} // Use 'filters'
                     onCheckedChange={() =>
                       toggleFilter(barangay, "barangays")
                     }
@@ -101,9 +101,7 @@ export function ExportFilterDialog({
                 >
                   <Checkbox
                     id={`export-class-${classification}`}
-                    checked={exportFilters.classifications.includes(
-                      classification
-                    )}
+                    checked={filters.classifications.includes(classification)} // Use 'filters'
                     onCheckedChange={() =>
                       toggleFilter(classification, "classifications")
                     }
@@ -130,7 +128,7 @@ export function ExportFilterDialog({
                 >
                   <Checkbox
                     id={`export-age-${ageGroup}`}
-                    checked={exportFilters.ageGroups.includes(ageGroup)}
+                    checked={filters.ageGroups.includes(ageGroup)} // Use 'filters'
                     onCheckedChange={() =>
                       toggleFilter(ageGroup, "ageGroups")
                     }
@@ -157,7 +155,7 @@ export function ExportFilterDialog({
                 >
                   <Checkbox
                     id={`export-work-${status}`}
-                    checked={exportFilters.workStatus.includes(status)}
+                    checked={filters.workStatus.includes(status)} // Use 'filters'
                     onCheckedChange={() =>
                       toggleFilter(status, "workStatus")
                     }
@@ -184,7 +182,7 @@ export function ExportFilterDialog({
                 >
                   <Checkbox
                     id={`export-edu-${education}`}
-                    checked={exportFilters.education.includes(education)}
+                    checked={filters.education.includes(education)} // Use 'filters'
                     onCheckedChange={() =>
                       toggleFilter(education, "education")
                     }
@@ -211,7 +209,7 @@ export function ExportFilterDialog({
                 >
                   <Checkbox
                     id={`export-sex-${sex}`}
-                    checked={exportFilters.sex.includes(sex)}
+                    checked={filters.sex.includes(sex)} // Use 'filters'
                     onCheckedChange={() => toggleFilter(sex, "sex")}
                   />
                   <label
@@ -236,7 +234,7 @@ export function ExportFilterDialog({
                 >
                   <Checkbox
                     id={`export-civil-${status}`}
-                    checked={exportFilters.civilStatus.includes(status)}
+                    checked={filters.civilStatus.includes(status)} // Use 'filters'
                     onCheckedChange={() =>
                       toggleFilter(status, "civilStatus")
                     }
@@ -263,7 +261,7 @@ export function ExportFilterDialog({
                 >
                   <Checkbox
                     id={`export-voter-${option}`}
-                    checked={exportFilters.registeredVoter.includes(option)}
+                    checked={filters.registeredVoter.includes(option)} // Use 'filters'
                     onCheckedChange={() =>
                       toggleFilter(option, "registeredVoter")
                     }
@@ -290,7 +288,7 @@ export function ExportFilterDialog({
                 >
                   <Checkbox
                     id={`export-voted-${option}`}
-                    checked={exportFilters.votedLastElection.includes(option)}
+                    checked={filters.votedLastElection.includes(option)} // Use 'filters'
                     onCheckedChange={() =>
                       toggleFilter(option, "votedLastElection")
                     }
@@ -317,7 +315,7 @@ export function ExportFilterDialog({
                 >
                   <Checkbox
                     id={`export-assembly-${option}`}
-                    checked={exportFilters.attendedAssembly.includes(option)}
+                    checked={filters.attendedAssembly.includes(option)} // Use 'filters'
                     onCheckedChange={() =>
                       toggleFilter(option, "attendedAssembly")
                     }

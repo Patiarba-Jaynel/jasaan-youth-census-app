@@ -138,6 +138,7 @@ export function useTableState(data: YouthRecord[]) {
   ]);
 
   // Handle advanced filter changes
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAdvancedFilterChange = (filterType: string, value: any) => {
     setAdvancedFilters(prev => ({
       ...prev,

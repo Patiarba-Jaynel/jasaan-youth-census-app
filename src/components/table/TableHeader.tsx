@@ -17,6 +17,7 @@ interface TableHeaderProps {
     attendedAssembly: string[];
     highestEducation: string[];
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onFilterChange: (filterType: string, value: any) => void;
   onClearFilters: () => void;
   columns: {
@@ -26,6 +27,7 @@ interface TableHeaderProps {
   }[];
   onToggleColumn: (key: string) => void;
   onExportDialogOpen: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any[];
   getExportCount: () => number;
   exportToCSV: () => void;

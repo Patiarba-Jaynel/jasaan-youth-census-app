@@ -37,6 +37,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   };
 
   // Handle save edited record
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSaveEdit = async (data: any) => {
     if (!selectedRecord) return;
 

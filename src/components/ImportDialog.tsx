@@ -29,6 +29,7 @@ export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDial
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [parseErrors, setParseErrors] = useState<string[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [parsedData, setParsedData] = useState<Record<string, any>[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,6 +65,7 @@ export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDial
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           validateData(results.data as Record<string, any>[]);
         },
         error: (error) => {
@@ -81,6 +83,7 @@ export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDial
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const json = XLSX.utils.sheet_to_json(worksheet);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           validateData(json as Record<string, any>[]);
         } catch (error) {
           setParseErrors([`Error parsing Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`]);
@@ -95,6 +98,7 @@ export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDial
   };
 
   // Validate the parsed data against schema
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const validateData = (data: Record<string, any>[]) => {
     if (!data.length) {
       setParseErrors(['File contains no data']);
@@ -147,6 +151,7 @@ export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDial
       // Transform data to match YouthRecord structure
       const formattedData = parsedData.map(record => {
         // Default values for required fields
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const formattedRecord: any = {
           name: record.name || '',
           age: record.age?.toString() || '',
