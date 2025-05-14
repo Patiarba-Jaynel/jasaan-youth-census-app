@@ -1,7 +1,5 @@
-import React from "react";
-import { formSchema } from "@/lib/schema";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,353 +8,161 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "@/components/ui/sonner";
+import { ListFilter, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
-interface ExportFilterDialogProps {
-  open: boolean;
+export type ExportFilter = {
+  id: string;
+  label: string;
+  checked: boolean;
+};
+
+export type ExportFilterDialogProps = {
+  isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  exportFilters: {
-    barangays: string[];
-    classifications: string[];
-    ageGroups: string[];
-    workStatus: string[];
-    education: string[];
-    sex: string[];
-    civilStatus: string[];
-    registeredVoter: string[];
-    votedLastElection: string[];
-    attendedAssembly: string[];
-  };
-  toggleFilter: (value: string, filterType: keyof typeof exportFilters) => void;
-  clearFilters: () => void;
-  getExportCount: () => number;
-  onApplyFilters: () => void;
-}
+  data: any[];
+};
 
-export function ExportFilterDialog({
-  open,
-  onOpenChange,
-  exportFilters: filters, // Rename destructured variable
-  toggleFilter,
-  clearFilters,
-  getExportCount,
-  onApplyFilters,
-}: ExportFilterDialogProps) {
-  // Get options from schema
-  const barangayOptions = formSchema.shape.barangay.options;
-  const youthClassificationOptions = formSchema.shape.youth_classification.options;
-  const youthAgeGroupOptions = formSchema.shape.youth_age_group.options;
-  const workStatusOptions = formSchema.shape.work_status.options;
-  const educationOptions = formSchema.shape.highest_education.options;
-  const sexOptions = formSchema.shape.sex.options;
-  const civilStatusOptions = formSchema.shape.civil_status.options;
-  const voterOptions = formSchema.shape.registered_voter.options;
-  const votedOptions = formSchema.shape.voted_last_election.options;
-  const assemblyOptions = formSchema.shape.attended_kk_assembly.options;
+export function ExportFilterDialog({ isOpen, onOpenChange, data }: ExportFilterDialogProps) {
+  const [filters, setFilters] = useState<ExportFilter[]>([
+    { id: "firstName", label: "First Name", checked: true },
+    { id: "lastName", label: "Last Name", checked: true },
+    { id: "middleName", label: "Middle Name", checked: true },
+    { id: "age", label: "Age", checked: true },
+    { id: "gender", label: "Gender", checked: true },
+    { id: "address", label: "Address", checked: true },
+    { id: "email", label: "Email", checked: true },
+    { id: "phoneNumber", label: "Phone Number", checked: true },
+    { id: "education", label: "Education", checked: true },
+  ]);
+
+  const handleExport = () => {
+    try {
+      if (!data || data.length === 0) {
+        toast.error("No data available to export");
+        return;
+      }
+
+      const selectedFields = filters.filter((filter) => filter.checked).map((f) => f.id);
+      
+      if (selectedFields.length === 0) {
+        toast.error("Please select at least one field to export");
+        return;
+      }
+
+      const filteredData = data.map((row) => {
+        const newRow: Record<string, any> = {};
+        selectedFields.forEach((field) => {
+          if (field in row) {
+            newRow[filters.find(f => f.id === field)?.label || field] = row[field];
+          }
+        });
+        return newRow;
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(filteredData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Youth Data");
+      
+      // Generate filename with current date
+      const date = new Date().toISOString().split('T')[0];
+      const filename = `youth_data_export_${date}.xlsx`;
+      
+      XLSX.writeFile(workbook, filename);
+      
+      toast.success("Data exported successfully");
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export data");
+    }
+  };
+
+  const toggleFilter = (id: string) => {
+    setFilters((prevFilters) =>
+      prevFilters.map((filter) =>
+        filter.id === id ? { ...filter, checked: !filter.checked } : filter
+      )
+    );
+  };
+
+  const toggleAllFilters = (checked: boolean) => {
+    setFilters((prevFilters) =>
+      prevFilters.map((filter) => ({ ...filter, checked }))
+    );
+  };
+
+  // Check if all filters are selected
+  const allSelected = filters.every((filter) => filter.checked);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Filter Export Data</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <ListFilter className="h-5 w-5" />
+            <span>Export Options</span>
+          </DialogTitle>
           <DialogDescription>
-            Select which records to include in your export.
+            Select the fields you want to include in your export
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-          {/* Barangay filters */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Barangay</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {barangayOptions.map((barangay) => (
-                <div
-                  key={`export-barangay-${barangay}`}
-                  className="flex items-center space-x-2"
-                >
-                  <Checkbox
-                    id={`export-barangay-${barangay}`}
-                    checked={filters.barangays.includes(barangay)} // Use 'filters'
-                    onCheckedChange={() =>
-                      toggleFilter(barangay, "barangays")
-                    }
-                  />
-                  <label
-                    htmlFor={`export-barangay-${barangay}`}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {barangay}
-                  </label>
-                </div>
-              ))}
-            </div>
+
+        <div className="py-4">
+          <div className="mb-4 flex items-center space-x-2">
+            <Checkbox
+              id="select-all"
+              checked={allSelected}
+              onCheckedChange={(checked) => toggleAllFilters(!!checked)}
+            />
+            <label
+              htmlFor="select-all"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Select All
+            </label>
           </div>
 
-          {/* Classification filters */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Classification</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {youthClassificationOptions.map((classification) => (
-                <div
-                  key={`export-class-${classification}`}
-                  className="flex items-center space-x-2"
+          <div className="grid grid-cols-2 gap-3">
+            {filters.map((filter) => (
+              <div key={filter.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={filter.id}
+                  checked={filter.checked}
+                  onCheckedChange={() => toggleFilter(filter.id)}
+                />
+                <label
+                  htmlFor={filter.id}
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  <Checkbox
-                    id={`export-class-${classification}`}
-                    checked={filters.classifications.includes(classification)} // Use 'filters'
-                    onCheckedChange={() =>
-                      toggleFilter(classification, "classifications")
-                    }
-                  />
-                  <label
-                    htmlFor={`export-class-${classification}`}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {classification}
-                  </label>
-                </div>
-              ))}
-            </div>
+                  {filter.label}
+                </label>
+              </div>
+            ))}
           </div>
-
-          {/* Age Group filters */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Age Group</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {youthAgeGroupOptions.map((ageGroup) => (
-                <div
-                  key={`export-age-${ageGroup}`}
-                  className="flex items-center space-x-2"
-                >
-                  <Checkbox
-                    id={`export-age-${ageGroup}`}
-                    checked={filters.ageGroups.includes(ageGroup)} // Use 'filters'
-                    onCheckedChange={() =>
-                      toggleFilter(ageGroup, "ageGroups")
-                    }
-                  />
-                  <label
-                    htmlFor={`export-age-${ageGroup}`}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {ageGroup}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Work Status filters */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Work Status</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {workStatusOptions.map((status) => (
-                <div
-                  key={`export-work-${status}`}
-                  className="flex items-center space-x-2"
-                >
-                  <Checkbox
-                    id={`export-work-${status}`}
-                    checked={filters.workStatus.includes(status)} // Use 'filters'
-                    onCheckedChange={() =>
-                      toggleFilter(status, "workStatus")
-                    }
-                  />
-                  <label
-                    htmlFor={`export-work-${status}`}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {status}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Education filters */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Highest Education</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {educationOptions.map((education) => (
-                <div
-                  key={`export-edu-${education}`}
-                  className="flex items-center space-x-2"
-                >
-                  <Checkbox
-                    id={`export-edu-${education}`}
-                    checked={filters.education.includes(education)} // Use 'filters'
-                    onCheckedChange={() =>
-                      toggleFilter(education, "education")
-                    }
-                  />
-                  <label
-                    htmlFor={`export-edu-${education}`}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {education}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Sex filters */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Sex</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {sexOptions.map((sex) => (
-                <div
-                  key={`export-sex-${sex}`}
-                  className="flex items-center space-x-2"
-                >
-                  <Checkbox
-                    id={`export-sex-${sex}`}
-                    checked={filters.sex.includes(sex)} // Use 'filters'
-                    onCheckedChange={() => toggleFilter(sex, "sex")}
-                  />
-                  <label
-                    htmlFor={`export-sex-${sex}`}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {sex}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Civil Status filters */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Civil Status</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {civilStatusOptions.map((status) => (
-                <div
-                  key={`export-civil-${status}`}
-                  className="flex items-center space-x-2"
-                >
-                  <Checkbox
-                    id={`export-civil-${status}`}
-                    checked={filters.civilStatus.includes(status)} // Use 'filters'
-                    onCheckedChange={() =>
-                      toggleFilter(status, "civilStatus")
-                    }
-                  />
-                  <label
-                    htmlFor={`export-civil-${status}`}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {status}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Registered Voter filters */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Registered Voter</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {voterOptions.map((option) => (
-                <div
-                  key={`export-voter-${option}`}
-                  className="flex items-center space-x-2"
-                >
-                  <Checkbox
-                    id={`export-voter-${option}`}
-                    checked={filters.registeredVoter.includes(option)} // Use 'filters'
-                    onCheckedChange={() =>
-                      toggleFilter(option, "registeredVoter")
-                    }
-                  />
-                  <label
-                    htmlFor={`export-voter-${option}`}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {option}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Voted Last Election filters */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Voted Last Election</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {votedOptions.map((option) => (
-                <div
-                  key={`export-voted-${option}`}
-                  className="flex items-center space-x-2"
-                >
-                  <Checkbox
-                    id={`export-voted-${option}`}
-                    checked={filters.votedLastElection.includes(option)} // Use 'filters'
-                    onCheckedChange={() =>
-                      toggleFilter(option, "votedLastElection")
-                    }
-                  />
-                  <label
-                    htmlFor={`export-voted-${option}`}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {option}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Attended KK Assembly filters */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Attended KK Assembly</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {assemblyOptions.map((option) => (
-                <div
-                  key={`export-assembly-${option}`}
-                  className="flex items-center space-x-2"
-                >
-                  <Checkbox
-                    id={`export-assembly-${option}`}
-                    checked={filters.attendedAssembly.includes(option)} // Use 'filters'
-                    onCheckedChange={() =>
-                      toggleFilter(option, "attendedAssembly")
-                    }
-                  />
-                  <label
-                    htmlFor={`export-assembly-${option}`}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {option}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Clear Export Filters button */}
-          <Button
-            variant="outline"
-            onClick={clearFilters}
-            className="w-full mt-4"
-          >
-            Clear All Filters
-          </Button>
         </div>
-        <DialogFooter>
+
+        <DialogFooter className="flex justify-between sm:justify-between">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
             Cancel
           </Button>
-          <Button
-            onClick={() => {
-              onApplyFilters();
-              onOpenChange(false);
-            }}
+          <Button 
+            onClick={handleExport}
+            className="gap-1"
           >
-            Apply Filters
+            <Download className="h-4 w-4" />
+            Export
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+export default ExportFilterDialog;
