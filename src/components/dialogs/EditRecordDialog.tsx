@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useEffect } from "react";
@@ -55,7 +56,6 @@ const civilStatusOptions = formSchema.shape.civil_status.options;
 const voterOptions = formSchema.shape.registered_voter.options;
 const votedOptions = formSchema.shape.voted_last_election.options;
 const assemblyOptions = formSchema.shape.attended_kk_assembly.options;
-const homeAddressOptions = formSchema.shape.home_address.options;
 
 // Create a zod schema specifically for the edit form
 const editFormSchema = z.object({
@@ -74,7 +74,7 @@ const editFormSchema = z.object({
   registered_voter: z.enum(voterOptions),
   voted_last_election: z.enum(votedOptions),
   attended_kk_assembly: z.enum(assemblyOptions),
-  home_address: z.enum(homeAddressOptions),
+  home_address: z.string().min(1, "Address is required"),
   email_address: z.string().email("Invalid email address"),
   contact_number: z.string().min(7, "Contact number must be at least 7 characters"),
   kk_assemblies_attended: z.coerce.number().int().nonnegative()
@@ -104,7 +104,7 @@ export function EditRecordDialog({
       registered_voter: "Yes",
       voted_last_election: "Yes",
       attended_kk_assembly: "Yes",
-      home_address: "ZONE 1",
+      home_address: "",
       email_address: "",
       contact_number: "",
       kk_assemblies_attended: 0
@@ -132,7 +132,7 @@ export function EditRecordDialog({
         registered_voter: selectedRecord.registered_voter as any,
         voted_last_election: selectedRecord.voted_last_election as any,
         attended_kk_assembly: selectedRecord.attended_kk_assembly as any,
-        home_address: selectedRecord.home_address as any,
+        home_address: selectedRecord.home_address,
         email_address: selectedRecord.email_address,
         contact_number: selectedRecord.contact_number,
         kk_assemblies_attended: selectedRecord.kk_assemblies_attended
@@ -354,25 +354,10 @@ export function EditRecordDialog({
                       name="home_address"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Home Address</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select zone" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {homeAddressOptions.map((option) => (
-                                <SelectItem key={option} value={option}>
-                                  {option}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Complete Home Address</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Enter complete home address" />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}

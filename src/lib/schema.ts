@@ -25,9 +25,7 @@ export const formSchema = z.object({
   ]),
   email_address: z.string().email("Invalid email address"),
   contact_number: z.string().min(7, "Contact number must be at least 7 characters"),
-  home_address: z.enum([
-    "ZONE 1", "ZONE 2", "ZONE 3", "ZONE 4", "ZONE 5", "ZONE 6",
-  ]),
+  home_address: z.string().min(1, "Address is required"),
   highest_education: z.enum([
     "Elementary",
     "High School",
@@ -74,6 +72,8 @@ export const generateTemplateData = () => {
       acc[field] = "2000-01-01";
     } else if (field === "kk_assemblies_attended") {
       acc[field] = "0";
+    } else if (field === "home_address") {
+      acc[field] = "Enter complete home address";
     } else {
       // For other fields, provide a descriptive placeholder
       acc[field] = `Enter ${field.replace(/_/g, " ")}`;
@@ -87,4 +87,3 @@ export const generateTemplateData = () => {
     sampleRow
   };
 };
-
