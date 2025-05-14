@@ -21,12 +21,48 @@ export type ExportFilter = {
 };
 
 export type ExportFilterDialogProps = {
-  isOpen: boolean;
+  open: boolean;
   onOpenChange: (open: boolean) => void;
-  data: any[];
+  data?: any[];
+  exportFilters?: {
+    barangays: string[];
+    classifications: string[];
+    ageGroups: string[];
+    workStatus: string[];
+    education: string[];
+    sex: string[];
+    civilStatus: string[];
+    registeredVoter: string[];
+    votedLastElection: string[];
+    attendedAssembly: string[];
+  };
+  toggleFilter?: (value: string, filterType: keyof typeof exportFilters) => void;
+  clearFilters?: () => void;
+  getExportCount?: () => number;
+  onApplyFilters?: () => void;
 };
 
-export function ExportFilterDialog({ isOpen, onOpenChange, data }: ExportFilterDialogProps) {
+export function ExportFilterDialog({
+  open,
+  onOpenChange,
+  data = [],
+  exportFilters = {
+    barangays: [],
+    classifications: [],
+    ageGroups: [],
+    workStatus: [],
+    education: [],
+    sex: [],
+    civilStatus: [],
+    registeredVoter: [],
+    votedLastElection: [],
+    attendedAssembly: [],
+  },
+  toggleFilter = () => {},
+  clearFilters = () => {},
+  getExportCount = () => 0,
+  onApplyFilters = () => {},
+}: ExportFilterDialogProps) {
   const [filters, setFilters] = useState<ExportFilter[]>([
     { id: "firstName", label: "First Name", checked: true },
     { id: "lastName", label: "Last Name", checked: true },
@@ -81,7 +117,7 @@ export function ExportFilterDialog({ isOpen, onOpenChange, data }: ExportFilterD
     }
   };
 
-  const toggleFilter = (id: string) => {
+  const toggleFilterItem = (id: string) => {
     setFilters((prevFilters) =>
       prevFilters.map((filter) =>
         filter.id === id ? { ...filter, checked: !filter.checked } : filter
@@ -99,7 +135,7 @@ export function ExportFilterDialog({ isOpen, onOpenChange, data }: ExportFilterD
   const allSelected = filters.every((filter) => filter.checked);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -132,7 +168,7 @@ export function ExportFilterDialog({ isOpen, onOpenChange, data }: ExportFilterD
                 <Checkbox
                   id={filter.id}
                   checked={filter.checked}
-                  onCheckedChange={() => toggleFilter(filter.id)}
+                  onCheckedChange={() => toggleFilterItem(filter.id)}
                 />
                 <label
                   htmlFor={filter.id}
