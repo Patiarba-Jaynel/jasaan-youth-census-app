@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, Filter, Search } from "lucide-react";
+import { FileText, Search } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ColumnVisibilityToggle } from "@/components/ColumnVisibilityToggle";
 import { AdvancedFilters } from "@/components/AdvancedFilters";
@@ -31,7 +31,6 @@ interface TableHeaderProps {
   data: any[];
   getExportCount: () => number;
   exportToCSV: () => void;
-  exportToPDF: () => void;
   hasActiveFilters: boolean;
 }
 
@@ -47,7 +46,6 @@ export function TableHeader({
   data,
   getExportCount,
   exportToCSV,
-  exportToPDF,
   hasActiveFilters
 }: TableHeaderProps) {
   return (
@@ -86,15 +84,6 @@ export function TableHeader({
                   >
                     <FileText size={16} />
                     CSV
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={exportToPDF}
-                    className="flex-1 flex items-center gap-2 justify-center"
-                    size="sm"
-                  >
-                    <FileText size={16} />
-                    PDF
                   </Button>
                 </div>
               </div>

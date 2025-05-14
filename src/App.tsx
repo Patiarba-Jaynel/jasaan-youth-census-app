@@ -6,10 +6,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { pbClient } from "@/lib/pb-client";
 
-import Index from "./pages/Index";
+import LoginPage from "./pages/LoginPage";
 import CensusPage from "./pages/CensusPage";
 import SuccessPage from "./pages/SuccessPage";
-import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import TableViewPage from "./pages/TableViewPage";
 import AboutPage from "./pages/AboutPage";
@@ -37,7 +36,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<LoginRoute />} />
           <Route path="/dashboard/census" element={<AuthRoute element={<CensusPage />} />} />
           <Route path="/dashboard/table" element={<AuthRoute element={<TableViewPage />} />} />
           <Route path="/success" element={<SuccessPage />} />

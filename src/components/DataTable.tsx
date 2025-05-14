@@ -87,7 +87,6 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
         data={data}
         getExportCount={tableState.getExportCount}
         exportToCSV={tableState.exportToCSV}
-        exportToPDF={tableState.exportToPDF}
         hasActiveFilters={tableState.hasActiveFilters}
       />
 

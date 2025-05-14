@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { YouthRecord } from '@/lib/pb-client';
 import { toast } from '@/components/ui/sonner';
@@ -318,15 +317,6 @@ export function useTableState(data: YouthRecord[]) {
     toast.success(`Exported ${dataToExport.length} records to CSV`);
   };
 
-  // Export to PDF
-  const exportToPDF = () => {
-    const dataToExport = getExportData();
-    // This is a placeholder for PDF export functionality
-    toast.info(
-      `PDF export for ${dataToExport.length} records would be implemented here`
-    );
-  };
-
   // Clear all filters
   const clearAllFilters = () => {
     setSearchTerm("");
@@ -417,6 +407,5 @@ export function useTableState(data: YouthRecord[]) {
     getExportCount,
     getExportData,
     exportToCSV,
-    exportToPDF,
   };
 }
