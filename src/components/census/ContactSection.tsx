@@ -1,6 +1,7 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Control } from "react-hook-form";
 import { FormValues } from "@/lib/schema";
 
@@ -45,10 +46,14 @@ export const ContactSection = ({ control }: ContactSectionProps) => {
           control={control}
           name="home_address"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="md:col-span-2">
               <FormLabel>Complete Home Address</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Enter complete home address" />
+                <Textarea 
+                  {...field} 
+                  placeholder="Enter complete home address" 
+                  className="min-h-[100px]"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
