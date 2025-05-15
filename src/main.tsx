@@ -7,7 +7,7 @@ import './index.css'
 const style = document.createElement('style');
 style.textContent = `
   .gradient-bg {
-    background: linear-gradient(135deg, #1B365D 0%, #D7262C 100%);
+    background: linear-gradient(135deg, #F2FCE2 0%, #D7262C 100%);
     color: white;
   }
 `;
