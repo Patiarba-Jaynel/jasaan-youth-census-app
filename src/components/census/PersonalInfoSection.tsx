@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
@@ -35,11 +36,6 @@ interface PersonalInfoSectionProps {
 export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
   const birthday = useWatch({ control, name: "birthday" });
   const [calculatedAge, setCalculatedAge] = useState<number | undefined>();
-
-  // Format the birthdate to show full date (e.g., "June 23rd, 2004")
-  const formattedBirthday = birthday
-    ? format(birthday, "do MMMM, yyyy")
-    : "";
 
   useEffect(() => {
     if (birthday) {
@@ -88,7 +84,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           )}
         />
 
-        {/* Date of Birth */}
+        {/* Date of Birth - Simplified Version */}
         <FormField
           control={control}
           name="birthday"
@@ -105,7 +101,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                         !field.value && "text-muted-foreground"
                       )}
                     >
-                      {formattedBirthday || "Select Date"}
+                      {field.value ? format(field.value, "MMMM d, yyyy") : "Select Date"}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>
@@ -114,12 +110,8 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                   <Calendar
                     mode="single"
                     selected={field.value}
-                    onSelect={(value) => {
-                      if (value) {
-                        field.onChange(value); // Pass the full date
-                      }
-                    }}
-                    captionLayout="dropdown"
+                    onSelect={field.onChange}
+                    captionLayout="dropdown-buttons"
                     fromYear={1980}
                     toYear={new Date().getFullYear()}
                     disabled={(date) =>
@@ -130,13 +122,6 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                   />
                 </PopoverContent>
               </Popover>
-              <FormControl className="mt-2">
-                <Input
-                  readOnly
-                  value={formattedBirthday}
-                  placeholder="Selected Date"
-                />
-              </FormControl>
               <FormMessage />
             </FormItem>
           )}
