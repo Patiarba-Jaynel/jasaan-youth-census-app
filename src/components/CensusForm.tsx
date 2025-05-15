@@ -32,7 +32,7 @@ export function CensusForm() {
       region: "X",
       province: "Misamis Oriental",
       city_municipality: "Jasaan",
-      kk_assemblies_attended: 0,
+      kk_assemblies_attended: 1,
     },
   });
 
