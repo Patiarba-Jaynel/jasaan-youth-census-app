@@ -11,41 +11,42 @@ const AboutPage = () => {
       <main className="flex-1 py-12">
         <div className="container px-4 md:px-6">
           <div className="max-w-3xl mx-auto">
-            <h1 className="text-3xl font-bold mb-6">About the Jasaan Youth Census</h1>
+            <h1 className="text-3xl font-bold mb-6">About POPCOM JASAAN</h1>
             
             <section className="mb-10">
               <h2 className="text-2xl font-semibold mb-4">Purpose</h2>
               <p className="text-gray-700 mb-4">
-                The Jasaan Youth Census is a comprehensive data collection initiative aimed at understanding 
-                the demographic profile, needs, and aspirations of young people aged 15-30 in Jasaan, 
-                Misamis Oriental. This census serves as a foundation for evidence-based policy-making 
-                and program development for youth in our community.
+                POPCOM JASAAN is a comprehensive data collection and monitoring initiative designed to capture the 
+                demographic profile, needs, and aspirations of the population across the 15 barangays of Jasaan, 
+                Misamis Oriental, Philippines. This centralized database serves as a vital tool for evidence-based 
+                policy-making and the development of targeted programs that support the well-being of youth and families 
+                within the community.
               </p>
             </section>
             
             <section className="mb-10">
-              <h2 className="text-2xl font-semibold mb-4">Objectives</h2>
+              <h2 className="text-2xl font-semibold mb-4">Main Objectives</h2>
               <ul className="list-disc pl-6 space-y-2 text-gray-700">
-                <li>To create a comprehensive database of youth in Jasaan</li>
-                <li>To identify the demographic characteristics of young people in each barangay</li>
-                <li>To understand the educational and employment status of youth</li>
+                <li>To create a comprehensive database of youth and overall sample population in Jasaan</li>
+                <li>To identify the demographic characteristics of residents in each barangay</li>
+                <li>To understand the educational and employment status of residents</li>
                 <li>To assess the level of civic participation among young people</li>
-                <li>To identify needs and priorities for youth development programs</li>
-                <li>To inform the allocation of resources for youth-focused initiatives</li>
+                <li>To identify needs and priorities for youth and family development programs</li>
+                <li>To inform the allocation of resources for youth-focused and family-focused initiatives</li>
               </ul>
             </section>
             
             <section className="mb-10">
-              <h2 className="text-2xl font-semibold mb-4">How Your Data Will Be Used</h2>
+              <h2 className="text-2xl font-semibold mb-4">How The Data Will Be Used</h2>
               <p className="text-gray-700 mb-4">
-                All information collected through this census will be used solely for planning 
-                and implementing youth development programs. Your personal information will be kept 
+                All information collected through the help of BPO (Barangay Population Officers) will be used solely for planning 
+                and implementing youth and family development programs. Any personal information will be kept 
                 confidential and will only be presented in aggregate form for statistical purposes.
               </p>
               <p className="text-gray-700">
                 The data will help local government officials, youth organizations, and other stakeholders 
                 design targeted interventions and allocate resources more effectively to address the 
-                specific needs of young people in Jasaan.
+                specific needs of young people and families in Jasaan.
               </p>
             </section>
             
@@ -72,9 +73,9 @@ const AboutPage = () => {
             </section>
             
             <div className="mt-10 text-center">
-              <p className="mb-4 text-gray-700">Ready to participate in shaping the future of Jasaan youth?</p>
+              <p className="mb-4 text-gray-700">Ready to participate in shaping the future of Jasaan?</p>
               <Button size="lg" asChild>
-                <Link to="/census">Register for the Census</Link>
+                <Link to="/census">Get Started</Link>
               </Button>
             </div>
           </div>

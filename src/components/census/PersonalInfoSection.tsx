@@ -36,6 +36,11 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
   const birthday = useWatch({ control, name: "birthday" });
   const [calculatedAge, setCalculatedAge] = useState<number | undefined>();
 
+  // Format the birthdate to show full date (e.g., "June 23rd, 2004")
+  const formattedBirthday = birthday
+    ? format(birthday, "do MMMM, yyyy")
+    : "";
+
   useEffect(() => {
     if (birthday) {
       const today = new Date();
@@ -53,6 +58,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
     <div className="md:col-span-2">
       <h3 className="text-lg font-medium mb-4">Personal Information</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Full Name */}
         <FormField
           control={control}
           name="name"
@@ -67,6 +73,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           )}
         />
 
+        {/* Age */}
         <FormField
           control={control}
           name="age"
@@ -81,6 +88,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           )}
         />
 
+        {/* Date of Birth */}
         <FormField
           control={control}
           name="birthday"
@@ -97,11 +105,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                         !field.value && "text-muted-foreground"
                       )}
                     >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
+                      {formattedBirthday || "Select Date"}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>
@@ -110,7 +114,11 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                   <Calendar
                     mode="single"
                     selected={field.value}
-                    onSelect={field.onChange}
+                    onSelect={(value) => {
+                      if (value) {
+                        field.onChange(value); // Pass the full date
+                      }
+                    }}
                     captionLayout="dropdown"
                     fromYear={1980}
                     toYear={new Date().getFullYear()}
@@ -122,11 +130,19 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                   />
                 </PopoverContent>
               </Popover>
+              <FormControl className="mt-2">
+                <Input
+                  readOnly
+                  value={formattedBirthday}
+                  placeholder="Selected Date"
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
+        {/* Sex */}
         <FormField
           control={control}
           name="sex"
@@ -158,6 +174,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           )}
         />
 
+        {/* Civil Status */}
         <FormField
           control={control}
           name="civil_status"
@@ -182,6 +199,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           )}
         />
 
+        {/* Youth Classification */}
         <FormField
           control={control}
           name="youth_classification"
@@ -208,6 +226,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           )}
         />
 
+        {/* Youth Age Group */}
         <FormField
           control={control}
           name="youth_age_group"

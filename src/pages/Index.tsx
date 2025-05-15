@@ -2,8 +2,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -12,6 +10,8 @@ import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 
 const Index = () => {
+  const currentYear = new Date().getFullYear();
+
   return (
     <div className="flex flex-col min-h-screen">
       <NavBar />
@@ -22,9 +22,9 @@ const Index = () => {
             <div className="flex flex-col items-center space-y-4 text-center text-white">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
-                  Jasaan Youth Census 2025
+                  POPCOM JASAAN {currentYear}
                 </h1>
-                <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed text-white/80">
+                <p className="mx-auto max-w-[700px] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed text-white/80">
                   Be counted. Be heard. Shape the future of Jasaan.
                 </p>
               </div>
@@ -32,42 +32,37 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Features Section */}
+        {/* Internal Features Section */}
         <section className="w-full py-12 md:py-24">
           <div className="container px-4 md:px-6">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               <Card>
                 <CardHeader>
-                  <CardTitle>Why Register?</CardTitle>
+                  <CardTitle>Centralized Data Access</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p>
-                    Your registration helps local government understand the
-                    needs of the youth in Jasaan, enabling better programs and
-                    services for you.
+                    Manage and review demographic records from all 15 barangays in one unified system, ensuring consistent and secure data access.
                   </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle>Quick & Easy</CardTitle>
+                  <CardTitle>Real-Time Monitoring</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p>
-                    Our census form takes just a few minutes to complete. Your
-                    information is secure and will only be used for planning
-                    purposes.
+                    Instantly track census activity, submissions, and trends to support timely and informed decision-making.
                   </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle>Make an Impact</CardTitle>
+                  <CardTitle>Secure Admin Tools</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p>
-                    Your participation directly impacts resource allocation and
-                    youth programs in your barangay and throughout Jasaan.
+                    Tools for authorized personnel to manage user access, export data, and maintain system integrity.
                   </p>
                 </CardContent>
               </Card>
@@ -84,11 +79,9 @@ const Index = () => {
                   About the Census
                 </h2>
                 <p className="text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
-                  The Jasaan Youth Census is a comprehensive initiative to
-                  collect data about the youth population in our municipality.
-                  This data helps in planning and implementing youth development
-                  programs, allocating resources, and addressing the specific
-                  needs of young people in different barangays.
+                  POPCOM JASAAN is a comprehensive data storage and monitoring initiative aimed at understanding
+                  the demographic profile, needs, and aspirations of the local population in 15 barangays within Jasaan, Misamis Oriental.
+                  This system supports evidence-based policy-making and program development for youth and families in the community.
                 </p>
                 <Button asChild>
                   <Link to="/about">Learn More</Link>
@@ -98,7 +91,7 @@ const Index = () => {
           </div>
         </section>
 
-        {/* CTA Section */}
+        {/* Admin CTA Section */}
         <section className="w-full py-12 md:py-24">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
@@ -107,9 +100,8 @@ const Index = () => {
                   Admin Access
                 </h2>
                 <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Youth census registration is managed by authorized
-                  administrators. If you are an admin, please login to access
-                  the system.
+                  This census system is for internal use only and accessible by authorized personnel.
+                  Please log in with your admin credentials to proceed.
                 </p>
               </div>
               <Button size="lg" asChild>
