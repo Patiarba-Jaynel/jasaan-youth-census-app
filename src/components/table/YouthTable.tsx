@@ -61,6 +61,9 @@ export function YouthTable({ columns, records, onEdit, onDelete }: YouthTablePro
             {columns.find(col => col.key === "attendedAssembly")?.visible && (
               <TableHead>Assembly</TableHead>
             )}
+            {columns.find(col => col.key === "assembliesAttended")?.visible && (
+              <TableHead>KK Assemblies Attended</TableHead>
+            )}
             {columns.find(col => col.key === "civilStatus")?.visible && (
               <TableHead>Civil Status</TableHead>
             )}
@@ -104,6 +107,13 @@ export function YouthTable({ columns, records, onEdit, onDelete }: YouthTablePro
                 {columns.find(col => col.key === "attendedAssembly")?.visible && (
                   <TableCell>{record.attended_kk_assembly}</TableCell>
                 )}
+                {columns.find(col => col.key === "assembliesAttended")?.visible && (
+                  <TableCell>
+                    {record.attended_kk_assembly === "Yes" 
+                      ? record.kk_assemblies_attended || "0"
+                      : "0"}
+                  </TableCell>
+                )}
                 {columns.find(col => col.key === "civilStatus")?.visible && (
                   <TableCell>{record.civil_status}</TableCell>
                 )}
@@ -133,7 +143,7 @@ export function YouthTable({ columns, records, onEdit, onDelete }: YouthTablePro
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={12} className="text-center py-4">
+              <TableCell colSpan={14} className="text-center py-4">
                 No records found
               </TableCell>
             </TableRow>

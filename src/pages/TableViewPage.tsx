@@ -22,7 +22,14 @@ const TableViewPage = () => {
     try {
       setIsLoading(true);
       const records = await pbClient.youth.getAll();
-      setYouthRecords(records);
+      
+      // Ensure all records have the kk_assemblies_attended field, defaulting to 0 if missing
+      const processedRecords = records.map(record => ({
+        ...record,
+        kk_assemblies_attended: record.kk_assemblies_attended || (record.attended_kk_assembly === "Yes" ? "0" : "0")
+      }));
+      
+      setYouthRecords(processedRecords);
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Failed to load youth records");

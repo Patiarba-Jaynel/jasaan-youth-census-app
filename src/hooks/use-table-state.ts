@@ -21,6 +21,7 @@ export function useTableState(data: YouthRecord[]) {
     { key: "registeredVoter", title: "Registered Voter", visible: true },
     { key: "votedLastElection", title: "Voted Last Election", visible: false },
     { key: "attendedAssembly", title: "Attended Assembly", visible: false },
+    { key: "assembliesAttended", title: "KK Assemblies Attended", visible: false },
     { key: "civilStatus", title: "Civil Status", visible: false },
   ]);
 
@@ -280,6 +281,7 @@ export function useTableState(data: YouthRecord[]) {
       "Registered Voter",
       "Voted Last Election",
       "Attended KK Assembly",
+      "KK Assemblies Attended"
     ];
 
     const rows = dataToExport.map((item) => [
@@ -296,6 +298,7 @@ export function useTableState(data: YouthRecord[]) {
       item.registered_voter,
       item.voted_last_election,
       item.attended_kk_assembly,
+      item.attended_kk_assembly === "Yes" ? (item.kk_assemblies_attended || "0") : "0"
     ]);
 
     const csvContent = [

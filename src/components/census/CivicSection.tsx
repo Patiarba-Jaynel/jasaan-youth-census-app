@@ -67,7 +67,16 @@ export const CivicSection = ({ control }: CivicSectionProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Have you attended any KK assemblies?</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={(value) => {
+                field.onChange(value);
+                // Reset assemblies count to 0 if changing to "No"
+                if (value === "No") {
+                  const kk_assemblies_field = document.querySelector('[name="kk_assemblies_attended"]') as HTMLInputElement;
+                  if (kk_assemblies_field) {
+                    kk_assemblies_field.value = "0";
+                  }
+                }
+              }} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select answer" />
@@ -83,29 +92,29 @@ export const CivicSection = ({ control }: CivicSectionProps) => {
           )}
         />
         
-        {watchAttendedAssembly === "Yes" && (
-          <FormField
-            control={control}
-            name="kk_assemblies_attended"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>How many KK assemblies have you attended?</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    min={0} 
-                    {...field}
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value);
-                      field.onChange(isNaN(value) ? 0 : value);
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        <FormField
+          control={control}
+          name="kk_assemblies_attended"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>How many KK assemblies have you attended?</FormLabel>
+              <FormControl>
+                <Input 
+                  type="number" 
+                  min={0} 
+                  {...field}
+                  disabled={watchAttendedAssembly !== "Yes"}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    field.onChange(isNaN(value) ? 0 : value);
+                  }}
+                  defaultValue={watchAttendedAssembly === "Yes" ? field.value || "0" : "0"}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </div>
   );
