@@ -1,6 +1,15 @@
+
 import { Link } from "react-router-dom";
 
 export function Footer() {
+  // Function to scroll to top when clicking home link
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
+
   return (
     <footer className="border-t bg-background py-8 mt-12">
       <div className="container px-4 sm:px-8">
@@ -31,7 +40,11 @@ export function Footer() {
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Quick Links</h3>
               <nav className="flex flex-col space-y-2">
-                <Link to="/" className="text-sm text-muted-foreground hover:underline">
+                <Link 
+                  to="/" 
+                  className="text-sm text-muted-foreground hover:underline"
+                  onClick={scrollToTop}
+                >
                   Home
                 </Link>
                 <Link to="/census" className="text-sm text-muted-foreground hover:underline">
