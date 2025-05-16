@@ -23,10 +23,12 @@ const TableViewPage = () => {
       setIsLoading(true);
       const records = await pbClient.youth.getAll();
       
-      // Ensure all records have the kk_assemblies_attended field, defaulting to 0 if missing
+      // Ensure all records have the kk_assemblies_attended field as a number, defaulting to 0 if missing
       const processedRecords = records.map(record => ({
         ...record,
-        kk_assemblies_attended: record.kk_assemblies_attended || (record.attended_kk_assembly === "Yes" ? "0" : "0")
+        kk_assemblies_attended: typeof record.kk_assemblies_attended === "number"
+          ? record.kk_assemblies_attended
+          : Number(record.kk_assemblies_attended) || 0
       }));
       
       setYouthRecords(processedRecords);
