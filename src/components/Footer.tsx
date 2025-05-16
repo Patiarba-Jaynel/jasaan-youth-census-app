@@ -50,7 +50,11 @@ export function Footer() {
                 <Link to="/census" className="text-sm text-muted-foreground hover:underline">
                   Register
                 </Link>
-                <Link to="/about" className="text-sm text-muted-foreground hover:underline">
+                <Link 
+                  to="/about" 
+                  className="text-sm text-muted-foreground hover:underline"
+                  onClick={scrollToTop}
+                >
                   About
                 </Link>
                 <a
@@ -74,4 +78,3 @@ export function Footer() {
     </footer>
   );
 }
-
