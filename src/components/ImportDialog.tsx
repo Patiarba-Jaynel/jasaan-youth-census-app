@@ -1,764 +1,139 @@
-import { useState, useRef, useCallback } from "react";
-import * as XLSX from "xlsx";
-import Papa from "papaparse";
-import { Button } from "@/components/ui/button";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState } from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { formSchema } from "@/lib/schema";
-import { pbClient, YouthRecord } from "@/lib/pb-client";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Download, FileSpreadsheet, FileUp, Loader2 } from "lucide-react";
-import { toast } from "@/components/ui/sonner";
-import { Badge } from "@/components/ui/badge";
-import { generateTemplateData } from "@/lib/schema";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Button, Typography, Box
+} from '@mui/material';
+import * as XLSX from 'xlsx';
+import Papa from 'papaparse';
+import { z } from 'zod';
+import { formSchema as YouthSchema } from '@/lib/schema';
 
 interface ImportDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onImportSuccess: () => void;
+  onClose: () => void;
+   
+  onImport: (records: any[]) => void;
 }
 
-interface Duplicate {
-  importIndex: number;
-  dbRecord?: YouthRecord;
-  record: Record<string, any>;
-}
-
-type DuplicateAction = "merge" | "overwrite" | "ignore";
-
-export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDialogProps) {
+export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImport }) => {
   const [file, setFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [parseErrors, setParseErrors] = useState<string[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [parsedData, setParsedData] = useState<Record<string, any>[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // Duplicate handling states
-  const [duplicatesWithinFile, setDuplicatesWithinFile] = useState<number[][]>([]);
-  const [duplicatesWithDb, setDuplicatesWithDb] = useState<Duplicate[]>([]);
-  const [currentDuplicateIndex, setCurrentDuplicateIndex] = useState<number>(-1);
-  const [showDuplicateDialog, setShowDuplicateDialog] = useState<boolean>(false);
-  const [processedRecords, setProcessedRecords] = useState<Record<string, any>[]>([]);
+   
+  const [parsedData, setParsedData] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+   
+  const [duplicates, setDuplicates] = useState<any[]>([]);
+   
+  const [validData, setValidData] = useState<any[]>([]);
 
-  // Reset state when dialog closes
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      setFile(null);
-      setParsedData([]);
-      setParseErrors([]);
-      setIsUploading(false);
-      setDuplicatesWithinFile([]);
-      setDuplicatesWithDb([]);
-      setCurrentDuplicateIndex(-1);
-      setShowDuplicateDialog(false);
-      setProcessedRecords([]);
-    }
-    onOpenChange(isOpen);
-  };
-
-  // Process the uploaded file
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (!selectedFile) return;
-    
-    setFile(selectedFile);
-    parseFile(selectedFile);
-  };
-
-  // Parse CSV or Excel file
-  const parseFile = (file: File) => {
-    setParseErrors([]);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    setError(null);
+    setDuplicates([]);
+    setValidData([]);
     setParsedData([]);
-    setDuplicatesWithinFile([]);
-    
-    const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    
-    if (fileExtension === 'csv') {
+    setFile(selectedFile || null);
+  };
+
+  const parseFile = async () => {
+    if (!file) return;
+
+    const fileName = file.name.toLowerCase();
+    if (fileName.endsWith('.csv')) {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          validateData(results.data as Record<string, any>[]);
+           
+          processData(results.data as any[]);
         },
-        error: (error) => {
-          setParseErrors([`Error parsing CSV: ${error.message}`]);
-        }
+        error: () => setError('Error parsing CSV file.'),
       });
-    } 
-    else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+    } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
       const reader = new FileReader();
-      
       reader.onload = (e) => {
-        try {
-          const data = e.target?.result;
-          const workbook = XLSX.read(data, { type: 'array' });
-          const sheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          validateData(json as Record<string, any>[]);
-        } catch (error) {
-          setParseErrors([`Error parsing Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`]);
-        }
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+        processData(jsonData);
       };
-      
       reader.readAsArrayBuffer(file);
-    } 
-    else {
-      setParseErrors(['Unsupported file format. Please upload a CSV or Excel file.']);
-    }
-  };
-
-  // Check for duplicates within the imported file
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const findDuplicatesInFile = (data: Record<string, any>[]) => {
-    const duplicates: number[][] = [];
-    const nameMap = new Map<string, number[]>();
-    
-    // First pass: group records by name (case insensitive)
-    data.forEach((record, index) => {
-      if (!record.name) return;
-      
-      const normalizedName = record.name.toLowerCase().trim();
-      if (nameMap.has(normalizedName)) {
-        nameMap.get(normalizedName)?.push(index);
-      } else {
-        nameMap.set(normalizedName, [index]);
-      }
-    });
-    
-    // Extract duplicate groups (2 or more records with same name)
-    nameMap.forEach(indices => {
-      if (indices.length > 1) {
-        duplicates.push(indices);
-      }
-    });
-    
-    return duplicates;
-  };
-
-  // Validate the parsed data against schema
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const validateData = (data: Record<string, any>[]) => {
-    if (!data.length) {
-      setParseErrors(['File contains no data']);
-      return;
-    }
-    
-    const errors: string[] = [];
-    const requiredFields = ['name', 'age', 'sex', 'barangay', 'youth_classification', 'youth_age_group'];
-    
-    // Check first row for required fields
-    const firstRow = data[0];
-    const missingFields = requiredFields.filter(field => !Object.keys(firstRow).includes(field));
-    
-    if (missingFields.length) {
-      errors.push(`Missing required columns: ${missingFields.join(', ')}`);
-    }
-    
-    // Validate each record
-    data.forEach((record, index) => {
-      // Check sex values
-      if (record.sex && !formSchema.shape.sex.options.includes(record.sex)) {
-        errors.push(`Row ${index + 2}: Invalid sex value "${record.sex}" (must be one of ${formSchema.shape.sex.options.join(', ')})`);
-      }
-      
-      // Check youth_classification values
-      if (record.youth_classification && !formSchema.shape.youth_classification.options.includes(record.youth_classification)) {
-        errors.push(`Row ${index + 2}: Invalid youth classification "${record.youth_classification}"`);
-      }
-      
-      // Check youth_age_group values
-      if (record.youth_age_group && !formSchema.shape.youth_age_group.options.includes(record.youth_age_group)) {
-        errors.push(`Row ${index + 2}: Invalid youth age group "${record.youth_age_group}"`);
-      }
-    });
-    
-    // Check for duplicates within the file
-    const duplicates = findDuplicatesInFile(data);
-    setDuplicatesWithinFile(duplicates);
-    
-    if (duplicates.length > 0) {
-      duplicates.forEach(group => {
-        const names = group.map(idx => data[idx].name);
-        errors.push(`Duplicate name "${names[0]}" found in rows: ${group.map(idx => idx + 2).join(', ')}`);
-      });
-    }
-    
-    if (errors.length) {
-      setParseErrors(errors);
-      setParsedData([]);
     } else {
-      setParsedData(data);
+      setError('Unsupported file format. Please upload a CSV or Excel file.');
     }
   };
 
-  // Check for duplicates with the database
-  const checkDuplicatesWithDb = useCallback(async (data: Record<string, any>[]) => {
-    try {
-      // Get all existing records from the database
-      const existingRecords = await pbClient.youth.getAll();
-      const duplicates: Duplicate[] = [];
-      
-      // Check each imported record against existing records
-      data.forEach((record, index) => {
-        // Skip if no name (though this should be caught in validation)
-        if (!record.name) return;
-        
-        // Find matching records by name (case insensitive)
-        const normalizedName = record.name.toLowerCase().trim();
-        const matchingRecord = existingRecords.find(dbRecord => 
-          dbRecord.name.toLowerCase().trim() === normalizedName
-        );
-        
-        if (matchingRecord) {
-          duplicates.push({
-            importIndex: index,
-            dbRecord: matchingRecord,
-            record: record
-          });
-        }
+  const processData = (data: any[]) => {
+    const seen = new Set();
+    const duplicatesList: any[] = [];
+    const validList: any[] = [];
+
+    const cleanedData = data.map((row) => {
+      const cleanedRow: any = {};
+      Object.entries(row).forEach(([key, value]) => {
+        cleanedRow[key.trim()] = typeof value === 'string' ? value.trim() : value;
       });
-      
-      return duplicates;
-    } catch (error) {
-      console.error("Error checking for duplicates:", error);
-      throw error;
-    }
-  }, []);
+      return cleanedRow;
+    });
 
-  // Handle duplicate resolution
-  const handleDuplicateAction = useCallback((action: DuplicateAction) => {
-    if (currentDuplicateIndex < 0 || currentDuplicateIndex >= duplicatesWithDb.length) {
-      return;
-    }
-    
-    const currentDuplicate = duplicatesWithDb[currentDuplicateIndex];
-    const recordIndex = currentDuplicate.importIndex;
-    const record = { ...parsedData[recordIndex] };
-    
-    // Apply the selected action
-    switch (action) {
-      case "merge":
-        // Merge: Keep existing values unless the import has new non-empty values
-        if (currentDuplicate.dbRecord) {
-          Object.keys(record).forEach(key => {
-            if (!record[key] && currentDuplicate.dbRecord && currentDuplicate.dbRecord[key as keyof YouthRecord]) {
-              record[key] = currentDuplicate.dbRecord[key as keyof YouthRecord];
-            }
-          });
-          
-          // Add the record ID for updating instead of creating
-          record.id = currentDuplicate.dbRecord.id;
-        }
-        setProcessedRecords([...processedRecords, record]);
-        break;
-        
-      case "overwrite":
-        // Overwrite: Use the imported data and add the record ID for updating
-        if (currentDuplicate.dbRecord) {
-          record.id = currentDuplicate.dbRecord.id;
-        }
-        setProcessedRecords([...processedRecords, record]);
-        break;
-        
-      case "ignore":
-        // Ignore: Don't add this record to processed records
-        break;
-    }
-    
-    // Move to next duplicate or finish
-    if (currentDuplicateIndex < duplicatesWithDb.length - 1) {
-      setCurrentDuplicateIndex(currentDuplicateIndex + 1);
-    } else {
-      setShowDuplicateDialog(false);
-      finishImport();
-    }
-  }, [currentDuplicateIndex, duplicatesWithDb, parsedData, processedRecords]);
-
-  // Process duplicates one by one
-  const processDuplicates = useCallback(async () => {
-    if (duplicatesWithDb.length > 0) {
-      setCurrentDuplicateIndex(0);
-      setShowDuplicateDialog(true);
-    } else {
-      // No duplicates, proceed with all records
-      setProcessedRecords([...parsedData]);
-      finishImport();
-    }
-  }, [duplicatesWithDb, parsedData]);
-
-  // Finish import after handling duplicates
-  const finishImport = useCallback(async () => {
-    try {
-      setIsUploading(true);
-      
-      // Filter out records that have been marked for ignore
-      const recordsToImport = processedRecords.map(record => {
-        // Format the record to match YouthRecord structure
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const formattedRecord: any = {
-          name: record.name || '',
-          age: record.age?.toString() || '',
-          sex: record.sex || 'MALE',
-          barangay: record.barangay || '',
-          youth_classification: record.youth_classification || 'ISY',
-          youth_age_group: record.youth_age_group || 'CORE YOUTH (18-24)',
-          birthday: record.birthday ? new Date(record.birthday) : new Date(),
-          civil_status: record.civil_status || 'SINGLE',
-          email_address: record.email_address || '',
-          contact_number: record.contact_number || '',
-          home_address: record.home_address || '',
-          region: record.region || '',
-          province: record.province || '',
-          city_municipality: record.city_municipality || '',
-          highest_education: record.highest_education || '',
-          work_status: record.work_status || '',
-          registered_voter: record.registered_voter || 'NO',
-          voted_last_election: record.voted_last_election || 'NO',
-          attended_kk_assembly: record.attended_kk_assembly || 'NO',
-          kk_assemblies_attended: parseInt(record.kk_assemblies_attended) || 0
-        };
-        
-        // If this is an update (has id), keep the id
-        if (record.id) {
-          formattedRecord.id = record.id;
-        }
-        
-        return formattedRecord;
-      });
-      
-      // Process records to create or update
-      const createdRecords = [];
-      const updatedRecords = [];
-      
-      // Split into new records and updates
-      const newRecords = recordsToImport.filter(record => !record.id);
-      const recordsToUpdate = recordsToImport.filter(record => record.id);
-      
-      // Create new records
-      if (newRecords.length > 0) {
-        const created = await pbClient.youth.createMany(newRecords);
-        createdRecords.push(...created);
-      }
-      
-      // Update existing records
-      for (const record of recordsToUpdate) {
-        const id = record.id;
-        delete record.id; // Remove id before updating
-        const updated = await pbClient.youth.update(id, record);
-        updatedRecords.push(updated);
-      }
-      
-      // Show success toast with count details
-      toast.success(`Import completed successfully`, {
-        description: `Created ${createdRecords.length} new records, updated ${updatedRecords.length} records.`
-      });
-      
-      onImportSuccess();
-    } catch (error) {
-      console.error('Error importing data:', error);
-      toast.error('Failed to import data');
-    } finally {
-      setIsUploading(false);
-    }
-  }, [processedRecords, onImportSuccess]);
-
-  // Import data to database
-  const handleImport = async () => {
-    if (!parsedData.length) return;
-    
-    try {
-      setIsUploading(true);
-      
-      // Check for duplicates with database
-      const dbDuplicates = await checkDuplicatesWithDb(parsedData);
-      setDuplicatesWithDb(dbDuplicates);
-      
-      // Get records that aren't duplicates with the database
-      const nonDuplicateIndices = parsedData
-        .map((_, index) => index)
-        .filter(index => !dbDuplicates.some(dup => dup.importIndex === index));
-      
-      // Add non-duplicate records to processed records
-      const nonDuplicates = nonDuplicateIndices.map(index => parsedData[index]);
-      setProcessedRecords(nonDuplicates);
-      
-      // Start processing duplicates or finish import
-      if (dbDuplicates.length > 0) {
-        processDuplicates();
-      } else {
-        finishImport();
-      }
-    } catch (error) {
-      console.error('Error importing data:', error);
-      toast.error('Failed to import data');
-      setIsUploading(false);
-    }
-  };
-
-  // Create and download beautiful template file
-  const downloadTemplate = () => {
-    // Get template data from schema
-    const { headers, sampleRow } = generateTemplateData();
-    
-    // Create workbook and worksheet
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet([sampleRow]);
-    
-    // Set column widths
-    const colWidths = [
-      {wch: 20}, // name
-      {wch: 5},  // age
-      {wch: 12}, // birthday
-      {wch: 8},  // sex
-      {wch: 12}, // civil_status
-      {wch: 15}, // barangay
-      {wch: 15}, // region
-      {wch: 15}, // province
-      {wch: 18}, // city_municipality
-      {wch: 10}, // youth_classification
-      {wch: 20}, // youth_age_group
-      {wch: 25}, // email_address
-      {wch: 15}, // contact_number
-      {wch: 20}, // home_address
-      {wch: 20}, // highest_education
-      {wch: 15}, // work_status
-      {wch: 15}, // registered_voter
-      {wch: 15}, // voted_last_election
-      {wch: 15}, // attended_kk_assembly
-      {wch: 15}  // kk_assemblies_attended
-    ];
-    ws['!cols'] = colWidths;
-
-    // Apply styling and formatting
-    const range = XLSX.utils.decode_range(ws['!ref'] || "A1:T2");
-    
-    // Create styles for different cell types
-    const headerStyle = {
-      fill: { fgColor: { rgb: "8B5CF6" } }, // Header background (Purple)
-      font: { color: { rgb: "FFFFFF" }, bold: true, sz: 12 },
-      alignment: { horizontal: "center", vertical: "center", wrapText: true },
-      border: {
-        top: { style: "thin", color: { rgb: "D3D3D3" } },
-        bottom: { style: "thin", color: { rgb: "D3D3D3" } },
-        left: { style: "thin", color: { rgb: "D3D3D3" } },
-        right: { style: "thin", color: { rgb: "D3D3D3" } }
-      }
-    };
-    
-    const requiredFieldStyle = {
-      fill: { fgColor: { rgb: "F2FCE2" } }, // Light green for required fields
-      font: { color: { rgb: "000000" } },
-      border: {
-        top: { style: "thin", color: { rgb: "D3D3D3" } },
-        bottom: { style: "thin", color: { rgb: "D3D3D3" } },
-        left: { style: "thin", color: { rgb: "D3D3D3" } },
-        right: { style: "thin", color: { rgb: "D3D3D3" } }
-      }
-    };
-    
-    const optionalFieldStyle = {
-      fill: { fgColor: { rgb: "F1F0FB" } }, // Light purple for optional fields
-      font: { color: { rgb: "000000" } },
-      border: {
-        top: { style: "thin", color: { rgb: "D3D3D3" } },
-        bottom: { style: "thin", color: { rgb: "D3D3D3" } },
-        left: { style: "thin", color: { rgb: "D3D3D3" } },
-        right: { style: "thin", color: { rgb: "D3D3D3" } }
-      }
-    };
-    
-    // Required fields
-    const requiredFields = ['name', 'age', 'sex', 'barangay', 'youth_classification', 'youth_age_group'];
-    
-    // Apply styles to each cell
-    for (let R = range.s.r; R <= range.e.r; R++) {
-      for (let C = range.s.c; C <= range.e.c; C++) {
-        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-        if (!ws[cellAddress]) continue;
-        
-        // Apply appropriate styles
-        if (R === 0) {
-          // Header row
-          ws[cellAddress].s = headerStyle;
+    for (const record of cleanedData) {
+      const result = YouthSchema.safeParse(record);
+      if (result.success) {
+        const key = `${record.first_name?.toLowerCase()}|${record.last_name?.toLowerCase()}|${record.birthdate}`;
+        if (seen.has(key)) {
+          duplicatesList.push(record);
         } else {
-          // Data row - check if it's a required field
-          const columnHeader = headers[C];
-          if (requiredFields.includes(columnHeader)) {
-            ws[cellAddress].s = requiredFieldStyle;
-          } else {
-            ws[cellAddress].s = optionalFieldStyle;
-          }
+          seen.add(key);
+          validList.push(record);
         }
       }
     }
-    
-    // Add instructions sheet
-    const instructionsData = [
-      ["Youth Census Data Import Template Instructions"],
-      [""],
-      ["1. Required Fields (highlighted in light green)"],
-      ["   - name: Full name of the youth"],
-      ["   - age: Numeric age (15-30)"],
-      ["   - sex: Must be one of: MALE, FEMALE"],
-      ["   - barangay: Must be one of the valid barangays"],
-      ["   - youth_classification: Must be one of: ISY, OSY, WY, YSN"],
-      ["   - youth_age_group: Must be one of: CHILD YOUTH (15-17), CORE YOUTH (18-24), YOUNG ADULT (25-30)"],
-      [""],
-      ["2. Optional Fields (highlighted in light purple)"],
-      ["   - birthday: Date in YYYY-MM-DD format"],
-      ["   - civil_status: Must be one of: SINGLE, MARRIED, LIVED-IN, WIDOWED"],
-      ["   - email_address: Valid email address"],
-      ["   - contact_number: Phone number"],
-      ["   - home_address: Home address details"],
-      ["   - region: Geographic region"],
-      ["   - province: Province name"],
-      ["   - city_municipality: City or municipality name"],
-      ["   - highest_education: Educational attainment"],
-      ["   - work_status: Employment status"],
-      ["   - registered_voter: YES or NO"],
-      ["   - voted_last_election: YES or NO"],
-      ["   - attended_kk_assembly: YES or NO"],
-      ["   - kk_assemblies_attended: Number of assemblies attended (0 or more)"],
-      [""],
-      ["3. Valid Barangay Values:"],
-      ["   Aplaya, Bobontugan, Corrales, Danao, Jampason, Kimaya, Lower Jasaan (Pob.), Luz Banzon,"],
-      ["   Natubo, San Antonio, San Isidro, San Nicolas, Upper Jasaan (Pob.), I. S. Cruz"],
-    ];
-    
-    const instructionsWs = XLSX.utils.aoa_to_sheet(instructionsData);
-    
-    // Style the instructions sheet
-    const instructionsRange = XLSX.utils.decode_range(instructionsWs['!ref'] || "A1:A30");
-    
-    const titleStyle = {
-      font: { bold: true, sz: 14, color: { rgb: "8B5CF6" } },
-      alignment: { horizontal: "left" }
-    };
-    
-    const headingStyle = {
-      font: { bold: true, sz: 12, color: { rgb: "000000" } },
-      alignment: { horizontal: "left" }
-    };
-    
-    const textStyle = {
-      font: { sz: 11, color: { rgb: "333333" } },
-      alignment: { horizontal: "left" }
-    };
-    
-    // Apply styles to instructions sheet
-    for (let R = instructionsRange.s.r; R <= instructionsRange.e.r; R++) {
-      const cellAddress = XLSX.utils.encode_cell({ r: R, c: 0 });
-      if (!instructionsWs[cellAddress]) continue;
-      
-      if (R === 0) {
-        instructionsWs[cellAddress].s = titleStyle; // Title
-      } else if ([2, 11, 26].includes(R)) {
-        instructionsWs[cellAddress].s = headingStyle; // Section headings
-      } else {
-        instructionsWs[cellAddress].s = textStyle; // Regular text
-      }
+
+    setParsedData(cleanedData);
+    setValidData(validList);
+    setDuplicates(duplicatesList);
+
+    if (validList.length === 0) {
+      setError('No valid records found. Please check your file format and data.');
     }
-    
-    // Set column widths for instructions
-    instructionsWs['!cols'] = [{ wch: 100 }];
-    
-    // Add both sheets to the workbook
-    XLSX.utils.book_append_sheet(wb, ws, "Template");
-    XLSX.utils.book_append_sheet(wb, instructionsWs, "Instructions");
-    
-    // Generate file and trigger download
-    XLSX.writeFile(wb, "youth_census_template.xlsx", { bookType: "xlsx", bookSST: false, type: "binary" });
+  };
+
+  const handleImport = () => {
+    if (validData.length > 0) {
+      onImport(validData);
+      onClose();
+    }
   };
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Import Youth Records</DialogTitle>
-            <DialogDescription>
-              Upload a CSV or Excel file with youth census data.
-            </DialogDescription>
-          </DialogHeader>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>Import Youth Records</DialogTitle>
+      <DialogContent>
+        <input type="file" accept=".csv, .xlsx, .xls" onChange={handleFileChange} />
+        <Button onClick={parseFile} variant="contained" sx={{ mt: 2 }}>Parse File</Button>
 
-          <div className="space-y-4 py-4">
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-muted-foreground">
-                File must include required fields: name, age, sex, barangay, youth classification and age group
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={downloadTemplate}
-                className="ml-auto flex items-center gap-2"
-              >
-                <Download size={14} />
-                Template
-              </Button>
-            </div>
-            
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept=".csv, .xlsx, .xls"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+        {error && <Typography color="error" sx={{ mt: 2 }}>{error}</Typography>}
 
-            <div 
-              className="border-2 border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {file ? (
-                <div className="flex flex-col items-center gap-2">
-                  <FileSpreadsheet className="h-10 w-10 text-muted-foreground" />
-                  <p className="font-medium">{file.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {file.size > 1024 * 1024
-                      ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
-                      : `${(file.size / 1024).toFixed(2)} KB`}
-                  </p>
-                  <Badge variant={parseErrors.length ? "destructive" : "secondary"}>
-                    {parseErrors.length 
-                      ? `${parseErrors.length} errors` 
-                      : `${parsedData.length} records ready${duplicatesWithinFile.length ? ` (${duplicatesWithinFile.length} duplicate groups)` : ''}`}
-                  </Badge>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <FileUp className="h-10 w-10 text-muted-foreground" />
-                  <p className="font-medium">Click to upload</p>
-                  <p className="text-xs text-muted-foreground">
-                    CSV or Excel files only
-                  </p>
-                </div>
-              )}
-            </div>
-            
-            {parseErrors.length > 0 && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Validation Errors</AlertTitle>
-                <AlertDescription>
-                  <ul className="list-disc pl-4 text-sm mt-2 max-h-[100px] overflow-y-auto">
-                    {parseErrors.slice(0, 5).map((error, index) => (
-                      <li key={index}>{error}</li>
-                    ))}
-                    {parseErrors.length > 5 && (
-                      <li>...and {parseErrors.length - 5} more errors</li>
-                    )}
-                  </ul>
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => handleOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleImport} 
-              disabled={parsedData.length === 0 || isUploading}
-              className="flex items-center gap-2"
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Importing...
-                </>
-              ) : (
-                'Import Data'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Duplicate Resolution Dialog */}
-      <AlertDialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Duplicate Record Found</AlertDialogTitle>
-            <AlertDialogDescription>
-              {currentDuplicateIndex >= 0 && duplicatesWithDb[currentDuplicateIndex] && (
-                <div className="space-y-4">
-                  <p>
-                    Record {currentDuplicateIndex + 1} of {duplicatesWithDb.length} with name 
-                    <span className="font-medium"> {duplicatesWithDb[currentDuplicateIndex].record.name} </span>  
-                    already exists in the database.
-                  </p>
-                  
-                  <div className="grid grid-cols-2 gap-4 bg-muted p-4 rounded-md">
-                    <div>
-                      <h4 className="font-medium mb-2">Existing Record:</h4>
-                      <ul className="text-sm space-y-1">
-                        {duplicatesWithDb[currentDuplicateIndex].dbRecord && (
-                          <>
-                            <li><span className="opacity-70">Age:</span> {duplicatesWithDb[currentDuplicateIndex].dbRecord?.age}</li>
-                            <li><span className="opacity-70">Barangay:</span> {duplicatesWithDb[currentDuplicateIndex].dbRecord?.barangay}</li>
-                            <li><span className="opacity-70">Classification:</span> {duplicatesWithDb[currentDuplicateIndex].dbRecord?.youth_classification}</li>
-                          </>
-                        )}
-                      </ul>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium mb-2">New Record:</h4>
-                      <ul className="text-sm space-y-1">
-                        <li><span className="opacity-70">Age:</span> {duplicatesWithDb[currentDuplicateIndex].record.age}</li>
-                        <li><span className="opacity-70">Barangay:</span> {duplicatesWithDb[currentDuplicateIndex].record.barangay}</li>
-                        <li><span className="opacity-70">Classification:</span> {duplicatesWithDb[currentDuplicateIndex].record.youth_classification}</li>
-                      </ul>
-                    </div>
-                  </div>
-                  
-                  <p>How would you like to handle this duplicate?</p>
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel onClick={() => handleDuplicateAction("ignore")}>
-              Ignore (Skip)
-            </AlertDialogCancel>
-            <div className="flex gap-2">
-              <AlertDialogAction 
-                className="bg-blue-600 hover:bg-blue-700" 
-                onClick={() => handleDuplicateAction("merge")}
-              >
-                Merge Records
-              </AlertDialogAction>
-              <AlertDialogAction 
-                className="bg-amber-600 hover:bg-amber-700"
-                onClick={() => handleDuplicateAction("overwrite")}
-              >
-                Overwrite
-              </AlertDialogAction>
-            </div>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+        {parsedData.length > 0 && (
+          <Box mt={2}>
+            <Typography variant="subtitle1">Total Parsed Records: {parsedData.length}</Typography>
+            <Typography variant="subtitle1" color="green">Valid Records: {validData.length}</Typography>
+            <Typography variant="subtitle1" color="orange">Duplicates: {duplicates.length}</Typography>
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          onClick={handleImport}
+          variant="contained"
+          disabled={validData.length === 0}
+        >
+          Import Valid Records
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
-}
+};

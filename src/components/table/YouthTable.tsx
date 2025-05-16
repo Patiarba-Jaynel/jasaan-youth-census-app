@@ -1,4 +1,3 @@
-
 import { Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { YouthRecord } from "@/lib/pb-client";
@@ -39,6 +38,9 @@ export function YouthTable({ columns, records, onEdit, onDelete }: YouthTablePro
             )}
             {columns.find(col => col.key === "barangay")?.visible && (
               <TableHead>Barangay</TableHead>
+            )}
+            {columns.find(col => col.key === "homeAddress")?.visible && (
+              <TableHead>Home Address</TableHead>
             )}
             {columns.find(col => col.key === "classification")?.visible && (
               <TableHead>Classification</TableHead>
@@ -85,6 +87,9 @@ export function YouthTable({ columns, records, onEdit, onDelete }: YouthTablePro
                 )}
                 {columns.find(col => col.key === "barangay")?.visible && (
                   <TableCell>{record.barangay}</TableCell>
+                )}
+                {columns.find(col => col.key === "homeAddress")?.visible && (
+                  <TableCell>{record.home_address}</TableCell>
                 )}
                 {columns.find(col => col.key === "classification")?.visible && (
                   <TableCell>{record.youth_classification}</TableCell>
@@ -143,7 +148,7 @@ export function YouthTable({ columns, records, onEdit, onDelete }: YouthTablePro
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={14} className="text-center py-4">
+              <TableCell colSpan={15} className="text-center py-4">
                 No records found
               </TableCell>
             </TableRow>

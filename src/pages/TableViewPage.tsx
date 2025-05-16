@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
@@ -22,15 +21,14 @@ const TableViewPage = () => {
     try {
       setIsLoading(true);
       const records = await pbClient.youth.getAll();
-      
-      // Ensure all records have the kk_assemblies_attended field as a number, defaulting to 0 if missing
+
       const processedRecords = records.map(record => ({
         ...record,
         kk_assemblies_attended: typeof record.kk_assemblies_attended === "number"
           ? record.kk_assemblies_attended
           : Number(record.kk_assemblies_attended) || 0
       }));
-      
+
       setYouthRecords(processedRecords);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -48,7 +46,7 @@ const TableViewPage = () => {
   useEffect(() => {
     const checkAuth = async () => {
       const isLoggedIn = pbClient.auth.isLoggedIn();
-      
+
       if (!isLoggedIn) {
         toast.error("Authentication required", {
           description: "Please log in to access the data table.",
@@ -56,10 +54,10 @@ const TableViewPage = () => {
         navigate("/login");
         return;
       }
-      
+
       fetchData();
     };
-    
+
     checkAuth();
   }, [navigate]);
 
@@ -89,7 +87,7 @@ const TableViewPage = () => {
               </Button>
             </div>
           </div>
-          
+
           {isLoading ? (
             <div className="flex items-center justify-center h-[60vh]">
               <div className="text-center">
@@ -109,8 +107,8 @@ const TableViewPage = () => {
 
       <ImportDialog 
         open={isImportDialogOpen}
-        onOpenChange={setIsImportDialogOpen}
-        onImportSuccess={handleImportSuccess}
+        onClose={() => setIsImportDialogOpen(false)}
+        onImport={handleImportSuccess}
       />
     </div>
   );

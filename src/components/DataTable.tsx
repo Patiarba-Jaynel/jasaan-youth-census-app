@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
@@ -16,43 +15,36 @@ interface DataTableProps {
 }
 
 export function DataTable({ data, onDataChange }: DataTableProps) {
-  // Use the custom hook for table state management
   const tableState = useTableState(data);
-  
-  // Dialog states
+
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<YouthRecord | null>(null);
 
-  // Handle opening edit dialog
   const handleEdit = (record: YouthRecord) => {
     setSelectedRecord(record);
     setIsEditDialogOpen(true);
   };
 
-  // Handle opening delete dialog
   const handleDelete = (record: YouthRecord) => {
     setSelectedRecord(record);
     setIsDeleteDialogOpen(true);
   };
 
-  // Handle save edited record
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleSaveEdit = async (data: any) => {
+  const handleSaveEdit = async (data: Partial<YouthRecord>) => {
     if (!selectedRecord) return;
 
     try {
       await pbClient.youth.update(selectedRecord.id, data);
       toast.success("Record updated successfully");
       setIsEditDialogOpen(false);
-      onDataChange(); // Refresh data after update
+      onDataChange();
     } catch (error) {
       console.error("Error updating record:", error);
       toast.error("Failed to update record");
     }
   };
 
-  // Handle confirm delete
   const handleConfirmDelete = async () => {
     if (!selectedRecord) return;
 
@@ -60,21 +52,20 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       await pbClient.youth.delete(selectedRecord.id);
       toast.success("Record deleted successfully");
       setIsDeleteDialogOpen(false);
-      onDataChange(); // Refresh data after delete
+      onDataChange();
     } catch (error) {
       console.error("Error deleting record:", error);
       toast.error("Failed to delete record");
     }
   };
 
-  // Handle applying export filters
   const handleApplyExportFilters = () => {
     toast.success(`Export filters applied (${tableState.getExportCount()} records selected)`);
   };
 
   return (
     <div className="w-full">
-      {/* Table header with search and filters */}
+      {/* Header with search/filter/column toggles */}
       <TableHeader 
         searchTerm={tableState.searchTerm}
         onSearchChange={tableState.setSearchTerm}
@@ -90,7 +81,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
         hasActiveFilters={tableState.hasActiveFilters}
       />
 
-      {/* Table */}
+      {/* Youth Table */}
       <YouthTable 
         columns={tableState.columns}
         records={tableState.currentItems}

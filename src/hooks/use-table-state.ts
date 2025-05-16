@@ -23,19 +23,16 @@ export function useTableState(data: YouthRecord[]) {
     { key: "attendedAssembly", title: "Attended Assembly", visible: false },
     { key: "assembliesAttended", title: "KK Assemblies Attended", visible: false },
     { key: "civilStatus", title: "Civil Status", visible: false },
+    { key: "homeAddress", title: "Home Address", visible: false }, // ✅ NEW COLUMN
   ]);
 
-  // State for filter dialogs
   const [isExportFilterDialogOpen, setIsExportFilterDialogOpen] = useState(false);
-
-  // State for search and filters
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBarangays, setSelectedBarangays] = useState<string[]>([]);
   const [selectedClassifications, setSelectedClassifications] = useState<string[]>([]);
   const [selectedAgeGroups, setSelectedAgeGroups] = useState<string[]>([]);
   const [selectedWorkStatus, setSelectedWorkStatus] = useState<string[]>([]);
 
-  // Advanced filter states
   const [advancedFilters, setAdvancedFilters] = useState({
     ageRange: [15, 30] as [number, number],
     gender: [] as string[],
@@ -44,7 +41,6 @@ export function useTableState(data: YouthRecord[]) {
     highestEducation: [] as string[],
   });
 
-  // Export filter states
   const [exportFilters, setExportFilters] = useState({
     barangays: [] as string[],
     classifications: [] as string[],
@@ -58,49 +54,33 @@ export function useTableState(data: YouthRecord[]) {
     attendedAssembly: [] as string[],
   });
 
-  // Apply filters to data
   const filteredData = data.filter((record) => {
-    // Search term filter
     const matchesSearch =
       searchTerm === "" ||
       record.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.barangay.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.youth_classification
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+      record.youth_classification.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Basic Dropdown filters
     const matchesBarangay =
-      selectedBarangays.length === 0 ||
-      selectedBarangays.includes(record.barangay);
+      selectedBarangays.length === 0 || selectedBarangays.includes(record.barangay);
     const matchesClassification =
-      selectedClassifications.length === 0 ||
-      selectedClassifications.includes(record.youth_classification);
+      selectedClassifications.length === 0 || selectedClassifications.includes(record.youth_classification);
     const matchesAgeGroup =
-      selectedAgeGroups.length === 0 ||
-      selectedAgeGroups.includes(record.youth_age_group);
+      selectedAgeGroups.length === 0 || selectedAgeGroups.includes(record.youth_age_group);
     const matchesWorkStatus =
-      selectedWorkStatus.length === 0 ||
-      selectedWorkStatus.includes(record.work_status);
-      
-    // Advanced filters
+      selectedWorkStatus.length === 0 || selectedWorkStatus.includes(record.work_status);
+
     const age = parseInt(record.age);
-    const matchesAgeRange = 
-      isNaN(age) || 
-      (age >= advancedFilters.ageRange[0] && age <= advancedFilters.ageRange[1]);
-      
-    const matchesGender = 
-      advancedFilters.gender.length === 0 ||
-      advancedFilters.gender.includes(record.sex);
-      
+    const matchesAgeRange =
+      isNaN(age) || (age >= advancedFilters.ageRange[0] && age <= advancedFilters.ageRange[1]);
+    const matchesGender =
+      advancedFilters.gender.length === 0 || advancedFilters.gender.includes(record.sex);
     const matchesVotedLastElection =
       advancedFilters.votedLastElection.length === 0 ||
       advancedFilters.votedLastElection.includes(record.voted_last_election);
-      
     const matchesAttendedAssembly =
       advancedFilters.attendedAssembly.length === 0 ||
       advancedFilters.attendedAssembly.includes(record.attended_kk_assembly);
-      
     const matchesEducation =
       advancedFilters.highestEducation.length === 0 ||
       advancedFilters.highestEducation.includes(record.highest_education);
@@ -119,13 +99,11 @@ export function useTableState(data: YouthRecord[]) {
     );
   });
 
-  // Calculate pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-  // Reset pagination when filters or search change
   useEffect(() => {
     setCurrentPage(1);
   }, [
@@ -134,22 +112,22 @@ export function useTableState(data: YouthRecord[]) {
     selectedClassifications,
     selectedAgeGroups,
     selectedWorkStatus,
-    advancedFilters
+    advancedFilters,
   ]);
 
-  // Handle advanced filter changes
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleAdvancedFilterChange = (filterType: string, value: any) => {
+  type AdvancedFilterKey = keyof typeof advancedFilters;
+  type AdvancedFilterValue = number[] | [number, number] | string[];
+
+  const handleAdvancedFilterChange = (filterType: AdvancedFilterKey, value: AdvancedFilterValue) => {
     setAdvancedFilters(prev => ({
       ...prev,
       [filterType]: value
     }));
   };
 
-  // Clear advanced filters
   const clearAdvancedFilters = () => {
     setAdvancedFilters({
-      ageRange: [15, 30] as [number, number],
+      ageRange: [15, 30],
       gender: [],
       votedLastElection: [],
       attendedAssembly: [],
@@ -157,96 +135,50 @@ export function useTableState(data: YouthRecord[]) {
     });
   };
 
-  // Toggle column visibility
   const toggleColumnVisibility = (key: string) => {
     setColumns(cols => cols.map(col => 
       col.key === key ? { ...col, visible: !col.visible } : col
     ));
   };
 
-  // Toggle filter selection
-  const toggleFilter = (
-    value: string,
-    filterType: "barangays" | "classifications" | "ageGroups" | "workStatus"
-  ) => {
+  const toggleFilter = (value: string, filterType: "barangays" | "classifications" | "ageGroups" | "workStatus") => {
     switch (filterType) {
       case "barangays":
-        setSelectedBarangays((prev) =>
-          prev.includes(value)
-            ? prev.filter((item) => item !== value)
-            : [...prev, value]
-        );
+        setSelectedBarangays(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
         break;
       case "classifications":
-        setSelectedClassifications((prev) =>
-          prev.includes(value)
-            ? prev.filter((item) => item !== value)
-            : [...prev, value]
-        );
+        setSelectedClassifications(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
         break;
       case "ageGroups":
-        setSelectedAgeGroups((prev) =>
-          prev.includes(value)
-            ? prev.filter((item) => item !== value)
-            : [...prev, value]
-        );
+        setSelectedAgeGroups(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
         break;
       case "workStatus":
-        setSelectedWorkStatus((prev) =>
-          prev.includes(value)
-            ? prev.filter((item) => item !== value)
-            : [...prev, value]
-        );
+        setSelectedWorkStatus(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
         break;
     }
   };
 
-  // Toggle export filter selection
-  const toggleExportFilter = (
-    value: string,
-    filterType: keyof typeof exportFilters
-  ) => {
-    setExportFilters((prev) => ({
+  const toggleExportFilter = (value: string, filterType: keyof typeof exportFilters) => {
+    setExportFilters(prev => ({
       ...prev,
       [filterType]: prev[filterType].includes(value)
-        ? prev[filterType].filter((item) => item !== value)
+        ? prev[filterType].filter(item => item !== value)
         : [...prev[filterType], value],
     }));
   };
 
-  // Filter data for export
   const getExportData = () => {
     return data.filter((record) => {
-      const matchesBarangay =
-        exportFilters.barangays.length === 0 ||
-        exportFilters.barangays.includes(record.barangay);
-      const matchesClassification =
-        exportFilters.classifications.length === 0 ||
-        exportFilters.classifications.includes(record.youth_classification);
-      const matchesAgeGroup =
-        exportFilters.ageGroups.length === 0 ||
-        exportFilters.ageGroups.includes(record.youth_age_group);
-      const matchesWorkStatus =
-        exportFilters.workStatus.length === 0 ||
-        exportFilters.workStatus.includes(record.work_status);
-      const matchesEducation =
-        exportFilters.education.length === 0 ||
-        exportFilters.education.includes(record.highest_education);
-      const matchesSex =
-        exportFilters.sex.length === 0 ||
-        exportFilters.sex.includes(record.sex);
-      const matchesCivilStatus =
-        exportFilters.civilStatus.length === 0 ||
-        exportFilters.civilStatus.includes(record.civil_status);
-      const matchesRegisteredVoter =
-        exportFilters.registeredVoter.length === 0 ||
-        exportFilters.registeredVoter.includes(record.registered_voter);
-      const matchesVotedLastElection =
-        exportFilters.votedLastElection.length === 0 ||
-        exportFilters.votedLastElection.includes(record.voted_last_election);
-      const matchesAttendedAssembly =
-        exportFilters.attendedAssembly.length === 0 ||
-        exportFilters.attendedAssembly.includes(record.attended_kk_assembly);
+      const matchesBarangay = exportFilters.barangays.length === 0 || exportFilters.barangays.includes(record.barangay);
+      const matchesClassification = exportFilters.classifications.length === 0 || exportFilters.classifications.includes(record.youth_classification);
+      const matchesAgeGroup = exportFilters.ageGroups.length === 0 || exportFilters.ageGroups.includes(record.youth_age_group);
+      const matchesWorkStatus = exportFilters.workStatus.length === 0 || exportFilters.workStatus.includes(record.work_status);
+      const matchesEducation = exportFilters.education.length === 0 || exportFilters.education.includes(record.highest_education);
+      const matchesSex = exportFilters.sex.length === 0 || exportFilters.sex.includes(record.sex);
+      const matchesCivilStatus = exportFilters.civilStatus.length === 0 || exportFilters.civilStatus.includes(record.civil_status);
+      const matchesRegisteredVoter = exportFilters.registeredVoter.length === 0 || exportFilters.registeredVoter.includes(record.registered_voter);
+      const matchesVotedLastElection = exportFilters.votedLastElection.length === 0 || exportFilters.votedLastElection.includes(record.voted_last_election);
+      const matchesAttendedAssembly = exportFilters.attendedAssembly.length === 0 || exportFilters.attendedAssembly.includes(record.attended_kk_assembly);
 
       return (
         matchesBarangay &&
@@ -263,7 +195,6 @@ export function useTableState(data: YouthRecord[]) {
     });
   };
 
-  // Export to CSV
   const exportToCSV = () => {
     const dataToExport = getExportData();
 
@@ -278,6 +209,7 @@ export function useTableState(data: YouthRecord[]) {
       "Age Group",
       "Work Status",
       "Highest Education",
+      "Home Address", // ✅ NEW FIELD
       "Registered Voter",
       "Voted Last Election",
       "Attended KK Assembly",
@@ -295,6 +227,7 @@ export function useTableState(data: YouthRecord[]) {
       item.youth_age_group,
       item.work_status,
       item.highest_education,
+      item.home_address || "", // ✅ NEW FIELD
       item.registered_voter,
       item.voted_last_election,
       item.attended_kk_assembly,
@@ -303,7 +236,7 @@ export function useTableState(data: YouthRecord[]) {
 
     const csvContent = [
       headers.join(","),
-      ...rows.map((row) => row.join(",")),
+      ...rows.map(row => row.join(",")),
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -316,11 +249,9 @@ export function useTableState(data: YouthRecord[]) {
     link.click();
     document.body.removeChild(link);
 
-    // Show toast with export count
     toast.success(`Exported ${dataToExport.length} records to CSV`);
   };
 
-  // Clear all filters
   const clearAllFilters = () => {
     setSearchTerm("");
     setSelectedBarangays([]);
@@ -330,7 +261,6 @@ export function useTableState(data: YouthRecord[]) {
     clearAdvancedFilters();
   };
 
-  // Clear export filters
   const clearExportFilters = () => {
     setExportFilters({
       barangays: [],
@@ -346,12 +276,10 @@ export function useTableState(data: YouthRecord[]) {
     });
   };
 
-  // Get counts for export filters
   const getExportCount = () => {
     return getExportData().length;
   };
 
-  // Check if any filters are active
   const hasActiveFilters = () => {
     return (
       selectedBarangays.length > 0 ||
@@ -369,23 +297,16 @@ export function useTableState(data: YouthRecord[]) {
   };
 
   return {
-    // Pagination
     currentPage,
     setCurrentPage,
     itemsPerPage,
     indexOfFirstItem,
     indexOfLastItem,
     totalPages,
-
-    // Data
     filteredData,
     currentItems,
-
-    // Column visibility
     columns,
     toggleColumnVisibility,
-
-    // Search and filters
     searchTerm,
     setSearchTerm,
     selectedBarangays,
@@ -393,15 +314,11 @@ export function useTableState(data: YouthRecord[]) {
     selectedAgeGroups,
     selectedWorkStatus,
     toggleFilter,
-
-    // Advanced filters
     advancedFilters,
     handleAdvancedFilterChange,
     clearAdvancedFilters,
     hasActiveFilters: hasActiveFilters(),
     clearAllFilters,
-
-    // Export filters
     exportFilters,
     toggleExportFilter,
     clearExportFilters,
