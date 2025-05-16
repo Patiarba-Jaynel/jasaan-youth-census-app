@@ -84,7 +84,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           )}
         />
 
-        {/* Date of Birth - Simplified Version */}
+        {/* Date of Birth - Updated to match EditRecordDialog format */}
         <FormField
           control={control}
           name="birthday"
@@ -97,11 +97,15 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                     <Button
                       variant={"outline"}
                       className={cn(
-                        "w-full pl-3 text-left font-normal",
+                        "w-full justify-start text-left font-normal",
                         !field.value && "text-muted-foreground"
                       )}
                     >
-                      {field.value ? format(field.value, "MMMM d, yyyy") : "Select Date"}
+                      {field.value ? (
+                        format(field.value, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>
@@ -111,9 +115,6 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                     mode="single"
                     selected={field.value}
                     onSelect={field.onChange}
-                    captionLayout="dropdown-buttons"
-                    fromYear={1980}
-                    toYear={new Date().getFullYear()}
                     disabled={(date) =>
                       date > new Date() || date < new Date("1980-01-01")
                     }
