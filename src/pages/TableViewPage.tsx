@@ -34,7 +34,6 @@ const TableViewPage = () => {
   const handleImportSuccess = () => {
     fetchData();
     setIsImportDialogOpen(false);
-    toast.success("Data imported successfully");
   };
 
   useEffect(() => {
@@ -67,7 +66,7 @@ const TableViewPage = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsImportDialogOpen(true)}
-                className="flex items-center gap-1"
+                className="flex items-center gap-2"
               >
                 <Import size={16} />
                 Import Data

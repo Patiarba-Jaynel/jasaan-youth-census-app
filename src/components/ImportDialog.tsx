@@ -1,5 +1,4 @@
-
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
@@ -18,12 +17,30 @@ import { AlertCircle, Download, FileSpreadsheet, FileUp, Loader2 } from "lucide-
 import { toast } from "@/components/ui/sonner";
 import { Badge } from "@/components/ui/badge";
 import { generateTemplateData } from "@/lib/schema";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onImportSuccess: () => void;
 }
+
+interface Duplicate {
+  importIndex: number;
+  dbRecord?: YouthRecord;
+  record: Record<string, any>;
+}
+
+type DuplicateAction = "merge" | "overwrite" | "ignore";
 
 export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDialogProps) {
   const [file, setFile] = useState<File | null>(null);
@@ -32,6 +49,13 @@ export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDial
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [parsedData, setParsedData] = useState<Record<string, any>[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Duplicate handling states
+  const [duplicatesWithinFile, setDuplicatesWithinFile] = useState<number[][]>([]);
+  const [duplicatesWithDb, setDuplicatesWithDb] = useState<Duplicate[]>([]);
+  const [currentDuplicateIndex, setCurrentDuplicateIndex] = useState<number>(-1);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState<boolean>(false);
+  const [processedRecords, setProcessedRecords] = useState<Record<string, any>[]>([]);
 
   // Reset state when dialog closes
   const handleOpenChange = (isOpen: boolean) => {
@@ -40,6 +64,11 @@ export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDial
       setParsedData([]);
       setParseErrors([]);
       setIsUploading(false);
+      setDuplicatesWithinFile([]);
+      setDuplicatesWithDb([]);
+      setCurrentDuplicateIndex(-1);
+      setShowDuplicateDialog(false);
+      setProcessedRecords([]);
     }
     onOpenChange(isOpen);
   };
@@ -57,6 +86,7 @@ export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDial
   const parseFile = (file: File) => {
     setParseErrors([]);
     setParsedData([]);
+    setDuplicatesWithinFile([]);
     
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
     
@@ -97,6 +127,34 @@ export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDial
     }
   };
 
+  // Check for duplicates within the imported file
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const findDuplicatesInFile = (data: Record<string, any>[]) => {
+    const duplicates: number[][] = [];
+    const nameMap = new Map<string, number[]>();
+    
+    // First pass: group records by name (case insensitive)
+    data.forEach((record, index) => {
+      if (!record.name) return;
+      
+      const normalizedName = record.name.toLowerCase().trim();
+      if (nameMap.has(normalizedName)) {
+        nameMap.get(normalizedName)?.push(index);
+      } else {
+        nameMap.set(normalizedName, [index]);
+      }
+    });
+    
+    // Extract duplicate groups (2 or more records with same name)
+    nameMap.forEach(indices => {
+      if (indices.length > 1) {
+        duplicates.push(indices);
+      }
+    });
+    
+    return duplicates;
+  };
+
   // Validate the parsed data against schema
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const validateData = (data: Record<string, any>[]) => {
@@ -134,23 +192,128 @@ export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDial
       }
     });
     
+    // Check for duplicates within the file
+    const duplicates = findDuplicatesInFile(data);
+    setDuplicatesWithinFile(duplicates);
+    
+    if (duplicates.length > 0) {
+      duplicates.forEach(group => {
+        const names = group.map(idx => data[idx].name);
+        errors.push(`Duplicate name "${names[0]}" found in rows: ${group.map(idx => idx + 2).join(', ')}`);
+      });
+    }
+    
     if (errors.length) {
       setParseErrors(errors);
+      setParsedData([]);
     } else {
       setParsedData(data);
     }
   };
 
-  // Import data to database
-  const handleImport = async () => {
-    if (!parsedData.length) return;
+  // Check for duplicates with the database
+  const checkDuplicatesWithDb = useCallback(async (data: Record<string, any>[]) => {
+    try {
+      // Get all existing records from the database
+      const existingRecords = await pbClient.youth.getAll();
+      const duplicates: Duplicate[] = [];
+      
+      // Check each imported record against existing records
+      data.forEach((record, index) => {
+        // Skip if no name (though this should be caught in validation)
+        if (!record.name) return;
+        
+        // Find matching records by name (case insensitive)
+        const normalizedName = record.name.toLowerCase().trim();
+        const matchingRecord = existingRecords.find(dbRecord => 
+          dbRecord.name.toLowerCase().trim() === normalizedName
+        );
+        
+        if (matchingRecord) {
+          duplicates.push({
+            importIndex: index,
+            dbRecord: matchingRecord,
+            record: record
+          });
+        }
+      });
+      
+      return duplicates;
+    } catch (error) {
+      console.error("Error checking for duplicates:", error);
+      throw error;
+    }
+  }, []);
+
+  // Handle duplicate resolution
+  const handleDuplicateAction = useCallback((action: DuplicateAction) => {
+    if (currentDuplicateIndex < 0 || currentDuplicateIndex >= duplicatesWithDb.length) {
+      return;
+    }
     
+    const currentDuplicate = duplicatesWithDb[currentDuplicateIndex];
+    const recordIndex = currentDuplicate.importIndex;
+    const record = { ...parsedData[recordIndex] };
+    
+    // Apply the selected action
+    switch (action) {
+      case "merge":
+        // Merge: Keep existing values unless the import has new non-empty values
+        if (currentDuplicate.dbRecord) {
+          Object.keys(record).forEach(key => {
+            if (!record[key] && currentDuplicate.dbRecord && currentDuplicate.dbRecord[key as keyof YouthRecord]) {
+              record[key] = currentDuplicate.dbRecord[key as keyof YouthRecord];
+            }
+          });
+          
+          // Add the record ID for updating instead of creating
+          record.id = currentDuplicate.dbRecord.id;
+        }
+        setProcessedRecords([...processedRecords, record]);
+        break;
+        
+      case "overwrite":
+        // Overwrite: Use the imported data and add the record ID for updating
+        if (currentDuplicate.dbRecord) {
+          record.id = currentDuplicate.dbRecord.id;
+        }
+        setProcessedRecords([...processedRecords, record]);
+        break;
+        
+      case "ignore":
+        // Ignore: Don't add this record to processed records
+        break;
+    }
+    
+    // Move to next duplicate or finish
+    if (currentDuplicateIndex < duplicatesWithDb.length - 1) {
+      setCurrentDuplicateIndex(currentDuplicateIndex + 1);
+    } else {
+      setShowDuplicateDialog(false);
+      finishImport();
+    }
+  }, [currentDuplicateIndex, duplicatesWithDb, parsedData, processedRecords]);
+
+  // Process duplicates one by one
+  const processDuplicates = useCallback(async () => {
+    if (duplicatesWithDb.length > 0) {
+      setCurrentDuplicateIndex(0);
+      setShowDuplicateDialog(true);
+    } else {
+      // No duplicates, proceed with all records
+      setProcessedRecords([...parsedData]);
+      finishImport();
+    }
+  }, [duplicatesWithDb, parsedData]);
+
+  // Finish import after handling duplicates
+  const finishImport = useCallback(async () => {
     try {
       setIsUploading(true);
       
-      // Transform data to match YouthRecord structure
-      const formattedData = parsedData.map(record => {
-        // Default values for required fields
+      // Filter out records that have been marked for ignore
+      const recordsToImport = processedRecords.map(record => {
+        // Format the record to match YouthRecord structure
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const formattedRecord: any = {
           name: record.name || '',
@@ -175,17 +338,79 @@ export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDial
           kk_assemblies_attended: parseInt(record.kk_assemblies_attended) || 0
         };
         
+        // If this is an update (has id), keep the id
+        if (record.id) {
+          formattedRecord.id = record.id;
+        }
+        
         return formattedRecord;
       });
       
-      // Upload the data
-      await pbClient.youth.createMany(formattedData);
+      // Process records to create or update
+      const createdRecords = [];
+      const updatedRecords = [];
+      
+      // Split into new records and updates
+      const newRecords = recordsToImport.filter(record => !record.id);
+      const recordsToUpdate = recordsToImport.filter(record => record.id);
+      
+      // Create new records
+      if (newRecords.length > 0) {
+        const created = await pbClient.youth.createMany(newRecords);
+        createdRecords.push(...created);
+      }
+      
+      // Update existing records
+      for (const record of recordsToUpdate) {
+        const id = record.id;
+        delete record.id; // Remove id before updating
+        const updated = await pbClient.youth.update(id, record);
+        updatedRecords.push(updated);
+      }
+      
+      // Show success toast with count details
+      toast.success(`Import completed successfully`, {
+        description: `Created ${createdRecords.length} new records, updated ${updatedRecords.length} records.`
+      });
       
       onImportSuccess();
     } catch (error) {
       console.error('Error importing data:', error);
       toast.error('Failed to import data');
     } finally {
+      setIsUploading(false);
+    }
+  }, [processedRecords, onImportSuccess]);
+
+  // Import data to database
+  const handleImport = async () => {
+    if (!parsedData.length) return;
+    
+    try {
+      setIsUploading(true);
+      
+      // Check for duplicates with database
+      const dbDuplicates = await checkDuplicatesWithDb(parsedData);
+      setDuplicatesWithDb(dbDuplicates);
+      
+      // Get records that aren't duplicates with the database
+      const nonDuplicateIndices = parsedData
+        .map((_, index) => index)
+        .filter(index => !dbDuplicates.some(dup => dup.importIndex === index));
+      
+      // Add non-duplicate records to processed records
+      const nonDuplicates = nonDuplicateIndices.map(index => parsedData[index]);
+      setProcessedRecords(nonDuplicates);
+      
+      // Start processing duplicates or finish import
+      if (dbDuplicates.length > 0) {
+        processDuplicates();
+      } else {
+        finishImport();
+      }
+    } catch (error) {
+      console.error('Error importing data:', error);
+      toast.error('Failed to import data');
       setIsUploading(false);
     }
   };
@@ -366,107 +591,174 @@ export function ImportDialog({ open, onOpenChange, onImportSuccess }: ImportDial
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Import Youth Records</DialogTitle>
-          <DialogDescription>
-            Upload a CSV or Excel file with youth census data.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Import Youth Records</DialogTitle>
+            <DialogDescription>
+              Upload a CSV or Excel file with youth census data.
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">
-              File must include required fields: name, age, sex, barangay, youth classification and age group
-            </p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={downloadTemplate}
-              className="ml-auto flex items-center gap-2"
+          <div className="space-y-4 py-4">
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-muted-foreground">
+                File must include required fields: name, age, sex, barangay, youth classification and age group
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={downloadTemplate}
+                className="ml-auto flex items-center gap-2"
+              >
+                <Download size={14} />
+                Template
+              </Button>
+            </div>
+            
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".csv, .xlsx, .xls"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+
+            <div 
+              className="border-2 border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
             >
-              <Download size={14} />
-              Template
+              {file ? (
+                <div className="flex flex-col items-center gap-2">
+                  <FileSpreadsheet className="h-10 w-10 text-muted-foreground" />
+                  <p className="font-medium">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {file.size > 1024 * 1024
+                      ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+                      : `${(file.size / 1024).toFixed(2)} KB`}
+                  </p>
+                  <Badge variant={parseErrors.length ? "destructive" : "secondary"}>
+                    {parseErrors.length 
+                      ? `${parseErrors.length} errors` 
+                      : `${parsedData.length} records ready${duplicatesWithinFile.length ? ` (${duplicatesWithinFile.length} duplicate groups)` : ''}`}
+                  </Badge>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <FileUp className="h-10 w-10 text-muted-foreground" />
+                  <p className="font-medium">Click to upload</p>
+                  <p className="text-xs text-muted-foreground">
+                    CSV or Excel files only
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            {parseErrors.length > 0 && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Validation Errors</AlertTitle>
+                <AlertDescription>
+                  <ul className="list-disc pl-4 text-sm mt-2 max-h-[100px] overflow-y-auto">
+                    {parseErrors.slice(0, 5).map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                    {parseErrors.length > 5 && (
+                      <li>...and {parseErrors.length - 5} more errors</li>
+                    )}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => handleOpenChange(false)}>
+              Cancel
             </Button>
-          </div>
-          
-          <input
-            type="file"
-            ref={fileInputRef}
-            accept=".csv, .xlsx, .xls"
-            onChange={handleFileChange}
-            className="hidden"
-          />
+            <Button 
+              onClick={handleImport} 
+              disabled={parsedData.length === 0 || isUploading}
+              className="flex items-center gap-2"
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                'Import Data'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-          <div 
-            className="border-2 border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {file ? (
-              <div className="flex flex-col items-center gap-2">
-                <FileSpreadsheet className="h-10 w-10 text-muted-foreground" />
-                <p className="font-medium">{file.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {file.size > 1024 * 1024
-                    ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
-                    : `${(file.size / 1024).toFixed(2)} KB`}
-                </p>
-                <Badge variant={parseErrors.length ? "destructive" : "secondary"}>
-                  {parseErrors.length 
-                    ? `${parseErrors.length} errors` 
-                    : `${parsedData.length} records ready`}
-                </Badge>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2">
-                <FileUp className="h-10 w-10 text-muted-foreground" />
-                <p className="font-medium">Click to upload</p>
-                <p className="text-xs text-muted-foreground">
-                  CSV or Excel files only
-                </p>
-              </div>
-            )}
-          </div>
-          
-          {parseErrors.length > 0 && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Validation Errors</AlertTitle>
-              <AlertDescription>
-                <ul className="list-disc pl-4 text-sm mt-2 max-h-[100px] overflow-y-auto">
-                  {parseErrors.slice(0, 5).map((error, index) => (
-                    <li key={index}>{error}</li>
-                  ))}
-                  {parseErrors.length > 5 && (
-                    <li>...and {parseErrors.length - 5} more errors</li>
-                  )}
-                </ul>
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleImport} 
-            disabled={parsedData.length === 0 || isUploading}
-            className="flex items-center gap-2"
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Importing...
-              </>
-            ) : (
-              'Import Data'
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      {/* Duplicate Resolution Dialog */}
+      <AlertDialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duplicate Record Found</AlertDialogTitle>
+            <AlertDialogDescription>
+              {currentDuplicateIndex >= 0 && duplicatesWithDb[currentDuplicateIndex] && (
+                <div className="space-y-4">
+                  <p>
+                    Record {currentDuplicateIndex + 1} of {duplicatesWithDb.length} with name 
+                    <span className="font-medium"> {duplicatesWithDb[currentDuplicateIndex].record.name} </span>  
+                    already exists in the database.
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-4 bg-muted p-4 rounded-md">
+                    <div>
+                      <h4 className="font-medium mb-2">Existing Record:</h4>
+                      <ul className="text-sm space-y-1">
+                        {duplicatesWithDb[currentDuplicateIndex].dbRecord && (
+                          <>
+                            <li><span className="opacity-70">Age:</span> {duplicatesWithDb[currentDuplicateIndex].dbRecord?.age}</li>
+                            <li><span className="opacity-70">Barangay:</span> {duplicatesWithDb[currentDuplicateIndex].dbRecord?.barangay}</li>
+                            <li><span className="opacity-70">Classification:</span> {duplicatesWithDb[currentDuplicateIndex].dbRecord?.youth_classification}</li>
+                          </>
+                        )}
+                      </ul>
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium mb-2">New Record:</h4>
+                      <ul className="text-sm space-y-1">
+                        <li><span className="opacity-70">Age:</span> {duplicatesWithDb[currentDuplicateIndex].record.age}</li>
+                        <li><span className="opacity-70">Barangay:</span> {duplicatesWithDb[currentDuplicateIndex].record.barangay}</li>
+                        <li><span className="opacity-70">Classification:</span> {duplicatesWithDb[currentDuplicateIndex].record.youth_classification}</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <p>How would you like to handle this duplicate?</p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel onClick={() => handleDuplicateAction("ignore")}>
+              Ignore (Skip)
+            </AlertDialogCancel>
+            <div className="flex gap-2">
+              <AlertDialogAction 
+                className="bg-blue-600 hover:bg-blue-700" 
+                onClick={() => handleDuplicateAction("merge")}
+              >
+                Merge Records
+              </AlertDialogAction>
+              <AlertDialogAction 
+                className="bg-amber-600 hover:bg-amber-700"
+                onClick={() => handleDuplicateAction("overwrite")}
+              >
+                Overwrite
+              </AlertDialogAction>
+            </div>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
