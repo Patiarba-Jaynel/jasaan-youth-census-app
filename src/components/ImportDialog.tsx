@@ -8,22 +8,19 @@ import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { z } from 'zod';
 import { formSchema as YouthSchema } from '@/lib/schema';
+import { format } from 'date-fns';
 
 interface ImportDialogProps {
   open: boolean;
   onClose: () => void;
-   
   onImport: (records: any[]) => void;
 }
 
 export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImport }) => {
   const [file, setFile] = useState<File | null>(null);
-   
   const [parsedData, setParsedData] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
-   
   const [duplicates, setDuplicates] = useState<any[]>([]);
-   
   const [validData, setValidData] = useState<any[]>([]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,10 +40,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
-        complete: (results) => {
-           
-          processData(results.data as any[]);
-        },
+        complete: (results) => processData(results.data as any[]),
         error: () => setError('Error parsing CSV file.'),
       });
     } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
@@ -54,14 +48,30 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
       reader.onload = (e) => {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(sheet);
         processData(jsonData);
       };
       reader.readAsArrayBuffer(file);
     } else {
       setError('Unsupported file format. Please upload a CSV or Excel file.');
+    }
+  };
+
+  const formatHomeAddress = (address: string): string => {
+    return address
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const formatBirthday = (birthday: string): string => {
+    try {
+      const date = new Date(birthday);
+      return format(date, 'MMMM dd, yyyy'); // e.g., May 06, 2003
+    } catch {
+      return birthday;
     }
   };
 
@@ -73,15 +83,29 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
     const cleanedData = data.map((row) => {
       const cleanedRow: any = {};
       Object.entries(row).forEach(([key, value]) => {
-        cleanedRow[key.trim()] = typeof value === 'string' ? value.trim() : value;
+        const trimmedKey = key.trim();
+        if (typeof value === 'string') {
+          cleanedRow[trimmedKey] = value.trim();
+        } else {
+          cleanedRow[trimmedKey] = value;
+        }
       });
+
+      // Normalize fields
+      if (cleanedRow.home_address) {
+        cleanedRow.home_address = formatHomeAddress(cleanedRow.home_address);
+      }
+      if (cleanedRow.birthday) {
+        cleanedRow.birthday = formatBirthday(cleanedRow.birthday);
+      }
+
       return cleanedRow;
     });
 
     for (const record of cleanedData) {
       const result = YouthSchema.safeParse(record);
       if (result.success) {
-        const key = `${record.first_name?.toLowerCase()}|${record.last_name?.toLowerCase()}|${record.birthdate}`;
+        const key = `${record.name?.toLowerCase()}|${record.birthday}`;
         if (seen.has(key)) {
           duplicatesList.push(record);
         } else {
