@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { YouthRecord } from '@/lib/pb-client';
 import { toast } from '@/components/ui/sonner';
 import { format } from 'date-fns';
-import { standardizeRecordFields } from "@/lib/standardize"; // Corrected import
+import { standardizeRecordFields } from "@/lib/standardize";
 
 export function useTableState(data: YouthRecord[]) {
   // State for pagination
@@ -27,13 +27,17 @@ export function useTableState(data: YouthRecord[]) {
     { key: "homeAddress", title: "Home Address", visible: false }, // ✅ NEW COLUMN
   ]);
 
+  // Export filter dialog state
   const [isExportFilterDialogOpen, setIsExportFilterDialogOpen] = useState(false);
+
+  // Search and filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBarangays, setSelectedBarangays] = useState<string[]>([]);
   const [selectedClassifications, setSelectedClassifications] = useState<string[]>([]);
   const [selectedAgeGroups, setSelectedAgeGroups] = useState<string[]>([]);
   const [selectedWorkStatus, setSelectedWorkStatus] = useState<string[]>([]);
 
+  // Advanced filters state
   const [advancedFilters, setAdvancedFilters] = useState({
     ageRange: [15, 30] as [number, number],
     gender: [] as string[],
@@ -42,6 +46,7 @@ export function useTableState(data: YouthRecord[]) {
     highestEducation: [] as string[],
   });
 
+  // Export filters state
   const [exportFilters, setExportFilters] = useState({
     barangays: [] as string[],
     classifications: [] as string[],
@@ -55,6 +60,10 @@ export function useTableState(data: YouthRecord[]) {
     attendedAssembly: [] as string[],
   });
 
+  // Selected records state (moved inside the hook)
+  const [selectedRecords, setSelectedRecords] = useState<YouthRecord[]>([]);
+
+  // Filtered data based on search and filters
   const filteredData = data.filter((record) => {
     const matchesSearch =
       searchTerm === "" ||
@@ -107,11 +116,13 @@ export function useTableState(data: YouthRecord[]) {
     );
   });
 
+  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
+  // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [
@@ -123,16 +134,17 @@ export function useTableState(data: YouthRecord[]) {
     advancedFilters,
   ]);
 
+  // Handle advanced filter changes
   type AdvancedFilterKey = keyof typeof advancedFilters;
   type AdvancedFilterValue = number[] | [number, number] | string[];
-
   const handleAdvancedFilterChange = (filterType: AdvancedFilterKey, value: AdvancedFilterValue) => {
     setAdvancedFilters(prev => ({
       ...prev,
-      [filterType]: value
+      [filterType]: value,
     }));
   };
 
+  // Clear advanced filters
   const clearAdvancedFilters = () => {
     setAdvancedFilters({
       ageRange: [15, 30],
@@ -143,12 +155,14 @@ export function useTableState(data: YouthRecord[]) {
     });
   };
 
+  // Toggle column visibility
   const toggleColumnVisibility = (key: string) => {
     setColumns(cols => cols.map(col =>
       col.key === key ? { ...col, visible: !col.visible } : col
     ));
   };
 
+  // Toggle basic filters
   const toggleFilter = (value: string, filterType: "barangays" | "classifications" | "ageGroups" | "workStatus") => {
     switch (filterType) {
       case "barangays":
@@ -166,6 +180,7 @@ export function useTableState(data: YouthRecord[]) {
     }
   };
 
+  // Toggle export filters
   const toggleExportFilter = (value: string, filterType: keyof typeof exportFilters) => {
     setExportFilters(prev => ({
       ...prev,
@@ -175,10 +190,10 @@ export function useTableState(data: YouthRecord[]) {
     }));
   };
 
+  // Get export data
   const getExportData = () => {
     // Standardize the data before filtering
     const standardizedData = data.map(record => standardizeRecordFields(record));
-
     return standardizedData.filter((record) => {
       const matchesBarangay = exportFilters.barangays.length === 0 || exportFilters.barangays.includes(record.barangay);
       const matchesClassification = exportFilters.classifications.length === 0 || exportFilters.classifications.includes(record.youth_classification);
@@ -190,7 +205,6 @@ export function useTableState(data: YouthRecord[]) {
       const matchesRegisteredVoter = exportFilters.registeredVoter.length === 0 || exportFilters.registeredVoter.includes(record.registered_voter);
       const matchesVotedLastElection = exportFilters.votedLastElection.length === 0 || exportFilters.votedLastElection.includes(record.voted_last_election);
       const matchesAttendedAssembly = exportFilters.attendedAssembly.length === 0 || exportFilters.attendedAssembly.includes(record.attended_kk_assembly);
-
       return (
         matchesBarangay &&
         matchesClassification &&
@@ -206,6 +220,7 @@ export function useTableState(data: YouthRecord[]) {
     });
   };
 
+  // Export to CSV
   const exportToCSV = () => {
     const dataToExport = getExportData();
     const headers = [
@@ -219,7 +234,7 @@ export function useTableState(data: YouthRecord[]) {
       "Age Group",
       "Work Status",
       "Highest Education",
-      "Home Address", // ✅ NEW FIELD
+      "Home Address",
       "Registered Voter",
       "Voted Last Election",
       "Attended KK Assembly",
@@ -258,6 +273,7 @@ export function useTableState(data: YouthRecord[]) {
     toast.success(`Exported ${dataToExport.length} records to CSV`);
   };
 
+  // Clear all filters
   const clearAllFilters = () => {
     setSearchTerm("");
     setSelectedBarangays([]);
@@ -267,6 +283,7 @@ export function useTableState(data: YouthRecord[]) {
     clearAdvancedFilters();
   };
 
+  // Clear export filters
   const clearExportFilters = () => {
     setExportFilters({
       barangays: [],
@@ -282,10 +299,12 @@ export function useTableState(data: YouthRecord[]) {
     });
   };
 
+  // Get export count
   const getExportCount = () => {
     return getExportData().length;
   };
 
+  // Check if any filters are active
   const hasActiveFilters = () => {
     return (
       selectedBarangays.length > 0 ||
@@ -333,5 +352,7 @@ export function useTableState(data: YouthRecord[]) {
     getExportCount,
     getExportData,
     exportToCSV,
+    selectedRecords,
+    setSelectedRecords,
   };
 }

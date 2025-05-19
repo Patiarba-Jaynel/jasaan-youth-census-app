@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { StatCard } from "@/components/StatCard";
@@ -95,10 +94,8 @@ const DashboardPage = () => {
     // Group by voter status with normalization
     const voterDistribution = records.reduce(
       (acc: { [key: string]: number }, record) => {
-        // Normalize the value to uppercase
         const normalizedValue = record.registered_voter?.toUpperCase() || "UNKNOWN";
 
-        // Only consider valid values ("YES" or "NO")
         if (["YES", "NO"].includes(normalizedValue)) {
           if (!acc[normalizedValue]) {
             acc[normalizedValue] = 0;
@@ -111,7 +108,6 @@ const DashboardPage = () => {
       {}
     );
 
-    // Convert to chart data format
     setBarangayData(
       Object.keys(barangayDistribution).map((key) => ({
         name: key,
@@ -144,7 +140,7 @@ const DashboardPage = () => {
 
     setVoterData(
       Object.keys(voterDistribution).map((key) => ({
-        name: key === "YES" ? "Yes" : "No", // Ensure consistent label names
+        name: key === "YES" ? "Yes" : "No",
         value: voterDistribution[key],
       }))
     );
@@ -152,7 +148,6 @@ const DashboardPage = () => {
 
   const handleLogout = () => {
     pbClient.auth.logout();
-    // Dispatch a custom event to notify components of auth change
     document.dispatchEvent(new CustomEvent("auth-change"));
     toast.success("Logged out successfully");
     navigate("/");

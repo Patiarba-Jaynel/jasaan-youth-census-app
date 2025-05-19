@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FileText, Search } from "lucide-react";
@@ -17,7 +17,7 @@ interface TableHeaderProps {
     attendedAssembly: string[];
     highestEducation: string[];
   };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   onFilterChange: (filterType: string, value: any) => void;
   onClearFilters: () => void;
   columns: {
@@ -27,7 +27,6 @@ interface TableHeaderProps {
   }[];
   onToggleColumn: (key: string) => void;
   onExportDialogOpen: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any[];
   getExportCount: () => number;
   exportToCSV: () => void;
@@ -46,7 +45,7 @@ export function TableHeader({
   data,
   getExportCount,
   exportToCSV,
-  hasActiveFilters
+  hasActiveFilters,
 }: TableHeaderProps) {
   return (
     <div className="flex flex-col gap-4 mb-4">
@@ -111,7 +110,7 @@ export function TableHeader({
             onFilterChange={onFilterChange}
             onClearFilters={onClearFilters}
           />
-          
+
           {/* Column visibility */}
           <ColumnVisibilityToggle
             columns={columns}
@@ -141,7 +140,7 @@ export function TableHeader({
             </button>
           </Badge>
         )}
-        
+
         {/* Gender badges */}
         {selectedFilters.gender.map((gender) => (
           <Badge key={`badge-gender-${gender}`} variant="outline" className="px-3 py-1">
@@ -157,7 +156,7 @@ export function TableHeader({
             </button>
           </Badge>
         ))}
-        
+
         {/* Voted badges */}
         {selectedFilters.votedLastElection.map((value) => (
           <Badge key={`badge-voted-${value}`} variant="outline" className="px-3 py-1">
@@ -173,7 +172,7 @@ export function TableHeader({
             </button>
           </Badge>
         ))}
-        
+
         {/* Assembly badges */}
         {selectedFilters.attendedAssembly.map((value) => (
           <Badge key={`badge-assembly-${value}`} variant="outline" className="px-3 py-1">
@@ -189,7 +188,7 @@ export function TableHeader({
             </button>
           </Badge>
         ))}
-        
+
         {/* Education badges */}
         {selectedFilters.highestEducation.map((value) => (
           <Badge key={`badge-edu-${value}`} variant="outline" className="px-3 py-1">

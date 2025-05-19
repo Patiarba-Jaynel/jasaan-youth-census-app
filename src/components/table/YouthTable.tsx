@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatBirthday } from "@/lib/standardize"; // Import the utility
+import { formatBirthday } from "@/lib/standardize";
 
 interface YouthTableProps {
   columns: {
@@ -72,7 +72,7 @@ export function YouthTable({ columns, records, onEdit, onDelete }: YouthTablePro
             )}
             {columns.find(col => col.key === "birthday")?.visible && (
               <TableHead>Birthday</TableHead>
-            )} {/* Add Birthday Column */}
+            )}
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -128,7 +128,7 @@ export function YouthTable({ columns, records, onEdit, onDelete }: YouthTablePro
                 )}
                 {columns.find(col => col.key === "birthday")?.visible && (
                   <TableCell>{formatBirthday(record.birthday?.toISOString?.() ?? String(record.birthday))}</TableCell>
-                )} {/* Format Birthday */}
+                )}
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button

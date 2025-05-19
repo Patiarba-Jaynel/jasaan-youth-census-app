@@ -34,7 +34,6 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { standardizeRecordFields } from "@/lib/standardize"; // Correct import
 
 interface EditRecordDialogProps {
   open: boolean;
@@ -43,35 +42,39 @@ interface EditRecordDialogProps {
   onSave: (data: any) => void;
 }
 
-// Get options from schema
-const barangayOptions = formSchema.shape.barangay.options;
-const youthClassificationOptions = formSchema.shape.youth_classification.options;
-const youthAgeGroupOptions = formSchema.shape.youth_age_group.options;
-const workStatusOptions = formSchema.shape.work_status.options;
-const educationOptions = formSchema.shape.highest_education.options;
-const sexOptions = formSchema.shape.sex.options;
-const civilStatusOptions = formSchema.shape.civil_status.options;
-const voterOptions = formSchema.shape.registered_voter.options;
-const votedOptions = formSchema.shape.voted_last_election.options;
-const assemblyOptions = formSchema.shape.attended_kk_assembly.options;
-
-// Create a zod schema specifically for the edit form
 const editFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   age: z.string().min(1, "Age is required"),
   birthday: z.date({
     required_error: "Birthday is required",
   }),
-  sex: z.enum(sexOptions),
-  civil_status: z.enum(civilStatusOptions),
-  barangay: z.enum(barangayOptions),
-  youth_classification: z.enum(youthClassificationOptions),
-  youth_age_group: z.enum(youthAgeGroupOptions),
-  highest_education: z.enum(educationOptions),
-  work_status: z.enum(workStatusOptions),
-  registered_voter: z.enum(voterOptions),
-  voted_last_election: z.enum(votedOptions),
-  attended_kk_assembly: z.enum(assemblyOptions),
+  sex: z.enum(["MALE", "FEMALE"]),
+  civil_status: z.enum(["SINGLE", "MARRIED", "DIVORCED", "WIDOWED"]),
+  barangay: z.enum([
+    "Aplaya",
+    "Bobontugan",
+    "Corrales",
+    "Jampason",
+    "Kimaya",
+    "Luz Banzon",
+    "Lower Jasaan",
+    "Solana",
+    "San Antonio",
+    "San Nicolas",
+    "Upper Jasaan",
+  ]),
+  youth_classification: z.enum(["ISY", "OSY", "WY", "YSN"]),
+  youth_age_group: z.enum(["15-17", "18-24", "25-30"]),
+  highest_education: z.enum([
+    "Elementary",
+    "High School",
+    "College",
+    "Postgraduate",
+  ]),
+  work_status: z.enum(["Employed", "Self-Employed", "Unemployed", "Student"]),
+  registered_voter: z.enum(["Yes", "No"]),
+  voted_last_election: z.enum(["Yes", "No"]),
+  attended_kk_assembly: z.enum(["Yes", "No"]),
   home_address: z.string().min(1, "Address is required"),
   email_address: z.string().email("Invalid email address"),
   contact_number: z.string().min(7, "Contact number must be at least 7 characters"),
@@ -96,7 +99,7 @@ export function EditRecordDialog({
       civil_status: "SINGLE",
       barangay: "Aplaya",
       youth_classification: "ISY",
-      youth_age_group: "CORE YOUTH (18-24)",
+      youth_age_group: "18-24",
       highest_education: "High School",
       work_status: "Employed",
       registered_voter: "Yes",
@@ -109,7 +112,6 @@ export function EditRecordDialog({
     },
   });
 
-  // Update form values when selected record changes
   useEffect(() => {
     if (selectedRecord) {
       form.reset({
@@ -134,10 +136,8 @@ export function EditRecordDialog({
     }
   }, [selectedRecord, form]);
 
-  // Updated handleSubmit function
   const handleSubmit = (data: EditFormValues) => {
-    const standardizedData = standardizeRecordFields(data); // Standardize the data
-    onSave(standardizedData); // Save the standardized data
+    onSave(data);
   };
 
   return (
@@ -152,7 +152,6 @@ export function EditRecordDialog({
         <ScrollArea className="max-h-[70vh] pr-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 py-4">
-              {/* Form fields go here */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Personal Information Section */}
                 <div className="space-y-4 col-span-2">
@@ -171,7 +170,47 @@ export function EditRecordDialog({
                         </FormItem>
                       )}
                     />
-                    {/* Other fields go here */}
+                    <FormField
+                      control={form.control}
+                      name="age"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Age</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="sex"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Sex</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select sex" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {["MALE", "FEMALE"].map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
               </div>
