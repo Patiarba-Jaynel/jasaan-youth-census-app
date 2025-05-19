@@ -24,7 +24,8 @@ export function useTableState(data: YouthRecord[]) {
     { key: "attendedAssembly", title: "Attended Assembly", visible: false },
     { key: "assembliesAttended", title: "KK Assemblies Attended", visible: false },
     { key: "civilStatus", title: "Civil Status", visible: false },
-    { key: "homeAddress", title: "Home Address", visible: false }, // ✅ NEW COLUMN
+    { key: "homeAddress", title: "Home Address", visible: false },
+    { key: "birthday", title: "Birthday", visible: false },
   ]);
 
   // Export filter dialog state
@@ -60,16 +61,19 @@ export function useTableState(data: YouthRecord[]) {
     attendedAssembly: [] as string[],
   });
 
-  // Selected records state (moved inside the hook)
+  // Selected records state
   const [selectedRecords, setSelectedRecords] = useState<YouthRecord[]>([]);
 
   // Filtered data based on search and filters
   const filteredData = data.filter((record) => {
-    const matchesSearch =
-      searchTerm === "" ||
-      record.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.barangay.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.youth_classification.toLowerCase().includes(searchTerm.toLowerCase());
+    // Search through all columns if searchTerm is not empty
+    const matchesSearch = searchTerm === "" || Object.entries(record).some(([key, value]) => {
+      // Exclude id and other non-searchable fields
+      if (key === 'id' || value === null || value === undefined) return false;
+      
+      // Convert value to string and check if it includes the search term
+      return String(value).toLowerCase().includes(searchTerm.toLowerCase());
+    });
 
     const matchesBarangay =
       selectedBarangays.length === 0 || selectedBarangays.includes(record.barangay);
@@ -220,7 +224,7 @@ export function useTableState(data: YouthRecord[]) {
     });
   };
 
-  // Export to CSV
+  // Export to CSV with SOLANA barangay added
   const exportToCSV = () => {
     const dataToExport = getExportData();
     const headers = [

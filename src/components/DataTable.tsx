@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
@@ -8,6 +9,9 @@ import { TablePagination } from "@/components/table/TablePagination";
 import { EditRecordDialog } from "@/components/dialogs/EditRecordDialog";
 import { DeleteRecordDialog } from "@/components/dialogs/DeleteRecordDialog";
 import { ExportFilterDialog } from "@/components/dialogs/ExportFilterDialog";
+import { BatchEditDialog } from "@/components/dialogs/BatchEditDialog";
+import { Button } from "@/components/ui/button";
+import { Search, Replace } from "lucide-react";
 
 interface DataTableProps {
   data: YouthRecord[];
@@ -19,6 +23,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isBatchEditDialogOpen, setIsBatchEditDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<YouthRecord | null>(null);
 
   const handleEdit = (record: YouthRecord) => {
@@ -63,8 +68,47 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     toast.success(`Export filters applied (${tableState.getExportCount()} records selected)`);
   };
 
+  const handleBatchEdit = async (field: string, oldValue: string, newValue: string) => {
+    try {
+      // Get all records that need to be updated
+      const recordsToUpdate = tableState.getExportData().filter((record) => 
+        String(record[field as keyof YouthRecord]) === oldValue
+      );
+      
+      if (recordsToUpdate.length === 0) {
+        toast.info("No matching records found to update");
+        return;
+      }
+      
+      // Update each record
+      let updatedCount = 0;
+      for (const record of recordsToUpdate) {
+        await pbClient.youth.update(record.id, { [field]: newValue });
+        updatedCount++;
+      }
+      
+      toast.success(`Updated ${updatedCount} records`);
+      onDataChange();
+    } catch (error) {
+      console.error("Error during batch update:", error);
+      toast.error("Failed to complete batch update");
+    }
+  };
+
   return (
     <div className="w-full">
+      <div className="flex justify-end mb-2">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => setIsBatchEditDialogOpen(true)}
+          className="flex items-center gap-2"
+        >
+          <Replace size={16} />
+          Find & Replace
+        </Button>
+      </div>
+
       {/* Header with search/filter/column toggles */}
       <TableHeader 
         searchTerm={tableState.searchTerm}
@@ -124,6 +168,14 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
         clearFilters={tableState.clearExportFilters}
         getExportCount={tableState.getExportCount}
         onApplyFilters={handleApplyExportFilters}
+      />
+
+      {/* Batch Edit Dialog */}
+      <BatchEditDialog
+        open={isBatchEditDialogOpen}
+        onOpenChange={setIsBatchEditDialogOpen}
+        selectedRecords={tableState.getExportData()}
+        onSave={handleBatchEdit}
       />
     </div>
   );

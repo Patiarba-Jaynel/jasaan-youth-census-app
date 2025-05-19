@@ -28,7 +28,11 @@ const TableViewPage = () => {
         ...record,
         kk_assemblies_attended: typeof record.kk_assemblies_attended === "number"
           ? record.kk_assemblies_attended
-          : Number(record.kk_assemblies_attended) || 0
+          : Number(record.kk_assemblies_attended) || 0,
+        // Normalize barangay data - if "SOLANA" is misspelled or in different case
+        barangay: record.barangay === "Solana" || record.barangay?.toUpperCase() === "SOLANA" 
+          ? "SOLANA" 
+          : record.barangay
       }));
 
       setYouthRecords(processedRecords);
@@ -49,7 +53,11 @@ const TableViewPage = () => {
         ...record,
         kk_assemblies_attended: typeof record.kk_assemblies_attended === "number"
           ? record.kk_assemblies_attended
-          : Number(record.kk_assemblies_attended) || 0
+          : Number(record.kk_assemblies_attended) || 0,
+        // Normalize barangay data - if "SOLANA" is misspelled or in different case
+        barangay: record.barangay === "Solana" || record.barangay?.toUpperCase() === "SOLANA" 
+          ? "SOLANA" 
+          : record.barangay
       }));
       
       // Import records one by one (could be optimized with batch operations)

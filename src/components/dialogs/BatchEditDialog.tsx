@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Dialog,
@@ -17,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { YouthRecord } from "@/lib/pb-client";
-
+import { Replace, Search } from "lucide-react";
 
 interface BatchEditDialogProps {
   open: boolean;
@@ -35,20 +36,59 @@ export function BatchEditDialog({
   const [field, setField] = useState("");
   const [oldValue, setOldValue] = useState("");
   const [newValue, setNewValue] = useState("");
+  
+  const fieldOptions = [
+    { value: "name", label: "Name" },
+    { value: "age", label: "Age" },
+    { value: "sex", label: "Sex" },
+    { value: "barangay", label: "Barangay" },
+    { value: "youth_classification", label: "Classification" },
+    { value: "youth_age_group", label: "Age Group" },
+    { value: "highest_education", label: "Education" },
+    { value: "work_status", label: "Work Status" },
+    { value: "registered_voter", label: "Registered Voter" },
+    { value: "voted_last_election", label: "Voted Last Election" },
+    { value: "attended_kk_assembly", label: "Attended Assembly" },
+    { value: "kk_assemblies_attended", label: "KK Assemblies Attended" },
+    { value: "civil_status", label: "Civil Status" },
+    { value: "home_address", label: "Home Address" },
+  ];
 
   const handleSave = () => {
     if (!field || !oldValue || !newValue) return;
     onSave(field, oldValue, newValue);
     onOpenChange(false);
   };
+  
+  const resetForm = () => {
+    setField("");
+    setOldValue("");
+    setNewValue("");
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onOpenChange(false);
+  };
+  
+  // Count occurrences of the search term in the selected field
+  const getMatchCount = () => {
+    if (!field || !oldValue) return 0;
+    
+    return selectedRecords.filter(record => 
+      String(record[field as keyof YouthRecord]) === oldValue
+    ).length;
+  };
+  
+  const matchCount = getMatchCount();
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Batch Edit Records</DialogTitle>
+          <DialogTitle>Find and Replace</DialogTitle>
           <DialogDescription>
-            Update specific fields across {selectedRecords.length} selected records.
+            Update values across multiple records at once.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -58,41 +98,43 @@ export function BatchEditDialog({
               Field to Edit
             </label>
             <Select value={field} onValueChange={setField}>
-              <SelectTrigger id="field">
+              <SelectTrigger id="field" className="w-full">
                 <SelectValue placeholder="Select field" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="age">Age</SelectItem>
-                <SelectItem value="sex">Sex</SelectItem>
-                <SelectItem value="barangay">Barangay</SelectItem>
-                <SelectItem value="youth_classification">Classification</SelectItem>
-                <SelectItem value="youth_age_group">Age Group</SelectItem>
-                <SelectItem value="highest_education">Education</SelectItem>
-                <SelectItem value="work_status">Work Status</SelectItem>
-                <SelectItem value="registered_voter">Registered Voter</SelectItem>
-                <SelectItem value="voted_last_election">Voted Last Election</SelectItem>
-                <SelectItem value="attended_kk_assembly">Attended Assembly</SelectItem>
+                {fieldOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Old Value Input */}
+          {/* Find Value Input */}
           <div>
-            <label htmlFor="oldValue" className="block text-sm font-medium">
+            <label htmlFor="oldValue" className="block text-sm font-medium flex items-center gap-2">
+              <Search size={16} />
               Find
             </label>
             <Input
               id="oldValue"
               value={oldValue}
               onChange={(e) => setOldValue(e.target.value)}
-              placeholder="Enter value to replace"
+              placeholder="Enter value to find"
+              className="w-full"
             />
+            {field && oldValue && (
+              <p className="text-xs mt-1 text-muted-foreground">
+                {matchCount} {matchCount === 1 ? 'match' : 'matches'} found
+              </p>
+            )}
           </div>
 
-          {/* New Value Input */}
+          {/* Replace Value Input */}
           <div>
-            <label htmlFor="newValue" className="block text-sm font-medium">
+            <label htmlFor="newValue" className="block text-sm font-medium flex items-center gap-2">
+              <Replace size={16} />
               Replace With
             </label>
             <Input
@@ -100,14 +142,25 @@ export function BatchEditDialog({
               value={newValue}
               onChange={(e) => setNewValue(e.target.value)}
               placeholder="Enter new value"
+              className="w-full"
             />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+        <DialogFooter className="sm:justify-between">
+          <div className="text-sm text-muted-foreground">
+            {field && oldValue && `${matchCount} ${matchCount === 1 ? 'record' : 'records'} will be updated`}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSave} 
+              disabled={!field || !oldValue || !newValue || matchCount === 0}
+            >
+              Replace All
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
