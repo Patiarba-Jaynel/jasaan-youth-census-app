@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
@@ -22,6 +23,7 @@ const TableViewPage = () => {
       setIsLoading(true);
       const records = await pbClient.youth.getAll();
 
+      // Ensure kk_assemblies_attended is always a number
       const processedRecords = records.map(record => ({
         ...record,
         kk_assemblies_attended: typeof record.kk_assemblies_attended === "number"
@@ -38,9 +40,32 @@ const TableViewPage = () => {
     }
   };
 
-  const handleImportSuccess = () => {
-    fetchData();
-    setIsImportDialogOpen(false);
+  const handleImport = async (records: any[]) => {
+    try {
+      setIsLoading(true);
+      
+      // Ensure each record has kk_assemblies_attended as a number
+      const processedRecords = records.map(record => ({
+        ...record,
+        kk_assemblies_attended: typeof record.kk_assemblies_attended === "number"
+          ? record.kk_assemblies_attended
+          : Number(record.kk_assemblies_attended) || 0
+      }));
+      
+      // Import records one by one (could be optimized with batch operations)
+      for (const record of processedRecords) {
+        await pbClient.youth.create(record);
+      }
+      
+      toast.success(`Successfully imported ${records.length} records`);
+      fetchData(); // Refresh data
+    } catch (error) {
+      console.error("Error importing records:", error);
+      toast.error("Failed to import records");
+    } finally {
+      setIsImportDialogOpen(false);
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -108,7 +133,7 @@ const TableViewPage = () => {
       <ImportDialog 
         open={isImportDialogOpen}
         onClose={() => setIsImportDialogOpen(false)}
-        onImport={handleImportSuccess}
+        onImport={handleImport}
       />
     </div>
   );
