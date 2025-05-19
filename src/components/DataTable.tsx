@@ -70,10 +70,12 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
 
   const handleBatchEdit = async (field: string, oldValue: string, newValue: string) => {
     try {
-      // Get all records that need to be updated
-      const recordsToUpdate = tableState.getExportData().filter((record) => 
-        String(record[field as keyof YouthRecord]) === oldValue
-      );
+      // Get all records that need to be updated and ensure they are valid YouthRecords 
+      // with the id field which is required for the update operation
+      const exportData = tableState.getExportData();
+      const recordsToUpdate = exportData.filter((record): record is YouthRecord => {
+        return 'id' in record && String(record[field as keyof YouthRecord]) === oldValue;
+      });
       
       if (recordsToUpdate.length === 0) {
         toast.info("No matching records found to update");
