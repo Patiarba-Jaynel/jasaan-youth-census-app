@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
@@ -70,11 +69,10 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
 
   const handleBatchEdit = async (field: string, oldValue: string, newValue: string) => {
     try {
-      // Get all records that need to be updated and ensure they are valid YouthRecords 
-      // with the id field which is required for the update operation
-      const exportData = tableState.getExportData();
-      const recordsToUpdate = exportData.filter((record): record is YouthRecord => {
-        return 'id' in record && String(record[field as keyof YouthRecord]) === oldValue;
+      // Get all records that need to be updated and ensure they are valid YouthRecords
+      const exportData = tableState.getExportData() as YouthRecord[];
+      const recordsToUpdate = exportData.filter((record) => {
+        return record.id && String(record[field as keyof YouthRecord]) === oldValue;
       });
       
       if (recordsToUpdate.length === 0) {
@@ -176,7 +174,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       <BatchEditDialog
         open={isBatchEditDialogOpen}
         onOpenChange={setIsBatchEditDialogOpen}
-        selectedRecords={tableState.getExportData()}
+        selectedRecords={tableState.getExportData() as YouthRecord[]}
         onSave={handleBatchEdit}
       />
     </div>

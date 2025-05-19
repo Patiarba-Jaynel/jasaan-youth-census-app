@@ -13,7 +13,7 @@ export const LocationSection = ({ control }: LocationSectionProps) => {
   const barangays = [
     "Aplaya", "Bobontugan", "Corrales", "Danao", "Jampason", "Kimaya",
     "Lower Jasaan (Pob.)", "Luz Banzon", "Natubo", "San Antonio", 
-    "San Isidro", "San Nicolas", "Upper Jasaan (Pob.)", "I. S. Cruz",
+    "San Isidro", "San Nicolas", "Solana", "Upper Jasaan (Pob.)", "I. S. Cruz",
   ];
 
   return (

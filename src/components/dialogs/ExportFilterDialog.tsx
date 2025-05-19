@@ -1,3 +1,4 @@
+
 import React from "react";
 import { formSchema } from "@/lib/schema";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,12 @@ export function ExportFilterDialog({
   getExportCount,
   onApplyFilters,
 }: ExportFilterDialogProps) {
-  const barangayOptions = formSchema.shape.barangay.options;
+  // Make sure to update barangayOptions to include Solana
+  const barangayOptions = [
+    "Aplaya", "Bobontugan", "Corrales", "Danao", "Jampason", "Kimaya",
+    "Lower Jasaan (Pob.)", "Luz Banzon", "Natubo", "San Antonio", 
+    "San Isidro", "San Nicolas", "Solana", "Upper Jasaan (Pob.)", "I. S. Cruz",
+  ];
   const youthClassificationOptions = formSchema.shape.youth_classification.options;
   const youthAgeGroupOptions = formSchema.shape.youth_age_group.options;
   const workStatusOptions = formSchema.shape.work_status.options;
