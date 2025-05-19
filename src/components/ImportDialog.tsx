@@ -96,8 +96,9 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
     for (const record of cleanedData) {
       const result = YouthSchema.safeParse(record);
       if (result.success) {
-        // Create a unique key based on first name, last name, and birthday
-        const key = `${record.first_name?.toLowerCase()}|${record.last_name?.toLowerCase()}|${record.birthday}`;
+        // Create a unique key based on name and birthday
+        // Since YouthRecord has a 'name' field instead of first_name/last_name
+        const key = `${record.name?.toLowerCase()}|${record.birthday}`;
         
         if (seen.has(key)) {
           duplicatesList.push(record);
@@ -124,8 +125,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
         for (const newRecord of validList) {
           // For each new record, check if it already exists in the database
           const isDuplicate = existingRecords.some(dbRecord => 
-            dbRecord.first_name?.toLowerCase() === newRecord.first_name?.toLowerCase() &&
-            dbRecord.last_name?.toLowerCase() === newRecord.last_name?.toLowerCase() &&
+            dbRecord.name?.toLowerCase() === newRecord.name?.toLowerCase() &&
             dbRecord.birthday === newRecord.birthday
           );
           
