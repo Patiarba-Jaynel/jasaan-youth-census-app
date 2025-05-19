@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { YouthRecord } from '@/lib/pb-client';
 import { toast } from '@/components/ui/sonner';
 import { format } from 'date-fns';
+import { standardizeRecordFields } from "@/lib/standardize"; // Corrected import
 
 export function useTableState(data: YouthRecord[]) {
   // State for pagination
@@ -63,24 +64,31 @@ export function useTableState(data: YouthRecord[]) {
 
     const matchesBarangay =
       selectedBarangays.length === 0 || selectedBarangays.includes(record.barangay);
+
     const matchesClassification =
       selectedClassifications.length === 0 || selectedClassifications.includes(record.youth_classification);
+
     const matchesAgeGroup =
       selectedAgeGroups.length === 0 || selectedAgeGroups.includes(record.youth_age_group);
+
     const matchesWorkStatus =
       selectedWorkStatus.length === 0 || selectedWorkStatus.includes(record.work_status);
 
     const age = parseInt(record.age);
     const matchesAgeRange =
       isNaN(age) || (age >= advancedFilters.ageRange[0] && age <= advancedFilters.ageRange[1]);
+
     const matchesGender =
       advancedFilters.gender.length === 0 || advancedFilters.gender.includes(record.sex);
+
     const matchesVotedLastElection =
       advancedFilters.votedLastElection.length === 0 ||
       advancedFilters.votedLastElection.includes(record.voted_last_election);
+
     const matchesAttendedAssembly =
       advancedFilters.attendedAssembly.length === 0 ||
       advancedFilters.attendedAssembly.includes(record.attended_kk_assembly);
+
     const matchesEducation =
       advancedFilters.highestEducation.length === 0 ||
       advancedFilters.highestEducation.includes(record.highest_education);
@@ -136,7 +144,7 @@ export function useTableState(data: YouthRecord[]) {
   };
 
   const toggleColumnVisibility = (key: string) => {
-    setColumns(cols => cols.map(col => 
+    setColumns(cols => cols.map(col =>
       col.key === key ? { ...col, visible: !col.visible } : col
     ));
   };
@@ -168,7 +176,10 @@ export function useTableState(data: YouthRecord[]) {
   };
 
   const getExportData = () => {
-    return data.filter((record) => {
+    // Standardize the data before filtering
+    const standardizedData = data.map(record => standardizeRecordFields(record));
+
+    return standardizedData.filter((record) => {
       const matchesBarangay = exportFilters.barangays.length === 0 || exportFilters.barangays.includes(record.barangay);
       const matchesClassification = exportFilters.classifications.length === 0 || exportFilters.classifications.includes(record.youth_classification);
       const matchesAgeGroup = exportFilters.ageGroups.length === 0 || exportFilters.ageGroups.includes(record.youth_age_group);
@@ -197,7 +208,6 @@ export function useTableState(data: YouthRecord[]) {
 
   const exportToCSV = () => {
     const dataToExport = getExportData();
-
     const headers = [
       "Name",
       "Age",
@@ -215,7 +225,6 @@ export function useTableState(data: YouthRecord[]) {
       "Attended KK Assembly",
       "KK Assemblies Attended"
     ];
-
     const rows = dataToExport.map((item) => [
       item.name,
       item.age,
@@ -233,12 +242,10 @@ export function useTableState(data: YouthRecord[]) {
       item.attended_kk_assembly,
       item.attended_kk_assembly === "Yes" ? (item.kk_assemblies_attended || "0") : "0"
     ]);
-
     const csvContent = [
       headers.join(","),
       ...rows.map(row => row.join(",")),
     ].join("\n");
-
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -248,7 +255,6 @@ export function useTableState(data: YouthRecord[]) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
     toast.success(`Exported ${dataToExport.length} records to CSV`);
   };
 

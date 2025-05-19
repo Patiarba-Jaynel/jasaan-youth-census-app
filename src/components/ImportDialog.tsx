@@ -1,14 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Typography, Box
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  Box,
 } from '@mui/material';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { z } from 'zod';
 import { formSchema as YouthSchema } from '@/lib/schema';
-import { format } from 'date-fns';
+import { standardizeRecordFields } from '@/lib/standardize'; // Corrected import
 
 interface ImportDialogProps {
   open: boolean;
@@ -48,7 +53,8 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
       reader.onload = (e) => {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(sheet);
         processData(jsonData);
       };
@@ -58,54 +64,23 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
     }
   };
 
-  const formatHomeAddress = (address: string): string => {
-    return address
-      .toLowerCase()
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
-  const formatBirthday = (birthday: string): string => {
-    try {
-      const date = new Date(birthday);
-      return format(date, 'MMMM dd, yyyy'); // e.g., May 06, 2003
-    } catch {
-      return birthday;
-    }
-  };
-
   const processData = (data: any[]) => {
     const seen = new Set();
     const duplicatesList: any[] = [];
     const validList: any[] = [];
 
-    const cleanedData = data.map((row) => {
+    const cleanedData = data.map(row => {
       const cleanedRow: any = {};
       Object.entries(row).forEach(([key, value]) => {
-        const trimmedKey = key.trim();
-        if (typeof value === 'string') {
-          cleanedRow[trimmedKey] = value.trim();
-        } else {
-          cleanedRow[trimmedKey] = value;
-        }
+        cleanedRow[key.trim()] = typeof value === 'string' ? value.trim() : value;
       });
-
-      // Normalize fields
-      if (cleanedRow.home_address) {
-        cleanedRow.home_address = formatHomeAddress(cleanedRow.home_address);
-      }
-      if (cleanedRow.birthday) {
-        cleanedRow.birthday = formatBirthday(cleanedRow.birthday);
-      }
-
-      return cleanedRow;
+      return standardizeRecordFields(cleanedRow); // Use the standardized record
     });
 
     for (const record of cleanedData) {
       const result = YouthSchema.safeParse(record);
       if (result.success) {
-        const key = `${record.name?.toLowerCase()}|${record.birthday}`;
+        const key = `${record.first_name?.toLowerCase()}|${record.last_name?.toLowerCase()}|${record.birthday}`;
         if (seen.has(key)) {
           duplicatesList.push(record);
         } else {
@@ -150,11 +125,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button
-          onClick={handleImport}
-          variant="contained"
-          disabled={validData.length === 0}
-        >
+        <Button onClick={handleImport} variant="contained" disabled={validData.length === 0}>
           Import Valid Records
         </Button>
       </DialogActions>
