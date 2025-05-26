@@ -45,6 +45,11 @@ export function useTableState(data: YouthRecord[]) {
     votedLastElection: [] as string[],
     attendedAssembly: [] as string[],
     highestEducation: [] as string[],
+    barangays: [] as string[],
+    classifications: [] as string[],
+    workStatus: [] as string[],
+    civilStatus: [] as string[],
+    registeredVoter: [] as string[],
   });
 
   // Export filters state
@@ -64,47 +69,122 @@ export function useTableState(data: YouthRecord[]) {
   // Selected records state
   const [selectedRecords, setSelectedRecords] = useState<YouthRecord[]>([]);
 
-  // Filtered data based on search and filters
-  const filteredData = data.filter((record) => {
-    // Search through all columns if searchTerm is not empty
-    const matchesSearch = searchTerm === "" || Object.entries(record).some(([key, value]) => {
-      // Exclude id and other non-searchable fields
-      if (key === 'id' || value === null || value === undefined) return false;
-      
-      // Convert value to string and check if it includes the search term
-      return String(value).toLowerCase().includes(searchTerm.toLowerCase());
+  // Auto-toggle column visibility based on search term
+  const autoToggleColumn = (searchValue: string) => {
+    const searchLower = searchValue.toLowerCase();
+    const columnMappings = {
+      'civil': 'civilStatus',
+      'single': 'civilStatus',
+      'married': 'civilStatus',
+      'divorced': 'civilStatus',
+      'widowed': 'civilStatus',
+      'education': 'education',
+      'elementary': 'education',
+      'college': 'education',
+      'high school': 'education',
+      'work': 'work',
+      'employed': 'work',
+      'unemployed': 'work',
+      'student': 'work',
+      'voter': 'registeredVoter',
+      'voted': 'votedLastElection',
+      'assembly': 'attendedAssembly',
+      'address': 'homeAddress',
+      'birthday': 'birthday',
+      'birth': 'birthday',
+      'january': 'birthday',
+      'february': 'birthday',
+      'march': 'birthday',
+      'april': 'birthday',
+      'may': 'birthday',
+      'june': 'birthday',
+      'july': 'birthday',
+      'august': 'birthday',
+      'september': 'birthday',
+      'october': 'birthday',
+      'november': 'birthday',
+      'december': 'birthday',
+    };
+
+    Object.entries(columnMappings).forEach(([keyword, columnKey]) => {
+      if (searchLower.includes(keyword)) {
+        setColumns(cols => cols.map(col =>
+          col.key === columnKey ? { ...col, visible: true } : col
+        ));
+      }
     });
+  };
 
-    const matchesBarangay =
-      selectedBarangays.length === 0 || selectedBarangays.includes(record.barangay);
+  // Enhanced filtered data with comprehensive search
+  const filteredData = data.filter((record) => {
+    // Enhanced search through all columns including birthday and age
+    const matchesSearch = searchTerm === "" || (() => {
+      const searchLower = searchTerm.toLowerCase();
+      
+      // Search in all text fields
+      const textFields = [
+        record.name,
+        record.sex,
+        record.civil_status,
+        record.barangay,
+        record.youth_classification,
+        record.youth_age_group,
+        record.highest_education,
+        record.work_status,
+        record.home_address,
+        record.email_address,
+        record.contact_number,
+        record.registered_voter,
+        record.voted_last_election,
+        record.attended_kk_assembly
+      ];
+      
+      // Check text fields
+      const textMatch = textFields.some(field => 
+        field && String(field).toLowerCase().includes(searchLower)
+      );
+      
+      // Check age
+      const ageMatch = record.age && record.age.includes(searchTerm);
+      
+      // Check birthday (including month names)
+      const birthdayMatch = record.birthday && (() => {
+        const birthday = new Date(record.birthday);
+        const monthNames = [
+          'january', 'february', 'march', 'april', 'may', 'june',
+          'july', 'august', 'september', 'october', 'november', 'december'
+        ];
+        const monthName = monthNames[birthday.getMonth()];
+        const year = birthday.getFullYear().toString();
+        const day = birthday.getDate().toString();
+        const formattedDate = format(birthday, 'yyyy-MM-dd');
+        
+        return monthName.includes(searchLower) || 
+               year.includes(searchTerm) || 
+               day.includes(searchTerm) ||
+               formattedDate.includes(searchTerm);
+      })();
+      
+      return textMatch || ageMatch || birthdayMatch;
+    })();
 
-    const matchesClassification =
-      selectedClassifications.length === 0 || selectedClassifications.includes(record.youth_classification);
-
-    const matchesAgeGroup =
-      selectedAgeGroups.length === 0 || selectedAgeGroups.includes(record.youth_age_group);
-
-    const matchesWorkStatus =
-      selectedWorkStatus.length === 0 || selectedWorkStatus.includes(record.work_status);
+    // Apply other filters
+    const matchesBarangay = selectedBarangays.length === 0 || selectedBarangays.includes(record.barangay);
+    const matchesClassification = selectedClassifications.length === 0 || selectedClassifications.includes(record.youth_classification);
+    const matchesAgeGroup = selectedAgeGroups.length === 0 || selectedAgeGroups.includes(record.youth_age_group);
+    const matchesWorkStatus = selectedWorkStatus.length === 0 || selectedWorkStatus.includes(record.work_status);
 
     const age = parseInt(record.age);
-    const matchesAgeRange =
-      isNaN(age) || (age >= advancedFilters.ageRange[0] && age <= advancedFilters.ageRange[1]);
-
-    const matchesGender =
-      advancedFilters.gender.length === 0 || advancedFilters.gender.includes(record.sex);
-
-    const matchesVotedLastElection =
-      advancedFilters.votedLastElection.length === 0 ||
-      advancedFilters.votedLastElection.includes(record.voted_last_election);
-
-    const matchesAttendedAssembly =
-      advancedFilters.attendedAssembly.length === 0 ||
-      advancedFilters.attendedAssembly.includes(record.attended_kk_assembly);
-
-    const matchesEducation =
-      advancedFilters.highestEducation.length === 0 ||
-      advancedFilters.highestEducation.includes(record.highest_education);
+    const matchesAgeRange = isNaN(age) || (age >= advancedFilters.ageRange[0] && age <= advancedFilters.ageRange[1]);
+    const matchesGender = advancedFilters.gender.length === 0 || advancedFilters.gender.includes(record.sex);
+    const matchesVotedLastElection = advancedFilters.votedLastElection.length === 0 || advancedFilters.votedLastElection.includes(record.voted_last_election);
+    const matchesAttendedAssembly = advancedFilters.attendedAssembly.length === 0 || advancedFilters.attendedAssembly.includes(record.attended_kk_assembly);
+    const matchesEducation = advancedFilters.highestEducation.length === 0 || advancedFilters.highestEducation.includes(record.highest_education);
+    const matchesAdvancedBarangays = advancedFilters.barangays.length === 0 || advancedFilters.barangays.includes(record.barangay);
+    const matchesAdvancedClassifications = advancedFilters.classifications.length === 0 || advancedFilters.classifications.includes(record.youth_classification);
+    const matchesAdvancedWorkStatus = advancedFilters.workStatus.length === 0 || advancedFilters.workStatus.includes(record.work_status);
+    const matchesAdvancedCivilStatus = advancedFilters.civilStatus.length === 0 || advancedFilters.civilStatus.includes(record.civil_status);
+    const matchesAdvancedRegisteredVoter = advancedFilters.registeredVoter.length === 0 || advancedFilters.registeredVoter.includes(record.registered_voter);
 
     return (
       matchesSearch &&
@@ -116,9 +196,22 @@ export function useTableState(data: YouthRecord[]) {
       matchesGender &&
       matchesVotedLastElection &&
       matchesAttendedAssembly &&
-      matchesEducation
+      matchesEducation &&
+      matchesAdvancedBarangays &&
+      matchesAdvancedClassifications &&
+      matchesAdvancedWorkStatus &&
+      matchesAdvancedCivilStatus &&
+      matchesAdvancedRegisteredVoter
     );
   });
+
+  // Enhanced search term handler with auto-toggle
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (value) {
+      autoToggleColumn(value);
+    }
+  };
 
   // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -156,6 +249,11 @@ export function useTableState(data: YouthRecord[]) {
       votedLastElection: [],
       attendedAssembly: [],
       highestEducation: [],
+      barangays: [],
+      classifications: [],
+      workStatus: [],
+      civilStatus: [],
+      registeredVoter: [],
     });
   };
 
@@ -226,7 +324,34 @@ export function useTableState(data: YouthRecord[]) {
 
   // Export to CSV with SOLANA barangay added
   const exportToCSV = () => {
-    const dataToExport = getExportData();
+    const dataToExport = (() => {
+      const standardizedData = data.map(record => standardizeRecordFields(record));
+      return standardizedData.filter((record) => {
+        const matchesBarangay = exportFilters.barangays.length === 0 || exportFilters.barangays.includes(record.barangay);
+        const matchesClassification = exportFilters.classifications.length === 0 || exportFilters.classifications.includes(record.youth_classification);
+        const matchesAgeGroup = exportFilters.ageGroups.length === 0 || exportFilters.ageGroups.includes(record.youth_age_group);
+        const matchesWorkStatus = exportFilters.workStatus.length === 0 || exportFilters.workStatus.includes(record.work_status);
+        const matchesEducation = exportFilters.education.length === 0 || exportFilters.education.includes(record.highest_education);
+        const matchesSex = exportFilters.sex.length === 0 || exportFilters.sex.includes(record.sex);
+        const matchesCivilStatus = exportFilters.civilStatus.length === 0 || exportFilters.civilStatus.includes(record.civil_status);
+        const matchesRegisteredVoter = exportFilters.registeredVoter.length === 0 || exportFilters.registeredVoter.includes(record.registered_voter);
+        const matchesVotedLastElection = exportFilters.votedLastElection.length === 0 || exportFilters.votedLastElection.includes(record.voted_last_election);
+        const matchesAttendedAssembly = exportFilters.attendedAssembly.length === 0 || exportFilters.attendedAssembly.includes(record.attended_kk_assembly);
+        return (
+          matchesBarangay &&
+          matchesClassification &&
+          matchesAgeGroup &&
+          matchesWorkStatus &&
+          matchesEducation &&
+          matchesSex &&
+          matchesCivilStatus &&
+          matchesRegisteredVoter &&
+          matchesVotedLastElection &&
+          matchesAttendedAssembly
+        );
+      });
+    })();
+    
     const headers = [
       "Name",
       "Age",
@@ -255,7 +380,7 @@ export function useTableState(data: YouthRecord[]) {
       item.youth_age_group,
       item.work_status,
       item.highest_education,
-      item.home_address || "", // ✅ NEW FIELD
+      item.home_address || "",
       item.registered_voter,
       item.voted_last_election,
       item.attended_kk_assembly,
@@ -320,6 +445,11 @@ export function useTableState(data: YouthRecord[]) {
       advancedFilters.votedLastElection.length > 0 ||
       advancedFilters.attendedAssembly.length > 0 ||
       advancedFilters.highestEducation.length > 0 ||
+      advancedFilters.barangays.length > 0 ||
+      advancedFilters.classifications.length > 0 ||
+      advancedFilters.workStatus.length > 0 ||
+      advancedFilters.civilStatus.length > 0 ||
+      advancedFilters.registeredVoter.length > 0 ||
       advancedFilters.ageRange[0] !== 15 ||
       advancedFilters.ageRange[1] !== 30
     );
@@ -337,7 +467,7 @@ export function useTableState(data: YouthRecord[]) {
     columns,
     toggleColumnVisibility,
     searchTerm,
-    setSearchTerm,
+    setSearchTerm: handleSearchChange,
     selectedBarangays,
     selectedClassifications,
     selectedAgeGroups,

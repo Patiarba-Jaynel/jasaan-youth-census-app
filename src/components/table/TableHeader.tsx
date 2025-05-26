@@ -16,6 +16,11 @@ interface TableHeaderProps {
     votedLastElection: string[];
     attendedAssembly: string[];
     highestEducation: string[];
+    barangays: string[];
+    classifications: string[];
+    workStatus: string[];
+    civilStatus: string[];
+    registeredVoter: string[];
   };
    
   onFilterChange: (filterType: string, value: any) => void;
@@ -31,6 +36,7 @@ interface TableHeaderProps {
   getExportCount: () => number;
   exportToCSV: () => void;
   hasActiveFilters: boolean;
+  autoToggleColumn: (searchValue: string) => void;
 }
 
 export function TableHeader({
@@ -96,7 +102,7 @@ export function TableHeader({
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name, barangay, classification..."
+            placeholder="Search by name, barangay, classification, age, birthday..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-10"
@@ -157,7 +163,87 @@ export function TableHeader({
           </Badge>
         ))}
 
-        {/* Voted badges */}
+        {/* Barangay badges */}
+        {selectedFilters.barangays.map((barangay) => (
+          <Badge key={`badge-barangay-${barangay}`} variant="outline" className="px-3 py-1">
+            Barangay: {barangay}
+            <button
+              className="ml-2 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                const newBarangays = selectedFilters.barangays.filter(b => b !== barangay);
+                onFilterChange('barangays', newBarangays);
+              }}
+            >
+              ×
+            </button>
+          </Badge>
+        ))}
+
+        {/* Classification badges */}
+        {selectedFilters.classifications.map((classification) => (
+          <Badge key={`badge-classification-${classification}`} variant="outline" className="px-3 py-1">
+            Class: {classification}
+            <button
+              className="ml-2 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                const newClassifications = selectedFilters.classifications.filter(c => c !== classification);
+                onFilterChange('classifications', newClassifications);
+              }}
+            >
+              ×
+            </button>
+          </Badge>
+        ))}
+
+        {/* Work Status badges */}
+        {selectedFilters.workStatus.map((status) => (
+          <Badge key={`badge-work-${status}`} variant="outline" className="px-3 py-1">
+            Work: {status}
+            <button
+              className="ml-2 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                const newStatuses = selectedFilters.workStatus.filter(s => s !== status);
+                onFilterChange('workStatus', newStatuses);
+              }}
+            >
+              ×
+            </button>
+          </Badge>
+        ))}
+
+        {/* Civil Status badges */}
+        {selectedFilters.civilStatus.map((status) => (
+          <Badge key={`badge-civil-${status}`} variant="outline" className="px-3 py-1">
+            Civil: {status}
+            <button
+              className="ml-2 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                const newStatuses = selectedFilters.civilStatus.filter(s => s !== status);
+                onFilterChange('civilStatus', newStatuses);
+              }}
+            >
+              ×
+            </button>
+          </Badge>
+        ))}
+
+        {/* Registered Voter badges */}
+        {selectedFilters.registeredVoter.map((status) => (
+          <Badge key={`badge-voter-${status}`} variant="outline" className="px-3 py-1">
+            Voter: {status}
+            <button
+              className="ml-2 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                const newStatuses = selectedFilters.registeredVoter.filter(s => s !== status);
+                onFilterChange('registeredVoter', newStatuses);
+              }}
+            >
+              ×
+            </button>
+          </Badge>
+        ))}
+
+        {/* Keep existing badges */}
         {selectedFilters.votedLastElection.map((value) => (
           <Badge key={`badge-voted-${value}`} variant="outline" className="px-3 py-1">
             Voted: {value}
@@ -173,7 +259,6 @@ export function TableHeader({
           </Badge>
         ))}
 
-        {/* Assembly badges */}
         {selectedFilters.attendedAssembly.map((value) => (
           <Badge key={`badge-assembly-${value}`} variant="outline" className="px-3 py-1">
             Assembly: {value}
@@ -189,7 +274,6 @@ export function TableHeader({
           </Badge>
         ))}
 
-        {/* Education badges */}
         {selectedFilters.highestEducation.map((value) => (
           <Badge key={`badge-edu-${value}`} variant="outline" className="px-3 py-1">
             Education: {value}

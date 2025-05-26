@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
@@ -10,7 +11,7 @@ import { DeleteRecordDialog } from "@/components/dialogs/DeleteRecordDialog";
 import { ExportFilterDialog } from "@/components/dialogs/ExportFilterDialog";
 import { BatchEditDialog } from "@/components/dialogs/BatchEditDialog";
 import { Button } from "@/components/ui/button";
-import { Search, Replace } from "lucide-react";
+import { Search, Replace, AlertTriangle } from "lucide-react";
 
 interface DataTableProps {
   data: YouthRecord[];
@@ -95,18 +96,54 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     }
   };
 
+  // Count data validation issues
+  const getDataIssuesCount = () => {
+    let issueCount = 0;
+    data.forEach(record => {
+      const age = parseInt(record.age);
+      const birthday = new Date(record.birthday);
+      const currentYear = new Date().getFullYear();
+      const birthYear = birthday.getFullYear();
+      const calculatedAge = currentYear - birthYear;
+      
+      // Check for age/birthday mismatch
+      if (Math.abs(age - calculatedAge) > 1) issueCount++;
+      
+      // Check for missing required fields
+      if (!record.name || !record.age || !record.birthday || !record.sex) issueCount++;
+      
+      // Check for invalid email format
+      if (record.email_address && !record.email_address.includes('@')) issueCount++;
+    });
+    return issueCount;
+  };
+
   return (
     <div className="w-full">
-      <div className="flex justify-end mb-2">
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => setIsBatchEditDialogOpen(true)}
-          className="flex items-center gap-2"
-        >
-          <Replace size={16} />
-          Find & Replace
-        </Button>
+      <div className="flex justify-between mb-2">
+        <div className="flex items-center gap-2">
+          {getDataIssuesCount() > 0 && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-2 text-amber-600 border-amber-200 hover:bg-amber-50"
+            >
+              <AlertTriangle size={16} />
+              See Problems ({getDataIssuesCount()})
+            </Button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setIsBatchEditDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Replace size={16} />
+            Find & Replace
+          </Button>
+        </div>
       </div>
 
       {/* Header with search/filter/column toggles */}
@@ -123,6 +160,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
         getExportCount={tableState.getExportCount}
         exportToCSV={tableState.exportToCSV}
         hasActiveFilters={tableState.hasActiveFilters}
+        autoToggleColumn={tableState.autoToggleColumn}
       />
 
       {/* Youth Table */}
