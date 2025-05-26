@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState } from "react";
@@ -10,6 +11,7 @@ import { Filter } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { formSchema } from "@/lib/schema";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AdvancedFiltersProps {
   selectedFilters: {
@@ -18,6 +20,11 @@ interface AdvancedFiltersProps {
     votedLastElection: string[];
     attendedAssembly: string[];
     highestEducation: string[];
+    barangays: string[];
+    classifications: string[];
+    workStatus: string[];
+    civilStatus: string[];
+    registeredVoter: string[];
   };
   onFilterChange: (filterType: string, value: any) => void;
   onClearFilters: () => void;
@@ -35,6 +42,16 @@ export function AdvancedFilters({
   const votedOptions = formSchema.shape.voted_last_election.options;
   const assemblyOptions = formSchema.shape.attended_kk_assembly.options;
   const educationOptions = formSchema.shape.highest_education.options;
+  const classificationOptions = formSchema.shape.youth_classification.options;
+  const workStatusOptions = formSchema.shape.work_status.options;
+  const civilStatusOptions = formSchema.shape.civil_status.options;
+  const registeredVoterOptions = formSchema.shape.registered_voter.options;
+  
+  const barangayOptions = [
+    "Aplaya", "Bobontugan", "Corrales", "Jampason", "Kimaya",
+    "Lower Jasaan (Pob.)", "Luz Banzon", "San Antonio", 
+    "San Nicolas", "Solana", "Upper Jasaan (Pob.)"
+  ];
   
   // Calculate active filters count
   const activeFilterCount = 
@@ -42,7 +59,12 @@ export function AdvancedFilters({
     selectedFilters.gender.length +
     selectedFilters.votedLastElection.length +
     selectedFilters.attendedAssembly.length +
-    selectedFilters.highestEducation.length;
+    selectedFilters.highestEducation.length +
+    selectedFilters.barangays.length +
+    selectedFilters.classifications.length +
+    selectedFilters.workStatus.length +
+    selectedFilters.civilStatus.length +
+    selectedFilters.registeredVoter.length;
   
   // Handle age range change
   const handleAgeRangeChange = (value: number[]) => {
@@ -77,120 +99,222 @@ export function AdvancedFilters({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">
-        <div className="p-4 space-y-4">
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm">Age Range</h4>
-            <div className="pt-4 px-2">
-              <Slider 
-                defaultValue={[15, 30]}
-                min={15}
-                max={30}
-                step={1}
-                value={[selectedFilters.ageRange[0], selectedFilters.ageRange[1]]}
-                onValueChange={handleAgeRangeChange}
-                className="mb-2"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{selectedFilters.ageRange[0]} years</span>
-                <span>{selectedFilters.ageRange[1]} years</span>
+        <ScrollArea className="h-[600px]">
+          <div className="p-4 space-y-4">
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">Age Range</h4>
+              <div className="pt-4 px-2">
+                <Slider 
+                  defaultValue={[15, 30]}
+                  min={15}
+                  max={30}
+                  step={1}
+                  value={[selectedFilters.ageRange[0], selectedFilters.ageRange[1]]}
+                  onValueChange={handleAgeRangeChange}
+                  className="mb-2"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{selectedFilters.ageRange[0]} years</span>
+                  <span>{selectedFilters.ageRange[1]} years</span>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <Separator />
-          
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm">Gender</h4>
-            <div className="grid gap-2">
-              {sexOptions.map((gender) => (
-                <div key={`gender-${gender}`} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`gender-${gender}`}
-                    checked={selectedFilters.gender.includes(gender)}
-                    onCheckedChange={() => toggleFilterSelection(gender, 'gender')}
-                  />
-                  <Label htmlFor={`gender-${gender}`} className="text-sm">
-                    {gender}
-                  </Label>
-                </div>
-              ))}
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">Gender</h4>
+              <div className="grid gap-2">
+                {sexOptions.map((gender) => (
+                  <div key={`gender-${gender}`} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`gender-${gender}`}
+                      checked={selectedFilters.gender.includes(gender)}
+                      onCheckedChange={() => toggleFilterSelection(gender, 'gender')}
+                    />
+                    <Label htmlFor={`gender-${gender}`} className="text-sm">
+                      {gender}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          
-          <Separator />
-          
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm">Voted Last Election</h4>
-            <div className="grid gap-2">
-              {votedOptions.map((option) => (
-                <div key={`voted-${option}`} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`voted-${option}`}
-                    checked={selectedFilters.votedLastElection.includes(option)}
-                    onCheckedChange={() => toggleFilterSelection(option, 'votedLastElection')}
-                  />
-                  <Label htmlFor={`voted-${option}`} className="text-sm">
-                    {option}
-                  </Label>
-                </div>
-              ))}
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">Barangay</h4>
+              <div className="grid gap-2 max-h-[120px] overflow-y-auto">
+                {barangayOptions.map((barangay) => (
+                  <div key={`barangay-${barangay}`} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`barangay-${barangay}`}
+                      checked={selectedFilters.barangays.includes(barangay)}
+                      onCheckedChange={() => toggleFilterSelection(barangay, 'barangays')}
+                    />
+                    <Label htmlFor={`barangay-${barangay}`} className="text-sm">
+                      {barangay}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          
-          <Separator />
-          
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm">Assembly Attendance</h4>
-            <div className="grid gap-2">
-              {assemblyOptions.map((option) => (
-                <div key={`assembly-${option}`} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`assembly-${option}`}
-                    checked={selectedFilters.attendedAssembly.includes(option)}
-                    onCheckedChange={() => toggleFilterSelection(option, 'attendedAssembly')}
-                  />
-                  <Label htmlFor={`assembly-${option}`} className="text-sm">
-                    {option}
-                  </Label>
-                </div>
-              ))}
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">Youth Classification</h4>
+              <div className="grid gap-2">
+                {classificationOptions.map((classification) => (
+                  <div key={`classification-${classification}`} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`classification-${classification}`}
+                      checked={selectedFilters.classifications.includes(classification)}
+                      onCheckedChange={() => toggleFilterSelection(classification, 'classifications')}
+                    />
+                    <Label htmlFor={`classification-${classification}`} className="text-sm">
+                      {classification}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          
-          <Separator />
-          
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm">Highest Education</h4>
-            <div className="grid gap-2 max-h-[150px] overflow-y-auto">
-              {educationOptions.map((education) => (
-                <div key={`edu-${education}`} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`edu-${education}`}
-                    checked={selectedFilters.highestEducation.includes(education)}
-                    onCheckedChange={() => toggleFilterSelection(education, 'highestEducation')}
-                  />
-                  <Label htmlFor={`edu-${education}`} className="text-sm">
-                    {education}
-                  </Label>
-                </div>
-              ))}
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">Work Status</h4>
+              <div className="grid gap-2">
+                {workStatusOptions.map((status) => (
+                  <div key={`work-${status}`} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`work-${status}`}
+                      checked={selectedFilters.workStatus.includes(status)}
+                      onCheckedChange={() => toggleFilterSelection(status, 'workStatus')}
+                    />
+                    <Label htmlFor={`work-${status}`} className="text-sm">
+                      {status}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">Civil Status</h4>
+              <div className="grid gap-2">
+                {civilStatusOptions.map((status) => (
+                  <div key={`civil-${status}`} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`civil-${status}`}
+                      checked={selectedFilters.civilStatus.includes(status)}
+                      onCheckedChange={() => toggleFilterSelection(status, 'civilStatus')}
+                    />
+                    <Label htmlFor={`civil-${status}`} className="text-sm">
+                      {status}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">Registered Voter</h4>
+              <div className="grid gap-2">
+                {registeredVoterOptions.map((option) => (
+                  <div key={`voter-${option}`} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`voter-${option}`}
+                      checked={selectedFilters.registeredVoter.includes(option)}
+                      onCheckedChange={() => toggleFilterSelection(option, 'registeredVoter')}
+                    />
+                    <Label htmlFor={`voter-${option}`} className="text-sm">
+                      {option}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">Voted Last Election</h4>
+              <div className="grid gap-2">
+                {votedOptions.map((option) => (
+                  <div key={`voted-${option}`} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`voted-${option}`}
+                      checked={selectedFilters.votedLastElection.includes(option)}
+                      onCheckedChange={() => toggleFilterSelection(option, 'votedLastElection')}
+                    />
+                    <Label htmlFor={`voted-${option}`} className="text-sm">
+                      {option}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">Assembly Attendance</h4>
+              <div className="grid gap-2">
+                {assemblyOptions.map((option) => (
+                  <div key={`assembly-${option}`} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`assembly-${option}`}
+                      checked={selectedFilters.attendedAssembly.includes(option)}
+                      onCheckedChange={() => toggleFilterSelection(option, 'attendedAssembly')}
+                    />
+                    <Label htmlFor={`assembly-${option}`} className="text-sm">
+                      {option}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm">Highest Education</h4>
+              <div className="grid gap-2 max-h-[150px] overflow-y-auto">
+                {educationOptions.map((education) => (
+                  <div key={`edu-${education}`} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`edu-${education}`}
+                      checked={selectedFilters.highestEducation.includes(education)}
+                      onCheckedChange={() => toggleFilterSelection(education, 'highestEducation')}
+                    />
+                    <Label htmlFor={`edu-${education}`} className="text-sm">
+                      {education}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {activeFilterCount > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full" 
+                onClick={() => {
+                  onClearFilters();
+                  setIsOpen(false);
+                }}
+              >
+                Clear Advanced Filters
+              </Button>
+            )}
           </div>
-          
-          {activeFilterCount > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full" 
-              onClick={() => {
-                onClearFilters();
-                setIsOpen(false);
-              }}
-            >
-              Clear Advanced Filters
-            </Button>
-          )}
-        </div>
+        </ScrollArea>
       </PopoverContent>
     </Popover>
   );

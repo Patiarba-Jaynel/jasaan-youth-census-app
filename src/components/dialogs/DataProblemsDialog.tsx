@@ -11,6 +11,7 @@ interface DataIssue {
   recordName: string;
   issue: string;
   severity: 'error' | 'warning';
+  field?: string; // Added to help with highlighting
 }
 
 interface DataProblemsDialogProps {
@@ -18,17 +19,19 @@ interface DataProblemsDialogProps {
   onOpenChange: (open: boolean) => void;
   issues: DataIssue[];
   onEditRecord: (record: YouthRecord) => void;
+  records: YouthRecord[]; // Added to find records by ID
 }
 
-export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord }: DataProblemsDialogProps) {
+export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, records }: DataProblemsDialogProps) {
   const errorCount = issues.filter(issue => issue.severity === 'error').length;
   const warningCount = issues.filter(issue => issue.severity === 'warning').length;
 
-  const handleEditRecord = async (recordId: string) => {
-    // For now, we'll need to find the record by ID
-    // In a real implementation, you might want to pass a function to get the record
-    console.log("Edit record:", recordId);
-    onOpenChange(false);
+  const handleEditRecord = (recordId: string) => {
+    const record = records.find(r => r.id === recordId);
+    if (record) {
+      onEditRecord(record);
+      onOpenChange(false);
+    }
   };
 
   return (

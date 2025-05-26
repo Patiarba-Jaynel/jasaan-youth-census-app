@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
@@ -72,7 +71,6 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
 
   const handleBatchEdit = async (field: string, oldValue: string, newValue: string) => {
     try {
-      // Get all records that need to be updated and ensure they are valid YouthRecords
       const exportData = tableState.getExportData() as YouthRecord[];
       const recordsToUpdate = exportData.filter((record) => {
         return record.id && String(record[field as keyof YouthRecord]) === oldValue;
@@ -83,7 +81,6 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
         return;
       }
       
-      // Update each record
       let updatedCount = 0;
       for (const record of recordsToUpdate) {
         await pbClient.youth.update(record.id, { [field]: newValue });
@@ -98,15 +95,88 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     }
   };
 
-  // Get data validation issues with detailed information
+  // Enhanced data validation with duplicate detection
   const getDataIssues = () => {
     const issues: Array<{
       recordId: string;
       recordName: string;
       issue: string;
       severity: 'error' | 'warning';
+      field?: string;
     }> = [];
 
+    // Check for duplicates
+    const nameMap = new Map<string, YouthRecord[]>();
+    const emailMap = new Map<string, YouthRecord[]>();
+    const contactMap = new Map<string, YouthRecord[]>();
+
+    data.forEach(record => {
+      // Group by name
+      if (record.name) {
+        const key = record.name.toLowerCase().trim();
+        if (!nameMap.has(key)) nameMap.set(key, []);
+        nameMap.get(key)!.push(record);
+      }
+
+      // Group by email
+      if (record.email_address) {
+        const key = record.email_address.toLowerCase().trim();
+        if (!emailMap.has(key)) emailMap.set(key, []);
+        emailMap.get(key)!.push(record);
+      }
+
+      // Group by contact number
+      if (record.contact_number) {
+        const key = record.contact_number.trim();
+        if (!contactMap.has(key)) contactMap.set(key, []);
+        contactMap.get(key)!.push(record);
+      }
+    });
+
+    // Add duplicate issues
+    nameMap.forEach((records, name) => {
+      if (records.length > 1) {
+        records.forEach(record => {
+          issues.push({
+            recordId: record.id,
+            recordName: record.name,
+            issue: `Duplicate name found: "${name}" (${records.length} records)`,
+            severity: 'warning',
+            field: 'name'
+          });
+        });
+      }
+    });
+
+    emailMap.forEach((records, email) => {
+      if (records.length > 1) {
+        records.forEach(record => {
+          issues.push({
+            recordId: record.id,
+            recordName: record.name,
+            issue: `Duplicate email found: "${email}" (${records.length} records)`,
+            severity: 'error',
+            field: 'email_address'
+          });
+        });
+      }
+    });
+
+    contactMap.forEach((records, contact) => {
+      if (records.length > 1) {
+        records.forEach(record => {
+          issues.push({
+            recordId: record.id,
+            recordName: record.name,
+            issue: `Duplicate contact number found: "${contact}" (${records.length} records)`,
+            severity: 'warning',
+            field: 'contact_number'
+          });
+        });
+      }
+    });
+
+    // Existing validation logic
     data.forEach(record => {
       const age = parseInt(record.age);
       const birthday = new Date(record.birthday);
@@ -120,25 +190,28 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
           recordId: record.id,
           recordName: record.name,
           issue: `Age (${age}) doesn't match birthday (calculated age: ${calculatedAge})`,
-          severity: 'error'
+          severity: 'error',
+          field: 'age'
         });
       }
       
       // Check for missing required fields
-      if (!record.name) {
+      if (!record.name || record.name.trim() === '') {
         issues.push({
           recordId: record.id,
           recordName: record.name || 'Unknown',
           issue: 'Missing name',
-          severity: 'error'
+          severity: 'error',
+          field: 'name'
         });
       }
-      if (!record.age) {
+      if (!record.age || record.age.trim() === '') {
         issues.push({
           recordId: record.id,
           recordName: record.name,
           issue: 'Missing age',
-          severity: 'error'
+          severity: 'error',
+          field: 'age'
         });
       }
       if (!record.birthday) {
@@ -146,7 +219,8 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
           recordId: record.id,
           recordName: record.name,
           issue: 'Missing birthday',
-          severity: 'error'
+          severity: 'error',
+          field: 'birthday'
         });
       }
       if (!record.sex) {
@@ -154,7 +228,116 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
           recordId: record.id,
           recordName: record.name,
           issue: 'Missing sex/gender',
-          severity: 'error'
+          severity: 'error',
+          field: 'sex'
+        });
+      }
+      if (!record.barangay || record.barangay.trim() === '') {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing barangay',
+          severity: 'error',
+          field: 'barangay'
+        });
+      }
+      if (!record.youth_classification) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing youth classification',
+          severity: 'error',
+          field: 'youth_classification'
+        });
+      }
+      if (!record.youth_age_group) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing age group',
+          severity: 'error',
+          field: 'youth_age_group'
+        });
+      }
+      if (!record.highest_education) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing education level',
+          severity: 'warning',
+          field: 'highest_education'
+        });
+      }
+      if (!record.work_status) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing work status',
+          severity: 'warning',
+          field: 'work_status'
+        });
+      }
+      if (!record.civil_status) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing civil status',
+          severity: 'warning',
+          field: 'civil_status'
+        });
+      }
+      if (!record.registered_voter) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing voter registration status',
+          severity: 'warning',
+          field: 'registered_voter'
+        });
+      }
+      if (!record.voted_last_election) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing voting history',
+          severity: 'warning',
+          field: 'voted_last_election'
+        });
+      }
+      if (!record.attended_kk_assembly) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing KK assembly attendance info',
+          severity: 'warning',
+          field: 'attended_kk_assembly'
+        });
+      }
+      if (!record.home_address || record.home_address.trim() === '') {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing home address',
+          severity: 'warning',
+          field: 'home_address'
+        });
+      }
+      if (!record.email_address || record.email_address.trim() === '') {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing email address',
+          severity: 'warning',
+          field: 'email_address'
+        });
+      }
+      if (!record.contact_number || record.contact_number.trim() === '') {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing contact number',
+          severity: 'warning',
+          field: 'contact_number'
         });
       }
       
@@ -164,7 +347,8 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
           recordId: record.id,
           recordName: record.name,
           issue: 'Invalid email format',
-          severity: 'warning'
+          severity: 'warning',
+          field: 'email_address'
         });
       }
     });
@@ -278,6 +462,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
         onOpenChange={setIsDataProblemsDialogOpen}
         issues={dataIssues}
         onEditRecord={handleEdit}
+        records={data}
       />
     </div>
   );
