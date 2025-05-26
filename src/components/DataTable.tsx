@@ -10,6 +10,7 @@ import { EditRecordDialog } from "@/components/dialogs/EditRecordDialog";
 import { DeleteRecordDialog } from "@/components/dialogs/DeleteRecordDialog";
 import { ExportFilterDialog } from "@/components/dialogs/ExportFilterDialog";
 import { BatchEditDialog } from "@/components/dialogs/BatchEditDialog";
+import { DataProblemsDialog } from "@/components/dialogs/DataProblemsDialog";
 import { Button } from "@/components/ui/button";
 import { Search, Replace, AlertTriangle } from "lucide-react";
 
@@ -24,6 +25,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isBatchEditDialogOpen, setIsBatchEditDialogOpen] = useState(false);
+  const [isDataProblemsDialogOpen, setIsDataProblemsDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<YouthRecord | null>(null);
 
   const handleEdit = (record: YouthRecord) => {
@@ -96,9 +98,15 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     }
   };
 
-  // Count data validation issues
-  const getDataIssuesCount = () => {
-    let issueCount = 0;
+  // Get data validation issues with detailed information
+  const getDataIssues = () => {
+    const issues: Array<{
+      recordId: string;
+      recordName: string;
+      issue: string;
+      severity: 'error' | 'warning';
+    }> = [];
+
     data.forEach(record => {
       const age = parseInt(record.age);
       const birthday = new Date(record.birthday);
@@ -107,29 +115,78 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       const calculatedAge = currentYear - birthYear;
       
       // Check for age/birthday mismatch
-      if (Math.abs(age - calculatedAge) > 1) issueCount++;
+      if (Math.abs(age - calculatedAge) > 1) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: `Age (${age}) doesn't match birthday (calculated age: ${calculatedAge})`,
+          severity: 'error'
+        });
+      }
       
       // Check for missing required fields
-      if (!record.name || !record.age || !record.birthday || !record.sex) issueCount++;
+      if (!record.name) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name || 'Unknown',
+          issue: 'Missing name',
+          severity: 'error'
+        });
+      }
+      if (!record.age) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing age',
+          severity: 'error'
+        });
+      }
+      if (!record.birthday) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing birthday',
+          severity: 'error'
+        });
+      }
+      if (!record.sex) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Missing sex/gender',
+          severity: 'error'
+        });
+      }
       
       // Check for invalid email format
-      if (record.email_address && !record.email_address.includes('@')) issueCount++;
+      if (record.email_address && !record.email_address.includes('@')) {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: 'Invalid email format',
+          severity: 'warning'
+        });
+      }
     });
-    return issueCount;
+    
+    return issues;
   };
+
+  const dataIssues = getDataIssues();
 
   return (
     <div className="w-full">
       <div className="flex justify-between mb-2">
         <div className="flex items-center gap-2">
-          {getDataIssuesCount() > 0 && (
+          {dataIssues.length > 0 && (
             <Button 
               variant="outline" 
               size="sm"
               className="flex items-center gap-2 text-amber-600 border-amber-200 hover:bg-amber-50"
+              onClick={() => setIsDataProblemsDialogOpen(true)}
             >
               <AlertTriangle size={16} />
-              See Problems ({getDataIssuesCount()})
+              See Problems ({dataIssues.length})
             </Button>
           )}
         </div>
@@ -160,7 +217,6 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
         getExportCount={tableState.getExportCount}
         exportToCSV={tableState.exportToCSV}
         hasActiveFilters={tableState.hasActiveFilters}
-        autoToggleColumn={tableState.autoToggleColumn}
       />
 
       {/* Youth Table */}
@@ -214,6 +270,14 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
         onOpenChange={setIsBatchEditDialogOpen}
         selectedRecords={tableState.getExportData() as YouthRecord[]}
         onSave={handleBatchEdit}
+      />
+
+      {/* Data Problems Dialog */}
+      <DataProblemsDialog
+        open={isDataProblemsDialogOpen}
+        onOpenChange={setIsDataProblemsDialogOpen}
+        issues={dataIssues}
+        onEditRecord={handleEdit}
       />
     </div>
   );
