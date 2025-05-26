@@ -48,9 +48,9 @@ export function AdvancedFilters({
   const registeredVoterOptions = formSchema.shape.registered_voter.options;
   
   const barangayOptions = [
-    "Aplaya", "Bobontugan", "Corrales", "Jampason", "Kimaya",
-    "Lower Jasaan (Pob.)", "Luz Banzon", "San Antonio", 
-    "San Nicolas", "Solana", "Upper Jasaan (Pob.)"
+    "Aplaya", "Bobontugan", "Corrales", "I.S. Cruz", "Danao", "Jampason", "Kimaya",
+    "Lower Jasaan", "Luz Banzon", "Natubo", "San Antonio", "San Isidro",
+    "San Nicolas", "Solana", "Upper Jasaan"
   ];
   
   // Calculate active filters count

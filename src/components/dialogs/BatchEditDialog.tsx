@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -36,7 +35,7 @@ export function BatchEditDialog({
   const [field, setField] = useState("");
   const [oldValue, setOldValue] = useState("");
   const [newValue, setNewValue] = useState("");
-  
+
   const fieldOptions = [
     { value: "name", label: "Name" },
     { value: "age", label: "Age" },
@@ -59,7 +58,7 @@ export function BatchEditDialog({
     onSave(field, oldValue, newValue);
     onOpenChange(false);
   };
-  
+
   const resetForm = () => {
     setField("");
     setOldValue("");
@@ -70,16 +69,16 @@ export function BatchEditDialog({
     resetForm();
     onOpenChange(false);
   };
-  
+
   // Count occurrences of the search term in the selected field
   const getMatchCount = () => {
     if (!field || !oldValue) return 0;
-    
-    return selectedRecords.filter(record => 
+
+    return selectedRecords.filter(record =>
       String(record[field as keyof YouthRecord]) === oldValue
     ).length;
   };
-  
+
   const matchCount = getMatchCount();
 
   return (
@@ -94,7 +93,7 @@ export function BatchEditDialog({
         <div className="space-y-4 py-4">
           {/* Field Selection */}
           <div>
-            <label htmlFor="field" className="block text-sm font-medium">
+            <label htmlFor="field" className="text-sm font-medium">
               Field to Edit
             </label>
             <Select value={field} onValueChange={setField}>
@@ -113,7 +112,7 @@ export function BatchEditDialog({
 
           {/* Find Value Input */}
           <div>
-            <label htmlFor="oldValue" className="block text-sm font-medium flex items-center gap-2">
+            <label htmlFor="oldValue" className="text-sm font-medium flex items-center gap-2">
               <Search size={16} />
               Find
             </label>
@@ -133,7 +132,7 @@ export function BatchEditDialog({
 
           {/* Replace Value Input */}
           <div>
-            <label htmlFor="newValue" className="block text-sm font-medium flex items-center gap-2">
+            <label htmlFor="newValue" className="text-sm font-medium flex items-center gap-2">
               <Replace size={16} />
               Replace With
             </label>
