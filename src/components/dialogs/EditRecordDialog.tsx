@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -107,23 +106,23 @@ export function EditRecordDialog({
   useEffect(() => {
     if (selectedRecord) {
       form.reset({
-        name: selectedRecord.name,
-        age: selectedRecord.age,
-        birthday: new Date(selectedRecord.birthday),
-        sex: selectedRecord.sex as any,
-        civil_status: selectedRecord.civil_status as any,
-        barangay: selectedRecord.barangay,
-        youth_classification: selectedRecord.youth_classification as any,
-        youth_age_group: selectedRecord.youth_age_group as any,
-        highest_education: selectedRecord.highest_education,
-        work_status: selectedRecord.work_status,
-        registered_voter: selectedRecord.registered_voter as any,
-        voted_last_election: selectedRecord.voted_last_election as any,
-        attended_kk_assembly: selectedRecord.attended_kk_assembly as any,
-        kk_assemblies_attended: selectedRecord.kk_assemblies_attended,
-        home_address: selectedRecord.home_address,
-        email_address: selectedRecord.email_address,
-        contact_number: selectedRecord.contact_number,
+        name: selectedRecord.name || "",
+        age: selectedRecord.age || "",
+        birthday: selectedRecord.birthday ? new Date(selectedRecord.birthday) : new Date(),
+        sex: (selectedRecord.sex as any) || "MALE",
+        civil_status: (selectedRecord.civil_status as any) || "SINGLE",
+        barangay: selectedRecord.barangay || "",
+        youth_classification: (selectedRecord.youth_classification as any) || "ISY",
+        youth_age_group: (selectedRecord.youth_age_group as any) || "CORE YOUTH (18-24)",
+        highest_education: selectedRecord.highest_education || "",
+        work_status: selectedRecord.work_status || "",
+        registered_voter: (selectedRecord.registered_voter as any) || "Yes",
+        voted_last_election: (selectedRecord.voted_last_election as any) || "Yes",
+        attended_kk_assembly: (selectedRecord.attended_kk_assembly as any) || "Yes",
+        kk_assemblies_attended: selectedRecord.kk_assemblies_attended || 0,
+        home_address: selectedRecord.home_address || "",
+        email_address: selectedRecord.email_address || "",
+        contact_number: selectedRecord.contact_number || "",
         region: selectedRecord.region || "",
         province: selectedRecord.province || "",
         city_municipality: selectedRecord.city_municipality || "",
@@ -132,6 +131,7 @@ export function EditRecordDialog({
   }, [selectedRecord, form]);
 
   const handleSubmit = (data: EditFormValues) => {
+    console.log("Form data being submitted:", data);
     onSave(data);
   };
 
@@ -612,8 +612,9 @@ export function EditRecordDialog({
                       );
                     }}
                   />
-             </div>
-          </div>
+                </div>
+              </div>
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                   Cancel

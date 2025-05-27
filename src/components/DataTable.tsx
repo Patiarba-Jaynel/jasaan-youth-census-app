@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
@@ -12,6 +13,7 @@ import { BatchEditDialog } from "@/components/dialogs/BatchEditDialog";
 import { DataProblemsDialog } from "@/components/dialogs/DataProblemsDialog";
 import { Button } from "@/components/ui/button";
 import { Search, Replace, AlertTriangle } from "lucide-react";
+import { formSchema } from "@/lib/schema";
 
 interface DataTableProps {
   data: YouthRecord[];
@@ -26,6 +28,14 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   const [isBatchEditDialogOpen, setIsBatchEditDialogOpen] = useState(false);
   const [isDataProblemsDialogOpen, setIsDataProblemsDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<YouthRecord | null>(null);
+
+  // Normalize data to replace blank values with "N/A"
+  const normalizeValue = (value: any): string => {
+    if (value === null || value === undefined || value === "" || (typeof value === 'string' && value.trim() === '')) {
+      return "N/A";
+    }
+    return String(value);
+  };
 
   const handleEdit = (record: YouthRecord) => {
     setSelectedRecord(record);
@@ -44,6 +54,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       await pbClient.youth.update(selectedRecord.id, data);
       toast.success("Record updated successfully");
       setIsEditDialogOpen(false);
+      setSelectedRecord(null);
       onDataChange();
     } catch (error) {
       console.error("Error updating record:", error);
@@ -58,6 +69,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       await pbClient.youth.delete(selectedRecord.id);
       toast.success("Record deleted successfully");
       setIsDeleteDialogOpen(false);
+      setSelectedRecord(null);
       onDataChange();
     } catch (error) {
       console.error("Error deleting record:", error);
@@ -95,7 +107,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     }
   };
 
-  // Enhanced data validation with duplicate detection
+  // Enhanced data validation with improved dropdown validation and duplicate detection
   const getDataIssues = () => {
     const issues: Array<{
       recordId: string;
@@ -105,28 +117,41 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       field?: string;
     }> = [];
 
-    // Check for duplicates
+    // Get valid options from schema
+    const validOptions = {
+      sex: formSchema.shape.sex.options,
+      civil_status: formSchema.shape.civil_status.options,
+      youth_classification: formSchema.shape.youth_classification.options,
+      youth_age_group: formSchema.shape.youth_age_group.options,
+      highest_education: formSchema.shape.highest_education.options,
+      work_status: formSchema.shape.work_status.options,
+      registered_voter: formSchema.shape.registered_voter.options,
+      voted_last_election: formSchema.shape.voted_last_election.options,
+      attended_kk_assembly: formSchema.shape.attended_kk_assembly.options,
+    };
+
+    // Check for duplicates (excluding N/A values)
     const nameMap = new Map<string, YouthRecord[]>();
     const emailMap = new Map<string, YouthRecord[]>();
     const contactMap = new Map<string, YouthRecord[]>();
 
     data.forEach(record => {
-      // Group by name
-      if (record.name) {
+      // Group by name (exclude N/A)
+      if (record.name && normalizeValue(record.name) !== "N/A") {
         const key = record.name.toLowerCase().trim();
         if (!nameMap.has(key)) nameMap.set(key, []);
         nameMap.get(key)!.push(record);
       }
 
-      // Group by email
-      if (record.email_address) {
+      // Group by email (exclude N/A)
+      if (record.email_address && normalizeValue(record.email_address) !== "N/A") {
         const key = record.email_address.toLowerCase().trim();
         if (!emailMap.has(key)) emailMap.set(key, []);
         emailMap.get(key)!.push(record);
       }
 
-      // Group by contact number
-      if (record.contact_number) {
+      // Group by contact number (exclude N/A)
+      if (record.contact_number && normalizeValue(record.contact_number) !== "N/A") {
         const key = record.contact_number.trim();
         if (!contactMap.has(key)) contactMap.set(key, []);
         contactMap.get(key)!.push(record);
@@ -176,7 +201,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       }
     });
 
-    // Existing validation logic
+    // Validate each record
     data.forEach(record => {
       const age = parseInt(record.age);
       const birthday = new Date(record.birthday);
@@ -194,155 +219,72 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
           field: 'age'
         });
       }
+
+      // Check for invalid dropdown values
+      Object.entries(validOptions).forEach(([field, options]) => {
+        const value = record[field as keyof YouthRecord];
+        if (value && normalizeValue(value) !== "N/A" && !options.includes(value as any)) {
+          issues.push({
+            recordId: record.id,
+            recordName: record.name,
+            issue: `Invalid ${field.replace('_', ' ')}: "${value}" (not in allowed options)`,
+            severity: 'error',
+            field: field
+          });
+        }
+      });
       
       // Check for missing required fields
-      if (!record.name || record.name.trim() === '') {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name || 'Unknown',
-          issue: 'Missing name',
-          severity: 'error',
-          field: 'name'
-        });
-      }
-      if (!record.age || record.age.trim() === '') {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing age',
-          severity: 'error',
-          field: 'age'
-        });
-      }
-      if (!record.birthday) {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing birthday',
-          severity: 'error',
-          field: 'birthday'
-        });
-      }
-      if (!record.sex) {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing sex/gender',
-          severity: 'error',
-          field: 'sex'
-        });
-      }
-      if (!record.barangay || record.barangay.trim() === '') {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing barangay',
-          severity: 'error',
-          field: 'barangay'
-        });
-      }
-      if (!record.youth_classification) {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing youth classification',
-          severity: 'error',
-          field: 'youth_classification'
-        });
-      }
-      if (!record.youth_age_group) {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing age group',
-          severity: 'error',
-          field: 'youth_age_group'
-        });
-      }
-      if (!record.highest_education) {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing education level',
-          severity: 'warning',
-          field: 'highest_education'
-        });
-      }
-      if (!record.work_status) {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing work status',
-          severity: 'warning',
-          field: 'work_status'
-        });
-      }
-      if (!record.civil_status) {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing civil status',
-          severity: 'warning',
-          field: 'civil_status'
-        });
-      }
-      if (!record.registered_voter) {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing voter registration status',
-          severity: 'warning',
-          field: 'registered_voter'
-        });
-      }
-      if (!record.voted_last_election) {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing voting history',
-          severity: 'warning',
-          field: 'voted_last_election'
-        });
-      }
-      if (!record.attended_kk_assembly) {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing KK assembly attendance info',
-          severity: 'warning',
-          field: 'attended_kk_assembly'
-        });
-      }
-      if (!record.home_address || record.home_address.trim() === '') {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing home address',
-          severity: 'warning',
-          field: 'home_address'
-        });
-      }
-      if (!record.email_address || record.email_address.trim() === '') {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing email address',
-          severity: 'warning',
-          field: 'email_address'
-        });
-      }
-      if (!record.contact_number || record.contact_number.trim() === '') {
-        issues.push({
-          recordId: record.id,
-          recordName: record.name,
-          issue: 'Missing contact number',
-          severity: 'warning',
-          field: 'contact_number'
-        });
-      }
+      const requiredFields = [
+        { field: 'name', label: 'name' },
+        { field: 'age', label: 'age' },
+        { field: 'birthday', label: 'birthday' },
+        { field: 'sex', label: 'sex/gender' },
+        { field: 'barangay', label: 'barangay' },
+        { field: 'youth_classification', label: 'youth classification' },
+        { field: 'youth_age_group', label: 'age group' }
+      ];
+
+      const optionalFields = [
+        { field: 'highest_education', label: 'education level' },
+        { field: 'work_status', label: 'work status' },
+        { field: 'civil_status', label: 'civil status' },
+        { field: 'registered_voter', label: 'voter registration status' },
+        { field: 'voted_last_election', label: 'voting history' },
+        { field: 'attended_kk_assembly', label: 'KK assembly attendance info' },
+        { field: 'home_address', label: 'home address' },
+        { field: 'email_address', label: 'email address' },
+        { field: 'contact_number', label: 'contact number' }
+      ];
+
+      requiredFields.forEach(({ field, label }) => {
+        const value = record[field as keyof YouthRecord];
+        if (!value || normalizeValue(value) === "N/A") {
+          issues.push({
+            recordId: record.id,
+            recordName: record.name,
+            issue: `Missing ${label}`,
+            severity: 'error',
+            field: field
+          });
+        }
+      });
+
+      optionalFields.forEach(({ field, label }) => {
+        const value = record[field as keyof YouthRecord];
+        if (!value || normalizeValue(value) === "N/A") {
+          issues.push({
+            recordId: record.id,
+            recordName: record.name,
+            issue: `Missing ${label}`,
+            severity: 'warning',
+            field: field
+          });
+        }
+      });
       
       // Check for invalid email format
-      if (record.email_address && !record.email_address.includes('@')) {
+      if (record.email_address && normalizeValue(record.email_address) !== "N/A" && !record.email_address.includes('@')) {
         issues.push({
           recordId: record.id,
           recordName: record.name,
