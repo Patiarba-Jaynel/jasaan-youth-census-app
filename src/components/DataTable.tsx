@@ -20,6 +20,14 @@ interface DataTableProps {
   onDataChange: () => void;
 }
 
+// Normalize data to replace blank values with "N/A"
+const normalizeValue = (value: any): string => {
+  if (value === null || value === undefined || value === "" || (typeof value === 'string' && value.trim() === '')) {
+    return "N/A";
+  }
+  return String(value);
+};
+
 export function DataTable({ data, onDataChange }: DataTableProps) {
   const tableState = useTableState(data);
 
@@ -28,14 +36,6 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   const [isBatchEditDialogOpen, setIsBatchEditDialogOpen] = useState(false);
   const [isDataProblemsDialogOpen, setIsDataProblemsDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<YouthRecord | null>(null);
-
-  // Normalize data to replace blank values with "N/A"
-  const normalizeValue = (value: any): string => {
-    if (value === null || value === undefined || value === "" || (typeof value === 'string' && value.trim() === '')) {
-      return "N/A";
-    }
-    return String(value);
-  };
 
   const handleEdit = (record: YouthRecord) => {
     setSelectedRecord(record);
@@ -51,7 +51,15 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     if (!selectedRecord) return;
 
     try {
-      await pbClient.youth.update(selectedRecord.id, data);
+      // Normalize all string fields to replace empty values with "N/A"
+      const normalizedData = Object.fromEntries(
+        Object.entries(data).map(([key, value]) => [
+          key,
+          typeof value === 'string' && value.trim() === '' ? 'N/A' : value
+        ])
+      );
+
+      await pbClient.youth.update(selectedRecord.id, normalizedData);
       toast.success("Record updated successfully");
       setIsEditDialogOpen(false);
       setSelectedRecord(null);
@@ -78,7 +86,8 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   };
 
   const handleApplyExportFilters = () => {
-    toast.success(`Export filters applied (${tableState.getExportCount()} records selected)`);
+    const count = tableState.getExportCount();
+    toast.success(`Export filters applied (${count} records selected)`);
   };
 
   const handleBatchEdit = async (field: string, oldValue: string, newValue: string) => {
@@ -95,7 +104,9 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       
       let updatedCount = 0;
       for (const record of recordsToUpdate) {
-        await pbClient.youth.update(record.id, { [field]: newValue });
+        // Normalize the new value
+        const normalizedValue = newValue.trim() === '' ? 'N/A' : newValue;
+        await pbClient.youth.update(record.id, { [field]: normalizedValue });
         updatedCount++;
       }
       

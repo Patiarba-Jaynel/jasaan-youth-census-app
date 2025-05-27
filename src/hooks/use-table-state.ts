@@ -23,8 +23,8 @@ export function useTableState(data: YouthRecord[]) {
     { key: "assembliesAttended", title: "KK Assemblies", visible: false },
     { key: "civilStatus", title: "Civil Status", visible: false },
     { key: "birthday", title: "Birthday", visible: false },
-    { key: "email", title: "Email", visible: false },
-    { key: "contactNumber", title: "Contact Number", visible: false },
+    { key: "email", title: "Email", visible: true },
+    { key: "contactNumber", title: "Contact Number", visible: true },
   ]);
 
   const [advancedFilters, setAdvancedFilters] = useState({
@@ -40,7 +40,8 @@ export function useTableState(data: YouthRecord[]) {
     registeredVoter: [] as string[],
   });
 
-  const [exportFilters, setExportFilters] = useState({
+  // Column selection for export
+  const [exportColumns, setExportColumns] = useState({
     name: true,
     age: true,
     sex: true,
@@ -58,6 +59,20 @@ export function useTableState(data: YouthRecord[]) {
     birthday: true,
     email: true,
     contactNumber: true,
+  });
+
+  // Data filtering for export
+  const [exportFilters, setExportFilters] = useState({
+    barangays: [] as string[],
+    classifications: [] as string[],
+    ageGroups: [] as string[],
+    workStatus: [] as string[],
+    education: [] as string[],
+    sex: [] as string[],
+    civilStatus: [] as string[],
+    registeredVoter: [] as string[],
+    votedLastElection: [] as string[],
+    attendedAssembly: [] as string[],
   });
 
   const itemsPerPage = 25;
@@ -115,6 +130,56 @@ export function useTableState(data: YouthRecord[]) {
     });
   }, [data, searchTerm, advancedFilters]);
 
+  // Filter data for export based on export filters
+  const exportFilteredData = useMemo(() => {
+    return filteredData.filter((record) => {
+      const matchesBarangay = 
+        exportFilters.barangays.length === 0 || 
+        exportFilters.barangays.includes(record.barangay);
+
+      const matchesClassification = 
+        exportFilters.classifications.length === 0 || 
+        exportFilters.classifications.includes(record.youth_classification);
+
+      const matchesAgeGroup = 
+        exportFilters.ageGroups.length === 0 || 
+        exportFilters.ageGroups.includes(record.youth_age_group);
+
+      const matchesWorkStatus = 
+        exportFilters.workStatus.length === 0 || 
+        exportFilters.workStatus.includes(record.work_status);
+
+      const matchesEducation = 
+        exportFilters.education.length === 0 || 
+        exportFilters.education.includes(record.highest_education);
+
+      const matchesSex = 
+        exportFilters.sex.length === 0 || 
+        exportFilters.sex.includes(record.sex);
+
+      const matchesCivilStatus = 
+        exportFilters.civilStatus.length === 0 || 
+        exportFilters.civilStatus.includes(record.civil_status);
+
+      const matchesRegisteredVoter = 
+        exportFilters.registeredVoter.length === 0 || 
+        exportFilters.registeredVoter.includes(record.registered_voter);
+
+      const matchesVotedLastElection = 
+        exportFilters.votedLastElection.length === 0 || 
+        exportFilters.votedLastElection.includes(record.voted_last_election);
+
+      const matchesAttendedAssembly = 
+        exportFilters.attendedAssembly.length === 0 || 
+        exportFilters.attendedAssembly.includes(record.attended_kk_assembly);
+
+      return matchesBarangay && matchesClassification && matchesAgeGroup && 
+             matchesWorkStatus && matchesEducation && matchesSex && 
+             matchesCivilStatus && matchesRegisteredVoter && 
+             matchesVotedLastElection && matchesAttendedAssembly;
+    });
+  }, [filteredData, exportFilters]);
+
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -168,64 +233,66 @@ export function useTableState(data: YouthRecord[]) {
            advancedFilters.registeredVoter.length > 0;
   }, [searchTerm, advancedFilters]);
 
-  const toggleExportFilter = (key: string) => {
-    setExportFilters(prev => ({
+  const toggleExportColumn = (key: string) => {
+    setExportColumns(prev => ({
       ...prev,
       [key]: !prev[key as keyof typeof prev]
     }));
   };
 
+  const toggleExportFilter = (value: string, filterType: keyof typeof exportFilters) => {
+    setExportFilters(prev => ({
+      ...prev,
+      [filterType]: prev[filterType].includes(value)
+        ? prev[filterType].filter(item => item !== value)
+        : [...prev[filterType], value]
+    }));
+  };
+
   const clearExportFilters = () => {
     setExportFilters({
-      name: false,
-      age: false,
-      sex: false,
-      barangay: false,
-      homeAddress: false,
-      classification: false,
-      ageGroup: false,
-      education: false,
-      work: false,
-      registeredVoter: false,
-      votedLastElection: false,
-      attendedAssembly: false,
-      assembliesAttended: false,
-      civilStatus: false,
-      birthday: false,
-      email: false,
-      contactNumber: false,
+      barangays: [],
+      classifications: [],
+      ageGroups: [],
+      workStatus: [],
+      education: [],
+      sex: [],
+      civilStatus: [],
+      registeredVoter: [],
+      votedLastElection: [],
+      attendedAssembly: [],
     });
   };
 
   const getExportData = () => {
-    return filteredData.map(record => {
+    return exportFilteredData.map(record => {
       const exportRecord: any = {};
       
-      if (exportFilters.name) exportRecord.name = record.name;
-      if (exportFilters.age) exportRecord.age = record.age;
-      if (exportFilters.sex) exportRecord.sex = record.sex;
-      if (exportFilters.barangay) exportRecord.barangay = record.barangay;
-      if (exportFilters.homeAddress) exportRecord.home_address = record.home_address;
-      if (exportFilters.classification) exportRecord.youth_classification = record.youth_classification;
-      if (exportFilters.ageGroup) exportRecord.youth_age_group = record.youth_age_group;
-      if (exportFilters.education) exportRecord.highest_education = record.highest_education;
-      if (exportFilters.work) exportRecord.work_status = record.work_status;
-      if (exportFilters.registeredVoter) exportRecord.registered_voter = record.registered_voter;
-      if (exportFilters.votedLastElection) exportRecord.voted_last_election = record.voted_last_election;
-      if (exportFilters.attendedAssembly) exportRecord.attended_kk_assembly = record.attended_kk_assembly;
-      if (exportFilters.assembliesAttended) exportRecord.kk_assemblies_attended = record.kk_assemblies_attended;
-      if (exportFilters.civilStatus) exportRecord.civil_status = record.civil_status;
-      if (exportFilters.birthday) exportRecord.birthday = record.birthday;
-      if (exportFilters.email) exportRecord.email_address = record.email_address;
-      if (exportFilters.contactNumber) exportRecord.contact_number = record.contact_number;
+      if (exportColumns.name) exportRecord.name = record.name;
+      if (exportColumns.age) exportRecord.age = record.age;
+      if (exportColumns.sex) exportRecord.sex = record.sex;
+      if (exportColumns.barangay) exportRecord.barangay = record.barangay;
+      if (exportColumns.homeAddress) exportRecord.home_address = record.home_address;
+      if (exportColumns.classification) exportRecord.youth_classification = record.youth_classification;
+      if (exportColumns.ageGroup) exportRecord.youth_age_group = record.youth_age_group;
+      if (exportColumns.education) exportRecord.highest_education = record.highest_education;
+      if (exportColumns.work) exportRecord.work_status = record.work_status;
+      if (exportColumns.registeredVoter) exportRecord.registered_voter = record.registered_voter;
+      if (exportColumns.votedLastElection) exportRecord.voted_last_election = record.voted_last_election;
+      if (exportColumns.attendedAssembly) exportRecord.attended_kk_assembly = record.attended_kk_assembly;
+      if (exportColumns.assembliesAttended) exportRecord.kk_assemblies_attended = record.kk_assemblies_attended;
+      if (exportColumns.civilStatus) exportRecord.civil_status = record.civil_status;
+      if (exportColumns.birthday) exportRecord.birthday = record.birthday;
+      if (exportColumns.email) exportRecord.email_address = record.email_address;
+      if (exportColumns.contactNumber) exportRecord.contact_number = record.contact_number;
       
       return exportRecord;
     });
   };
 
   const getExportCount = () => {
-    const activeFilters = Object.values(exportFilters).filter(Boolean).length;
-    return `${filteredData.length} records, ${activeFilters} fields`;
+    const activeFilters = Object.values(exportColumns).filter(Boolean).length;
+    return exportFilteredData.length;
   };
 
   const exportToCSV = () => {
@@ -283,7 +350,9 @@ export function useTableState(data: YouthRecord[]) {
     hasActiveFilters,
     
     // Export
+    exportColumns,
     exportFilters,
+    toggleExportColumn,
     toggleExportFilter,
     clearExportFilters,
     getExportData,
