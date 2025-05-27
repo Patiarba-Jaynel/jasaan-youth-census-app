@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { YouthRecord } from "@/lib/pb-client";
 
@@ -79,9 +78,11 @@ export function useTableState(data: YouthRecord[]) {
 
   const filteredData = useMemo(() => {
     return data.filter((record) => {
-      const matchesSearch = Object.values(record).some((value) =>
-        String(value).toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      // Case-insensitive search that includes N/A values
+      const matchesSearch = searchTerm === "" || Object.values(record).some((value) => {
+        const stringValue = value === null || value === undefined || value === "" ? "N/A" : String(value);
+        return stringValue.toLowerCase().includes(searchTerm.toLowerCase());
+      });
 
       const matchesAge = 
         parseInt(record.age) >= advancedFilters.ageRange[0] &&
@@ -89,39 +90,39 @@ export function useTableState(data: YouthRecord[]) {
 
       const matchesGender = 
         advancedFilters.gender.length === 0 || 
-        advancedFilters.gender.includes(record.sex);
+        advancedFilters.gender.includes(record.sex || "N/A");
 
       const matchesVoted = 
         advancedFilters.votedLastElection.length === 0 || 
-        advancedFilters.votedLastElection.includes(record.voted_last_election);
+        advancedFilters.votedLastElection.includes(record.voted_last_election || "N/A");
 
       const matchesAssembly = 
         advancedFilters.attendedAssembly.length === 0 || 
-        advancedFilters.attendedAssembly.includes(record.attended_kk_assembly);
+        advancedFilters.attendedAssembly.includes(record.attended_kk_assembly || "N/A");
 
       const matchesEducation = 
         advancedFilters.highestEducation.length === 0 || 
-        advancedFilters.highestEducation.includes(record.highest_education);
+        advancedFilters.highestEducation.includes(record.highest_education || "N/A");
 
       const matchesBarangay = 
         advancedFilters.barangays.length === 0 || 
-        advancedFilters.barangays.includes(record.barangay);
+        advancedFilters.barangays.includes(record.barangay || "N/A");
 
       const matchesClassification = 
         advancedFilters.classifications.length === 0 || 
-        advancedFilters.classifications.includes(record.youth_classification);
+        advancedFilters.classifications.includes(record.youth_classification || "N/A");
 
       const matchesWorkStatus = 
         advancedFilters.workStatus.length === 0 || 
-        advancedFilters.workStatus.includes(record.work_status);
+        advancedFilters.workStatus.includes(record.work_status || "N/A");
 
       const matchesCivilStatus = 
         advancedFilters.civilStatus.length === 0 || 
-        advancedFilters.civilStatus.includes(record.civil_status);
+        advancedFilters.civilStatus.includes(record.civil_status || "N/A");
 
       const matchesRegisteredVoter = 
         advancedFilters.registeredVoter.length === 0 || 
-        advancedFilters.registeredVoter.includes(record.registered_voter);
+        advancedFilters.registeredVoter.includes(record.registered_voter || "N/A");
 
       return matchesSearch && matchesAge && matchesGender && matchesVoted && 
              matchesAssembly && matchesEducation && matchesBarangay && 
@@ -135,43 +136,43 @@ export function useTableState(data: YouthRecord[]) {
     return filteredData.filter((record) => {
       const matchesBarangay = 
         exportFilters.barangays.length === 0 || 
-        exportFilters.barangays.includes(record.barangay);
+        exportFilters.barangays.includes(record.barangay || "N/A");
 
       const matchesClassification = 
         exportFilters.classifications.length === 0 || 
-        exportFilters.classifications.includes(record.youth_classification);
+        exportFilters.classifications.includes(record.youth_classification || "N/A");
 
       const matchesAgeGroup = 
         exportFilters.ageGroups.length === 0 || 
-        exportFilters.ageGroups.includes(record.youth_age_group);
+        exportFilters.ageGroups.includes(record.youth_age_group || "N/A");
 
       const matchesWorkStatus = 
         exportFilters.workStatus.length === 0 || 
-        exportFilters.workStatus.includes(record.work_status);
+        exportFilters.workStatus.includes(record.work_status || "N/A");
 
       const matchesEducation = 
         exportFilters.education.length === 0 || 
-        exportFilters.education.includes(record.highest_education);
+        exportFilters.education.includes(record.highest_education || "N/A");
 
       const matchesSex = 
         exportFilters.sex.length === 0 || 
-        exportFilters.sex.includes(record.sex);
+        exportFilters.sex.includes(record.sex || "N/A");
 
       const matchesCivilStatus = 
         exportFilters.civilStatus.length === 0 || 
-        exportFilters.civilStatus.includes(record.civil_status);
+        exportFilters.civilStatus.includes(record.civil_status || "N/A");
 
       const matchesRegisteredVoter = 
         exportFilters.registeredVoter.length === 0 || 
-        exportFilters.registeredVoter.includes(record.registered_voter);
+        exportFilters.registeredVoter.includes(record.registered_voter || "N/A");
 
       const matchesVotedLastElection = 
         exportFilters.votedLastElection.length === 0 || 
-        exportFilters.votedLastElection.includes(record.voted_last_election);
+        exportFilters.votedLastElection.includes(record.voted_last_election || "N/A");
 
       const matchesAttendedAssembly = 
         exportFilters.attendedAssembly.length === 0 || 
-        exportFilters.attendedAssembly.includes(record.attended_kk_assembly);
+        exportFilters.attendedAssembly.includes(record.attended_kk_assembly || "N/A");
 
       return matchesBarangay && matchesClassification && matchesAgeGroup && 
              matchesWorkStatus && matchesEducation && matchesSex && 
@@ -268,23 +269,23 @@ export function useTableState(data: YouthRecord[]) {
     return exportFilteredData.map(record => {
       const exportRecord: any = {};
       
-      if (exportColumns.name) exportRecord.name = record.name;
-      if (exportColumns.age) exportRecord.age = record.age;
-      if (exportColumns.sex) exportRecord.sex = record.sex;
-      if (exportColumns.barangay) exportRecord.barangay = record.barangay;
-      if (exportColumns.homeAddress) exportRecord.home_address = record.home_address;
-      if (exportColumns.classification) exportRecord.youth_classification = record.youth_classification;
-      if (exportColumns.ageGroup) exportRecord.youth_age_group = record.youth_age_group;
-      if (exportColumns.education) exportRecord.highest_education = record.highest_education;
-      if (exportColumns.work) exportRecord.work_status = record.work_status;
-      if (exportColumns.registeredVoter) exportRecord.registered_voter = record.registered_voter;
-      if (exportColumns.votedLastElection) exportRecord.voted_last_election = record.voted_last_election;
-      if (exportColumns.attendedAssembly) exportRecord.attended_kk_assembly = record.attended_kk_assembly;
-      if (exportColumns.assembliesAttended) exportRecord.kk_assemblies_attended = record.kk_assemblies_attended;
-      if (exportColumns.civilStatus) exportRecord.civil_status = record.civil_status;
-      if (exportColumns.birthday) exportRecord.birthday = record.birthday;
-      if (exportColumns.email) exportRecord.email_address = record.email_address;
-      if (exportColumns.contactNumber) exportRecord.contact_number = record.contact_number;
+      if (exportColumns.name) exportRecord.name = record.name || "N/A";
+      if (exportColumns.age) exportRecord.age = record.age || "N/A";
+      if (exportColumns.sex) exportRecord.sex = record.sex || "N/A";
+      if (exportColumns.barangay) exportRecord.barangay = record.barangay || "N/A";
+      if (exportColumns.homeAddress) exportRecord.home_address = record.home_address || "N/A";
+      if (exportColumns.classification) exportRecord.youth_classification = record.youth_classification || "N/A";
+      if (exportColumns.ageGroup) exportRecord.youth_age_group = record.youth_age_group || "N/A";
+      if (exportColumns.education) exportRecord.highest_education = record.highest_education || "N/A";
+      if (exportColumns.work) exportRecord.work_status = record.work_status || "N/A";
+      if (exportColumns.registeredVoter) exportRecord.registered_voter = record.registered_voter || "N/A";
+      if (exportColumns.votedLastElection) exportRecord.voted_last_election = record.voted_last_election || "N/A";
+      if (exportColumns.attendedAssembly) exportRecord.attended_kk_assembly = record.attended_kk_assembly || "N/A";
+      if (exportColumns.assembliesAttended) exportRecord.kk_assemblies_attended = record.kk_assemblies_attended || 0;
+      if (exportColumns.civilStatus) exportRecord.civil_status = record.civil_status || "N/A";
+      if (exportColumns.birthday) exportRecord.birthday = record.birthday || "N/A";
+      if (exportColumns.email) exportRecord.email_address = record.email_address || "N/A";
+      if (exportColumns.contactNumber) exportRecord.contact_number = record.contact_number || "N/A";
       
       return exportRecord;
     });

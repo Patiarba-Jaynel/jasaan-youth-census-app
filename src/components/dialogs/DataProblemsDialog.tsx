@@ -1,8 +1,9 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, AlertCircle, Edit, Trash2, UserX } from "lucide-react";
+import { AlertTriangle, AlertCircle, Edit, UserX, Users } from "lucide-react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
 import { useState } from "react";
@@ -13,6 +14,8 @@ interface DataIssue {
   issue: string;
   severity: 'error' | 'warning';
   field?: string;
+  issueType?: string;
+  duplicateGroup?: string[];
 }
 
 interface DataProblemsDialogProps {
@@ -29,37 +32,26 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
   const errorCount = issues.filter(issue => issue.severity === 'error').length;
   const warningCount = issues.filter(issue => issue.severity === 'warning').length;
 
+  // Group issues by issue type for batch operations
+  const groupedIssues = issues.reduce((acc, issue) => {
+    const key = issue.issueType || 'other';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(issue);
+    return acc;
+  }, {} as Record<string, DataIssue[]>);
+
   const findRecord = (recordId: string) => {
     return records.find(r => r.id === recordId);
   };
 
   const isDuplicateIssue = (issue: DataIssue) => {
-    return issue.issue.toLowerCase().includes('duplicate');
+    return issue.issueType?.startsWith('duplicate_') || false;
   };
 
   const getDuplicateRecords = (issue: DataIssue) => {
-    if (!isDuplicateIssue(issue)) return [];
+    if (!isDuplicateIssue(issue) || !issue.duplicateGroup) return [];
     
-    const field = issue.field;
-    const currentRecord = findRecord(issue.recordId);
-    if (!currentRecord || !field) return [];
-
-    const fieldValue = currentRecord[field as keyof YouthRecord];
-    if (!fieldValue) return [];
-
-    return records.filter(record => {
-      const recordValue = record[field as keyof YouthRecord];
-      if (field === 'name') {
-        return recordValue?.toString().toLowerCase().trim() === fieldValue.toString().toLowerCase().trim();
-      }
-      if (field === 'email_address') {
-        return recordValue?.toString().toLowerCase().trim() === fieldValue.toString().toLowerCase().trim();
-      }
-      if (field === 'contact_number') {
-        return recordValue?.toString().trim() === fieldValue.toString().trim();
-      }
-      return recordValue === fieldValue;
-    });
+    return records.filter(record => issue.duplicateGroup?.includes(record.id));
   };
 
   const handleEditRecord = async (recordId: string) => {
@@ -67,27 +59,6 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
     if (record) {
       onEditRecord(record);
       onOpenChange(false);
-    }
-  };
-
-  const handleDeleteRecord = async (recordId: string) => {
-    if (processingIds.has(recordId)) return;
-    
-    setProcessingIds(prev => new Set(prev).add(recordId));
-    
-    try {
-      await pbClient.youth.delete(recordId);
-      toast.success("Record deleted successfully");
-      window.location.reload(); // Refresh to update the data
-    } catch (error) {
-      console.error("Error deleting record:", error);
-      toast.error("Failed to delete record");
-    } finally {
-      setProcessingIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(recordId);
-        return newSet;
-      });
     }
   };
 
@@ -113,6 +84,25 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
     }
   };
 
+  const handleBatchFixIssueType = async (issueType: string) => {
+    const issuesOfType = groupedIssues[issueType];
+    if (!issuesOfType) return;
+
+    try {
+      if (issueType.startsWith('duplicate_')) {
+        // Handle all duplicates of this type
+        for (const issue of issuesOfType) {
+          await handleBulkDeleteDuplicates(issue);
+        }
+      } else {
+        toast.info(`Batch fix for ${issueType} not implemented yet. Please fix individually.`);
+      }
+    } catch (error) {
+      console.error("Error during batch fix:", error);
+      toast.error("Failed to complete batch fix");
+    }
+  };
+
   const renderIssueActions = (issue: DataIssue) => {
     const record = findRecord(issue.recordId);
     if (!record) return null;
@@ -135,16 +125,6 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
               <Edit className="h-3 w-3" />
               Edit
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDeleteRecord(issue.recordId)}
-              className="flex items-center gap-1 text-red-600 border-red-200 hover:bg-red-50"
-              disabled={isProcessing}
-            >
-              <Trash2 className="h-3 w-3" />
-              Delete This
-            </Button>
           </div>
           {duplicateRecords.length > 1 && (
             <Button
@@ -154,7 +134,7 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
               className="flex items-center gap-1 text-orange-600 border-orange-200 hover:bg-orange-50"
             >
               <UserX className="h-3 w-3" />
-              Delete All Duplicates (Keep 1)
+              Delete Duplicates (Keep 1)
             </Button>
           )}
         </div>
@@ -176,9 +156,37 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
     );
   };
 
+  const renderBatchActions = () => {
+    return (
+      <div className="mb-4 p-4 border rounded-lg bg-blue-50">
+        <h3 className="font-semibold mb-3 flex items-center gap-2">
+          <Users className="h-4 w-4" />
+          Batch Actions
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {Object.entries(groupedIssues).map(([issueType, issueList]) => (
+            <div key={issueType} className="flex items-center justify-between p-2 bg-white rounded border">
+              <span className="text-sm">
+                {issueType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} ({issueList.length})
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleBatchFixIssueType(issueType)}
+                className="text-xs"
+              >
+                Fix All
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent className="max-w-4xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-amber-500" />
@@ -197,6 +205,8 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
         </DialogHeader>
 
         <div className="max-h-[60vh] overflow-y-auto pr-4 scrollbar scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+          {Object.keys(groupedIssues).length > 1 && renderBatchActions()}
+          
           <div className="space-y-3">
             {issues.map((issue, index) => {
               const record = findRecord(issue.recordId);

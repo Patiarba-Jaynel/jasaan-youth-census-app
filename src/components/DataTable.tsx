@@ -118,7 +118,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     }
   };
 
-  // Enhanced data validation with improved dropdown validation and duplicate detection
+  // Enhanced data validation with improved duplicate detection (only one report per duplicate group)
   const getDataIssues = () => {
     const issues: Array<{
       recordId: string;
@@ -126,6 +126,8 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       issue: string;
       severity: 'error' | 'warning';
       field?: string;
+      issueType?: string;
+      duplicateGroup?: string[];
     }> = [];
 
     // Get valid options from schema
@@ -141,7 +143,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       attended_kk_assembly: formSchema.shape.attended_kk_assembly.options,
     };
 
-    // Check for duplicates (excluding N/A values)
+    // Check for duplicates (excluding N/A values) - only report once per duplicate group
     const nameMap = new Map<string, YouthRecord[]>();
     const emailMap = new Map<string, YouthRecord[]>();
     const contactMap = new Map<string, YouthRecord[]>();
@@ -169,45 +171,45 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       }
     });
 
-    // Add duplicate issues
+    // Add duplicate issues - only one report per duplicate group
     nameMap.forEach((records, name) => {
       if (records.length > 1) {
-        records.forEach(record => {
-          issues.push({
-            recordId: record.id,
-            recordName: record.name,
-            issue: `Duplicate name found: "${name}" (${records.length} records)`,
-            severity: 'warning',
-            field: 'name'
-          });
+        issues.push({
+          recordId: records[0].id, // Use first record as representative
+          recordName: records[0].name,
+          issue: `Duplicate name found: "${name}" (${records.length} records)`,
+          severity: 'warning',
+          field: 'name',
+          issueType: 'duplicate_name',
+          duplicateGroup: records.map(r => r.id)
         });
       }
     });
 
     emailMap.forEach((records, email) => {
       if (records.length > 1) {
-        records.forEach(record => {
-          issues.push({
-            recordId: record.id,
-            recordName: record.name,
-            issue: `Duplicate email found: "${email}" (${records.length} records)`,
-            severity: 'error',
-            field: 'email_address'
-          });
+        issues.push({
+          recordId: records[0].id,
+          recordName: records[0].name,
+          issue: `Duplicate email found: "${email}" (${records.length} records)`,
+          severity: 'error',
+          field: 'email_address',
+          issueType: 'duplicate_email',
+          duplicateGroup: records.map(r => r.id)
         });
       }
     });
 
     contactMap.forEach((records, contact) => {
       if (records.length > 1) {
-        records.forEach(record => {
-          issues.push({
-            recordId: record.id,
-            recordName: record.name,
-            issue: `Duplicate contact number found: "${contact}" (${records.length} records)`,
-            severity: 'warning',
-            field: 'contact_number'
-          });
+        issues.push({
+          recordId: records[0].id,
+          recordName: records[0].name,
+          issue: `Duplicate contact number found: "${contact}" (${records.length} records)`,
+          severity: 'warning',
+          field: 'contact_number',
+          issueType: 'duplicate_contact',
+          duplicateGroup: records.map(r => r.id)
         });
       }
     });
@@ -227,7 +229,8 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
           recordName: record.name,
           issue: `Age (${age}) doesn't match birthday (calculated age: ${calculatedAge})`,
           severity: 'error',
-          field: 'age'
+          field: 'age',
+          issueType: 'age_mismatch'
         });
       }
 
@@ -240,7 +243,8 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
             recordName: record.name,
             issue: `Invalid ${field.replace('_', ' ')}: "${value}" (not in allowed options)`,
             severity: 'error',
-            field: field
+            field: field,
+            issueType: 'invalid_dropdown'
           });
         }
       });
@@ -276,7 +280,8 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
             recordName: record.name,
             issue: `Missing ${label}`,
             severity: 'error',
-            field: field
+            field: field,
+            issueType: 'missing_required'
           });
         }
       });
@@ -289,7 +294,8 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
             recordName: record.name,
             issue: `Missing ${label}`,
             severity: 'warning',
-            field: field
+            field: field,
+            issueType: 'missing_optional'
           });
         }
       });
@@ -301,7 +307,8 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
           recordName: record.name,
           issue: 'Invalid email format',
           severity: 'warning',
-          field: 'email_address'
+          field: 'email_address',
+          issueType: 'invalid_email'
         });
       }
     });
