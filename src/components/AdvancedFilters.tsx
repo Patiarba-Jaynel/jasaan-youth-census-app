@@ -34,6 +34,13 @@ export function AdvancedFilters({
 }: AdvancedFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const toTitleCase = (str: string) =>
+    str
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+
   const sexOptions = formSchema.shape.sex.options;
   const votedOptions = formSchema.shape.voted_last_election.options;
   const assemblyOptions = formSchema.shape.attended_kk_assembly.options;
@@ -114,39 +121,86 @@ export function AdvancedFilters({
 
         <Separator />
 
-        <FilterGroup label="Gender" options={sexOptions} selected={selectedFilters.gender} onToggle={(value) => toggleFilterSelection(value, 'gender')} />
+        <FilterGroup
+          label="Gender"
+          options={sexOptions}
+          selected={selectedFilters.gender}
+          onToggle={(value) => toggleFilterSelection(value, 'gender')}
+          toTitleCase={true}
+        />
 
         <Separator />
 
-        <FilterGroup label="Barangay" options={barangayOptions} selected={selectedFilters.barangays} onToggle={(value) => toggleFilterSelection(value, 'barangays')} />
+        <FilterGroup
+          label="Barangay"
+          options={barangayOptions}
+          selected={selectedFilters.barangays}
+          onToggle={(value) => toggleFilterSelection(value, 'barangays')}
+        />
 
         <Separator />
 
-        <FilterGroup label="Youth Classification" options={classificationOptions} selected={selectedFilters.classifications} onToggle={(value) => toggleFilterSelection(value, 'classifications')} />
+        <FilterGroup
+          label="Youth Classification"
+          options={classificationOptions}
+          selected={selectedFilters.classifications}
+          onToggle={(value) => toggleFilterSelection(value, 'classifications')}
+        />
 
         <Separator />
 
-        <FilterGroup label="Work Status" options={workStatusOptions} selected={selectedFilters.workStatus} onToggle={(value) => toggleFilterSelection(value, 'workStatus')} />
+        <FilterGroup
+          label="Work Status"
+          options={workStatusOptions}
+          selected={selectedFilters.workStatus}
+          onToggle={(value) => toggleFilterSelection(value, 'workStatus')}
+        />
 
         <Separator />
 
-        <FilterGroup label="Civil Status" options={civilStatusOptions} selected={selectedFilters.civilStatus} onToggle={(value) => toggleFilterSelection(value, 'civilStatus')} />
+        <FilterGroup
+          label="Civil Status"
+          options={civilStatusOptions}
+          selected={selectedFilters.civilStatus}
+          onToggle={(value) => toggleFilterSelection(value, 'civilStatus')}
+          toTitleCase={true}
+        />
 
         <Separator />
 
-        <FilterGroup label="Registered Voter" options={registeredVoterOptions} selected={selectedFilters.registeredVoter} onToggle={(value) => toggleFilterSelection(value, 'registeredVoter')} />
+        <FilterGroup
+          label="Registered Voter"
+          options={registeredVoterOptions}
+          selected={selectedFilters.registeredVoter}
+          onToggle={(value) => toggleFilterSelection(value, 'registeredVoter')}
+        />
 
         <Separator />
 
-        <FilterGroup label="Voted Last Election" options={votedOptions} selected={selectedFilters.votedLastElection} onToggle={(value) => toggleFilterSelection(value, 'votedLastElection')} />
+        <FilterGroup
+          label="Voted Last Election"
+          options={votedOptions}
+          selected={selectedFilters.votedLastElection}
+          onToggle={(value) => toggleFilterSelection(value, 'votedLastElection')}
+        />
 
         <Separator />
 
-        <FilterGroup label="Assembly Attendance" options={assemblyOptions} selected={selectedFilters.attendedAssembly} onToggle={(value) => toggleFilterSelection(value, 'attendedAssembly')} />
+        <FilterGroup
+          label="Assembly Attendance"
+          options={assemblyOptions}
+          selected={selectedFilters.attendedAssembly}
+          onToggle={(value) => toggleFilterSelection(value, 'attendedAssembly')}
+        />
 
         <Separator />
 
-        <FilterGroup label="Highest Education" options={educationOptions} selected={selectedFilters.highestEducation} onToggle={(value) => toggleFilterSelection(value, 'highestEducation')} />
+        <FilterGroup
+          label="Highest Education"
+          options={educationOptions}
+          selected={selectedFilters.highestEducation}
+          onToggle={(value) => toggleFilterSelection(value, 'highestEducation')}
+        />
 
         {activeFilterCount > 0 && (
           <>
@@ -174,13 +228,24 @@ function FilterGroup({
   label,
   options,
   selected,
-  onToggle
+  onToggle,
+  toTitleCase = false
 }: {
   label: string;
   options: string[];
   selected: string[];
   onToggle: (value: string) => void;
+  toTitleCase?: boolean;
 }) {
+  const formatLabel = (str: string) =>
+    toTitleCase
+      ? str
+          .toLowerCase()
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ")
+      : str;
+
   return (
     <div className="space-y-2 my-4">
       <h4 className="font-medium text-sm">{label}</h4>
@@ -193,7 +258,7 @@ function FilterGroup({
               onCheckedChange={() => onToggle(option)}
             />
             <Label htmlFor={`${label}-${option}`} className="text-sm">
-              {option}
+              {formatLabel(option)}
             </Label>
           </div>
         ))}
