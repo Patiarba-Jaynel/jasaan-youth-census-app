@@ -560,7 +560,15 @@ export function EditRecordDialog({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Attended KK Assembly</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            if (value === "No") {
+                              form.setValue("kk_assemblies_attended", 0);
+                            }
+                          }}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select" />
@@ -581,19 +589,31 @@ export function EditRecordDialog({
                   <FormField
                     control={form.control}
                     name="kk_assemblies_attended"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>KK Assemblies Attended</FormLabel>
-                        <FormControl>
-                          <Input {...field} type="number" min="0" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const attendedKK = form.watch("attended_kk_assembly");
+                      const isDisabled = attendedKK === "No";
+                      return (
+                        <FormItem>
+                          <FormLabel>KK Assemblies Attended</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              min="0"
+                              disabled={isDisabled}
+                              onChange={(e) => {
+                                const value = Number(e.target.value);
+                                if (!isDisabled) field.onChange(value);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
-                </div>
-              </div>
-
+             </div>
+          </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                   Cancel
