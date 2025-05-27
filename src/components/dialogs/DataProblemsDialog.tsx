@@ -48,7 +48,8 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord }:
           </div>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[60vh] pr-4">
+        {/* Scroll Area with Visible Grey Scrollbar */}
+        <div className="max-h-[60vh] overflow-y-auto pr-4 scrollbar scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
           <div className="space-y-3">
             {issues.map((issue, index) => (
               <div
@@ -86,7 +87,7 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord }:
               </div>
             ))}
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
