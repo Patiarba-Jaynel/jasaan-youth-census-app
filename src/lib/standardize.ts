@@ -28,7 +28,7 @@ export function standardizeRecordFields(record: Record<string, any>): Record<str
   if (copy.last_name) copy.last_name = toTitleCase(copy.last_name);
   if (copy.name) copy.name = toTitleCase(copy.name);
 
-  // Personal information
+  // Personal information - Force Title Case for sex and civil_status
   if (copy.sex) copy.sex = toTitleCase(copy.sex);
   if (copy.gender) copy.gender = toTitleCase(copy.gender);
   if (copy.civil_status) copy.civil_status = toTitleCase(copy.civil_status);

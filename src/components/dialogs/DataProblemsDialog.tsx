@@ -1,9 +1,8 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, AlertCircle, Edit, UserX, Users } from "lucide-react";
+import { AlertTriangle, AlertCircle, Edit, UserX } from "lucide-react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
 import { useState } from "react";
@@ -31,14 +30,6 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
   
   const errorCount = issues.filter(issue => issue.severity === 'error').length;
   const warningCount = issues.filter(issue => issue.severity === 'warning').length;
-
-  // Group issues by issue type for batch operations
-  const groupedIssues = issues.reduce((acc, issue) => {
-    const key = issue.issueType || 'other';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(issue);
-    return acc;
-  }, {} as Record<string, DataIssue[]>);
 
   const findRecord = (recordId: string) => {
     return records.find(r => r.id === recordId);
@@ -84,25 +75,6 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
     }
   };
 
-  const handleBatchFixIssueType = async (issueType: string) => {
-    const issuesOfType = groupedIssues[issueType];
-    if (!issuesOfType) return;
-
-    try {
-      if (issueType.startsWith('duplicate_')) {
-        // Handle all duplicates of this type
-        for (const issue of issuesOfType) {
-          await handleBulkDeleteDuplicates(issue);
-        }
-      } else {
-        toast.info(`Batch fix for ${issueType} not implemented yet. Please fix individually.`);
-      }
-    } catch (error) {
-      console.error("Error during batch fix:", error);
-      toast.error("Failed to complete batch fix");
-    }
-  };
-
   const renderIssueActions = (issue: DataIssue) => {
     const record = findRecord(issue.recordId);
     if (!record) return null;
@@ -114,17 +86,20 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
       
       return (
         <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleEditRecord(issue.recordId)}
-              className="flex items-center gap-1"
-              disabled={isProcessing}
-            >
-              <Edit className="h-3 w-3" />
-              Edit
-            </Button>
+          <div className="flex gap-2 flex-wrap">
+            {duplicateRecords.map((dupRecord, index) => (
+              <Button
+                key={dupRecord.id}
+                variant="outline"
+                size="sm"
+                onClick={() => handleEditRecord(dupRecord.id)}
+                className="flex items-center gap-1"
+                disabled={isProcessing}
+              >
+                <Edit className="h-3 w-3" />
+                Edit #{index + 1}
+              </Button>
+            ))}
           </div>
           {duplicateRecords.length > 1 && (
             <Button
@@ -156,34 +131,6 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
     );
   };
 
-  const renderBatchActions = () => {
-    return (
-      <div className="mb-4 p-4 border rounded-lg bg-blue-50">
-        <h3 className="font-semibold mb-3 flex items-center gap-2">
-          <Users className="h-4 w-4" />
-          Batch Actions
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {Object.entries(groupedIssues).map(([issueType, issueList]) => (
-            <div key={issueType} className="flex items-center justify-between p-2 bg-white rounded border">
-              <span className="text-sm">
-                {issueType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} ({issueList.length})
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleBatchFixIssueType(issueType)}
-                className="text-xs"
-              >
-                Fix All
-              </Button>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh]">
@@ -205,8 +152,6 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
         </DialogHeader>
 
         <div className="max-h-[60vh] overflow-y-auto pr-4 scrollbar scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
-          {Object.keys(groupedIssues).length > 1 && renderBatchActions()}
-          
           <div className="space-y-3">
             {issues.map((issue, index) => {
               const record = findRecord(issue.recordId);

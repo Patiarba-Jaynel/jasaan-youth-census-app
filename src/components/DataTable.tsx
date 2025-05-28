@@ -130,8 +130,8 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       duplicateGroup?: string[];
     }> = [];
 
-    // Get valid options from schema
-    const validOptions = {
+    // Get valid options from schema with proper typing
+    const validOptions: Record<string, readonly string[]> = {
       sex: formSchema.shape.sex.options,
       civil_status: formSchema.shape.civil_status.options,
       youth_classification: formSchema.shape.youth_classification.options,

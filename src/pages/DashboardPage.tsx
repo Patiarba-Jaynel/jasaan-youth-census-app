@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NavBar } from "@/components/NavBar";
@@ -118,10 +119,10 @@ const DashboardPage = () => {
     setClassificationData(
       Object.keys(classificationDistribution).map((key) => {
         const labels: { [key: string]: string } = {
-          ISY: "In-School Youth",
-          OSY: "Out-of-School Youth",
-          WY: "Working Youth",
-          YSN: "Youth with Special Needs",
+          ISY: "ISY",
+          OSY: "OSY", 
+          WY: "WY",
+          YSN: "YSN",
         };
 
         return {
@@ -272,7 +273,7 @@ const DashboardPage = () => {
             />
             <AnalyticsCard
               title="Youth Classification"
-              description="Distribution by youth classification type"
+              description="ISY (In-School), OSY (Out-of-School), WY (Working), YSN (Special Needs)"
               data={classificationData}
               type="area"
               nameKey="name"

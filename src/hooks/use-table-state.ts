@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { YouthRecord } from "@/lib/pb-client";
 
@@ -292,7 +293,6 @@ export function useTableState(data: YouthRecord[]) {
   };
 
   const getExportCount = () => {
-    const activeFilters = Object.values(exportColumns).filter(Boolean).length;
     return exportFilteredData.length;
   };
 
