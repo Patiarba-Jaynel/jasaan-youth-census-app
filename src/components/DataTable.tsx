@@ -27,6 +27,14 @@ const normalizeValue = (value: any): string => {
   return String(value);
 };
 
+// Helper function for consistent value comparison
+const normalizeForComparison = (value: any): string => {
+  if (value === null || value === undefined || value === "" || (typeof value === 'string' && value.trim() === '')) {
+    return "N/A";
+  }
+  return String(value).trim();
+};
+
 export function DataTable({ data, onDataChange }: DataTableProps) {
   const tableState = useTableState(data);
 
@@ -98,18 +106,27 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       console.log("Sample export data:", exportData.slice(0, 3));
       
       const recordsToUpdate = exportData.filter((record) => {
-        const recordValue = String(record[field as keyof YouthRecord]);
-        const matches = recordValue === oldValue;
-        console.log(`Record ${record.id}: ${field}="${recordValue}" matches "${oldValue}"?`, matches);
+        const recordValue = normalizeForComparison(record[field as keyof YouthRecord]);
+        const normalizedOldValue = normalizeForComparison(oldValue);
+        
+        // Try multiple comparison methods for better matching
+        const exactMatch = recordValue === normalizedOldValue;
+        const caseInsensitiveMatch = recordValue.toLowerCase() === normalizedOldValue.toLowerCase();
+        const upperCaseMatch = recordValue.toUpperCase() === normalizedOldValue.toUpperCase();
+        
+        const matches = exactMatch || caseInsensitiveMatch || upperCaseMatch;
+        
+        console.log(`Record ${record.id}: ${field}="${recordValue}" vs "${normalizedOldValue}" - matches: ${matches}`);
         return record.id && matches;
       });
       
       console.log("Records to update:", recordsToUpdate.length);
       
       if (recordsToUpdate.length === 0) {
-        console.log("No matching records found. Checking all civil status values in data:");
+        console.log("No matching records found. Checking all values in data for field:", field);
         data.forEach(record => {
-          console.log(`Record ${record.id}: civil_status="${record.civil_status}"`);
+          const value = record[field as keyof YouthRecord];
+          console.log(`Record ${record.id}: ${field}="${value}" (normalized: "${normalizeForComparison(value)}")`);
         });
         toast.info("No matching records found to update");
         return;

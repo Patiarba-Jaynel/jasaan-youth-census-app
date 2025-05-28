@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { YouthRecord } from "@/lib/pb-client";
 
@@ -77,7 +76,18 @@ export function useTableState(data: YouthRecord[]) {
 
   const itemsPerPage = 25;
 
+  // Helper function to normalize values for comparison
+  const normalizeForComparison = (value: any): string => {
+    if (value === null || value === undefined || value === "" || (typeof value === 'string' && value.trim() === '')) {
+      return "N/A";
+    }
+    return String(value).trim();
+  };
+
   const filteredData = useMemo(() => {
+    console.log("Filtering data with advanced filters:", advancedFilters);
+    console.log("Total data records:", data.length);
+    
     return data.filter((record) => {
       // Case-insensitive search that includes N/A values
       const matchesSearch = searchTerm === "" || Object.values(record).some((value) => {
@@ -91,44 +101,63 @@ export function useTableState(data: YouthRecord[]) {
 
       const matchesGender = 
         advancedFilters.gender.length === 0 || 
-        advancedFilters.gender.includes(record.sex || "N/A");
+        advancedFilters.gender.includes(normalizeForComparison(record.sex));
 
       const matchesVoted = 
         advancedFilters.votedLastElection.length === 0 || 
-        advancedFilters.votedLastElection.includes(record.voted_last_election || "N/A");
+        advancedFilters.votedLastElection.includes(normalizeForComparison(record.voted_last_election));
 
       const matchesAssembly = 
         advancedFilters.attendedAssembly.length === 0 || 
-        advancedFilters.attendedAssembly.includes(record.attended_kk_assembly || "N/A");
+        advancedFilters.attendedAssembly.includes(normalizeForComparison(record.attended_kk_assembly));
 
       const matchesEducation = 
         advancedFilters.highestEducation.length === 0 || 
-        advancedFilters.highestEducation.includes(record.highest_education || "N/A");
+        advancedFilters.highestEducation.includes(normalizeForComparison(record.highest_education));
 
       const matchesBarangay = 
         advancedFilters.barangays.length === 0 || 
-        advancedFilters.barangays.includes(record.barangay || "N/A");
+        advancedFilters.barangays.includes(normalizeForComparison(record.barangay));
 
       const matchesClassification = 
         advancedFilters.classifications.length === 0 || 
-        advancedFilters.classifications.includes(record.youth_classification || "N/A");
+        advancedFilters.classifications.includes(normalizeForComparison(record.youth_classification));
 
       const matchesWorkStatus = 
         advancedFilters.workStatus.length === 0 || 
-        advancedFilters.workStatus.includes(record.work_status || "N/A");
+        advancedFilters.workStatus.includes(normalizeForComparison(record.work_status));
 
-      const matchesCivilStatus = 
-        advancedFilters.civilStatus.length === 0 || 
-        advancedFilters.civilStatus.includes(record.civil_status || "N/A");
+      // Enhanced civil status matching with debugging
+      const recordCivilStatus = normalizeForComparison(record.civil_status);
+      const matchesCivilStatus = advancedFilters.civilStatus.length === 0 || 
+        advancedFilters.civilStatus.some(filterValue => {
+          // Try exact match first
+          if (recordCivilStatus === filterValue) return true;
+          
+          // Try case-insensitive match
+          if (recordCivilStatus.toLowerCase() === filterValue.toLowerCase()) return true;
+          
+          // Try normalized comparison (handle SINGLE vs Single, MARRIED vs Married, etc.)
+          const normalizedRecord = recordCivilStatus.toUpperCase();
+          const normalizedFilter = filterValue.toUpperCase();
+          
+          return normalizedRecord === normalizedFilter;
+        });
+
+      if (advancedFilters.civilStatus.length > 0) {
+        console.log(`Record ${record.id}: civil_status="${record.civil_status}" (normalized: "${recordCivilStatus}") matches filter ${advancedFilters.civilStatus}?`, matchesCivilStatus);
+      }
 
       const matchesRegisteredVoter = 
         advancedFilters.registeredVoter.length === 0 || 
-        advancedFilters.registeredVoter.includes(record.registered_voter || "N/A");
+        advancedFilters.registeredVoter.includes(normalizeForComparison(record.registered_voter));
 
-      return matchesSearch && matchesAge && matchesGender && matchesVoted && 
+      const passes = matchesSearch && matchesAge && matchesGender && matchesVoted && 
              matchesAssembly && matchesEducation && matchesBarangay && 
              matchesClassification && matchesWorkStatus && matchesCivilStatus && 
              matchesRegisteredVoter;
+
+      return passes;
     });
   }, [data, searchTerm, advancedFilters]);
 
@@ -137,43 +166,46 @@ export function useTableState(data: YouthRecord[]) {
     return filteredData.filter((record) => {
       const matchesBarangay = 
         exportFilters.barangays.length === 0 || 
-        exportFilters.barangays.includes(record.barangay || "N/A");
+        exportFilters.barangays.includes(normalizeForComparison(record.barangay));
 
       const matchesClassification = 
         exportFilters.classifications.length === 0 || 
-        exportFilters.classifications.includes(record.youth_classification || "N/A");
+        exportFilters.classifications.includes(normalizeForComparison(record.youth_classification));
 
       const matchesAgeGroup = 
         exportFilters.ageGroups.length === 0 || 
-        exportFilters.ageGroups.includes(record.youth_age_group || "N/A");
+        exportFilters.ageGroups.includes(normalizeForComparison(record.youth_age_group));
 
       const matchesWorkStatus = 
         exportFilters.workStatus.length === 0 || 
-        exportFilters.workStatus.includes(record.work_status || "N/A");
+        exportFilters.workStatus.includes(normalizeForComparison(record.work_status));
 
       const matchesEducation = 
         exportFilters.education.length === 0 || 
-        exportFilters.education.includes(record.highest_education || "N/A");
+        exportFilters.education.includes(normalizeForComparison(record.highest_education));
 
       const matchesSex = 
         exportFilters.sex.length === 0 || 
-        exportFilters.sex.includes(record.sex || "N/A");
+        exportFilters.sex.includes(normalizeForComparison(record.sex));
 
       const matchesCivilStatus = 
         exportFilters.civilStatus.length === 0 || 
-        exportFilters.civilStatus.includes(record.civil_status || "N/A");
+        exportFilters.civilStatus.some(filterValue => {
+          const recordValue = normalizeForComparison(record.civil_status);
+          return recordValue.toUpperCase() === filterValue.toUpperCase();
+        });
 
       const matchesRegisteredVoter = 
         exportFilters.registeredVoter.length === 0 || 
-        exportFilters.registeredVoter.includes(record.registered_voter || "N/A");
+        exportFilters.registeredVoter.includes(normalizeForComparison(record.registered_voter));
 
       const matchesVotedLastElection = 
         exportFilters.votedLastElection.length === 0 || 
-        exportFilters.votedLastElection.includes(record.voted_last_election || "N/A");
+        exportFilters.votedLastElection.includes(normalizeForComparison(record.voted_last_election));
 
       const matchesAttendedAssembly = 
         exportFilters.attendedAssembly.length === 0 || 
-        exportFilters.attendedAssembly.includes(record.attended_kk_assembly || "N/A");
+        exportFilters.attendedAssembly.includes(normalizeForComparison(record.attended_kk_assembly));
 
       return matchesBarangay && matchesClassification && matchesAgeGroup && 
              matchesWorkStatus && matchesEducation && matchesSex && 
