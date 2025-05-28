@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
@@ -87,7 +86,16 @@ const SettingsPage = () => {
   const loadUsers = async () => {
     try {
       const records = await pbClient.collection('users').getFullList();
-      setUsers(records as User[]);
+      // Properly type the records as User array
+      const typedUsers: User[] = records.map(record => ({
+        id: record.id,
+        email: record.email || "",
+        name: record.name || "",
+        role: record.role || "user",
+        created: record.created,
+        updated: record.updated
+      }));
+      setUsers(typedUsers);
     } catch (error) {
       console.error("Error loading users:", error);
       toast.error("Failed to load users");

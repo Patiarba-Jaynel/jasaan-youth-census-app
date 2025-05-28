@@ -7,8 +7,8 @@ import { toast } from "@/components/ui/sonner";
 
 import { formSchema, type FormValues } from "@/lib/schema";
 import { validateAgeConsistency } from "@/lib/validation";
-import { standardizeRecordFields } from "@/lib/standardize";
-import { pbClient } from "@/lib/pb-client";
+import { standardizeYouthRecord } from "@/lib/standardize";
+import { pbClient, type YouthRecord } from "@/lib/pb-client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -58,7 +58,7 @@ export function CensusForm() {
       }
 
       // Create properly typed youth record
-      const youthRecord = {
+      const youthRecord: Omit<YouthRecord, 'id' | 'created' | 'updated'> = {
         region: data.region,
         province: data.province,
         city_municipality: data.city_municipality,
@@ -82,7 +82,7 @@ export function CensusForm() {
       };
 
       // Standardize the data before submission
-      const standardizedData = standardizeRecordFields(youthRecord);
+      const standardizedData = standardizeYouthRecord(youthRecord);
       
       await pbClient.youth.create(standardizedData);
       
