@@ -45,7 +45,7 @@ export function CensusForm() {
       
       // Validate age consistency before submission
       const ageValidation = validateAgeConsistency(
-        data.age, 
+        Number(data.age), 
         data.birthday.toISOString().split('T')[0], 
         data.youth_age_group
       );
@@ -57,8 +57,8 @@ export function CensusForm() {
         return;
       }
 
-      // Standardize the data before submission
-      const standardizedData = standardizeRecordFields({
+      // Create properly typed youth record
+      const youthRecord = {
         region: data.region,
         province: data.province,
         city_municipality: data.city_municipality,
@@ -79,7 +79,10 @@ export function CensusForm() {
         voted_last_election: data.voted_last_election,
         attended_kk_assembly: data.attended_kk_assembly,
         kk_assemblies_attended: data.kk_assemblies_attended,
-      });
+      };
+
+      // Standardize the data before submission
+      const standardizedData = standardizeRecordFields(youthRecord);
       
       await pbClient.youth.create(standardizedData);
       

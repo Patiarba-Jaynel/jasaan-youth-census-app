@@ -1,3 +1,4 @@
+
 import PocketBase from 'pocketbase';
 
 // Create a PocketBase client instance
@@ -38,6 +39,9 @@ type RecordModel = {
 };
 
 export const pbClient = {
+  // Raw PocketBase instance access
+  collection: (name: string) => pb.collection(name),
+  
   // Authentication methods
   auth: {
     login: async (email: string, password: string) => {
@@ -51,6 +55,12 @@ export const pbClient = {
     },
     isLoggedIn: () => {
       return pb.authStore.isValid;
+    },
+    getAuthData: () => {
+      return {
+        record: pb.authStore.model,
+        token: pb.authStore.token
+      };
     }
   },
   
