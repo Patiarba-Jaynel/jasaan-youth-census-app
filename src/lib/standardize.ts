@@ -46,8 +46,8 @@ export function normalizeCivilStatus(value: string): string {
   return statusMap[normalized] || toTitleCase(value);
 }
 
-// Type-safe standardization for YouthRecord
-export function standardizeYouthRecord<T extends Record<string, any>>(record: T): T {
+// Type-safe standardization for YouthRecord - using any for flexibility
+export function standardizeYouthRecord(record: any): any {
   const copy = { ...record };
 
   // Name fields

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
@@ -92,12 +91,26 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
 
   const handleBatchEdit = async (field: string, oldValue: string, newValue: string) => {
     try {
+      console.log("Batch edit starting:", { field, oldValue, newValue });
+      
       const exportData = tableState.getExportData() as YouthRecord[];
+      console.log("Export data count:", exportData.length);
+      console.log("Sample export data:", exportData.slice(0, 3));
+      
       const recordsToUpdate = exportData.filter((record) => {
-        return record.id && String(record[field as keyof YouthRecord]) === oldValue;
+        const recordValue = String(record[field as keyof YouthRecord]);
+        const matches = recordValue === oldValue;
+        console.log(`Record ${record.id}: ${field}="${recordValue}" matches "${oldValue}"?`, matches);
+        return record.id && matches;
       });
       
+      console.log("Records to update:", recordsToUpdate.length);
+      
       if (recordsToUpdate.length === 0) {
+        console.log("No matching records found. Checking all civil status values in data:");
+        data.forEach(record => {
+          console.log(`Record ${record.id}: civil_status="${record.civil_status}"`);
+        });
         toast.info("No matching records found to update");
         return;
       }
