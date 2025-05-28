@@ -101,32 +101,53 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     try {
       console.log("Batch edit starting:", { field, oldValue, newValue });
       
-      const exportData = tableState.getExportData() as YouthRecord[];
-      console.log("Export data count:", exportData.length);
-      console.log("Sample export data:", exportData.slice(0, 3));
+      // Use filtered data instead of export data to include all currently visible records
+      const recordsToSearch = tableState.filteredData;
+      console.log("Records to search:", recordsToSearch.length);
       
-      const recordsToUpdate = exportData.filter((record) => {
-        const recordValue = normalizeForComparison(record[field as keyof YouthRecord]);
+      // Map display field names to actual database field names
+      const fieldMapping: { [key: string]: string } = {
+        "civil_status": "civil_status",
+        "name": "name",
+        "age": "age",
+        "sex": "sex",
+        "barangay": "barangay",
+        "youth_classification": "youth_classification",
+        "youth_age_group": "youth_age_group",
+        "highest_education": "highest_education",
+        "work_status": "work_status",
+        "registered_voter": "registered_voter",
+        "voted_last_election": "voted_last_election",
+        "attended_kk_assembly": "attended_kk_assembly",
+        "kk_assemblies_attended": "kk_assemblies_attended",
+        "home_address": "home_address"
+      };
+
+      const actualFieldName = fieldMapping[field] || field;
+      console.log("Field mapping:", field, "->", actualFieldName);
+      
+      const recordsToUpdate = recordsToSearch.filter((record) => {
+        const recordValue = normalizeForComparison(record[actualFieldName as keyof YouthRecord]);
         const normalizedOldValue = normalizeForComparison(oldValue);
         
-        // Try multiple comparison methods for better matching
+        // Multiple comparison methods for better matching
         const exactMatch = recordValue === normalizedOldValue;
         const caseInsensitiveMatch = recordValue.toLowerCase() === normalizedOldValue.toLowerCase();
         const upperCaseMatch = recordValue.toUpperCase() === normalizedOldValue.toUpperCase();
         
         const matches = exactMatch || caseInsensitiveMatch || upperCaseMatch;
         
-        console.log(`Record ${record.id}: ${field}="${recordValue}" vs "${normalizedOldValue}" - matches: ${matches}`);
+        console.log(`Record ${record.id}: ${actualFieldName}="${recordValue}" vs "${normalizedOldValue}" - matches: ${matches}`);
         return record.id && matches;
       });
       
       console.log("Records to update:", recordsToUpdate.length);
       
       if (recordsToUpdate.length === 0) {
-        console.log("No matching records found. Checking all values in data for field:", field);
-        data.forEach(record => {
-          const value = record[field as keyof YouthRecord];
-          console.log(`Record ${record.id}: ${field}="${value}" (normalized: "${normalizeForComparison(value)}")`);
+        console.log("No matching records found. Sample values for field:", actualFieldName);
+        recordsToSearch.slice(0, 5).forEach(record => {
+          const value = record[actualFieldName as keyof YouthRecord];
+          console.log(`Record ${record.id}: ${actualFieldName}="${value}" (normalized: "${normalizeForComparison(value)}")`);
         });
         toast.info("No matching records found to update");
         return;
@@ -136,7 +157,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       for (const record of recordsToUpdate) {
         // Normalize the new value
         const normalizedValue = newValue.trim() === '' ? 'N/A' : newValue;
-        await pbClient.youth.update(record.id, { [field]: normalizedValue });
+        await pbClient.youth.update(record.id, { [actualFieldName]: normalizedValue });
         updatedCount++;
       }
       
@@ -442,7 +463,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       <BatchEditDialog
         open={isBatchEditDialogOpen}
         onOpenChange={setIsBatchEditDialogOpen}
-        selectedRecords={tableState.getExportData() as YouthRecord[]}
+        selectedRecords={tableState.filteredData}
         onSave={handleBatchEdit}
       />
 
