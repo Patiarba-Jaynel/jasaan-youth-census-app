@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NavBar } from "@/components/NavBar";
@@ -8,7 +7,7 @@ import { AnalyticsCard } from "@/components/AnalyticsCard";
 import { pbClient, YouthRecord } from "@/lib/pb-client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
-import { Eye, Plus, LogOut, Table } from "lucide-react";
+import { Eye, Plus, LogOut, Table, Settings } from "lucide-react";
 
 interface AnalyticsData {
   name: string;
@@ -68,7 +67,7 @@ const DashboardPage = () => {
       {}
     );
 
-    // Group by classification
+    // Group by classification - Updated to use acronyms
     const classificationDistribution = records.reduce(
       (acc: { [key: string]: number }, record) => {
         if (!acc[record.youth_classification]) {
@@ -118,11 +117,12 @@ const DashboardPage = () => {
 
     setClassificationData(
       Object.keys(classificationDistribution).map((key) => {
+        // Updated labels to show acronyms
         const labels: { [key: string]: string } = {
-          ISY: "ISY",
-          OSY: "OSY", 
-          WY: "WY",
-          YSN: "YSN",
+          ISY: "ISY (In-School Youth)",
+          OSY: "OSY (Out-of-School Youth)", 
+          WY: "WY (Working Youth)",
+          YSN: "YSN (Youth Special Needs)",
         };
 
         return {
@@ -194,7 +194,15 @@ const DashboardPage = () => {
             </div>
             <div className="flex flex-col md:flex-row gap-4 mt-4 md:mt-0">
               <Button
-                onClick={handleViewTable}
+                onClick={() => navigate("/dashboard/settings")}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Settings size={16} />
+                Settings
+              </Button>
+              <Button
+                onClick={() => navigate("/dashboard/table")}
                 variant="outline"
                 className="flex items-center gap-2"
               >
@@ -202,7 +210,7 @@ const DashboardPage = () => {
                 View Table
               </Button>
               <Button
-                onClick={handleAddYouth}
+                onClick={() => navigate("/dashboard/census")}
                 variant="default"
                 className="flex items-center gap-2"
               >
@@ -210,7 +218,12 @@ const DashboardPage = () => {
                 Add Youth
               </Button>
               <Button
-                onClick={handleLogout}
+                onClick={() => {
+                  pbClient.auth.logout();
+                  document.dispatchEvent(new CustomEvent("auth-change"));
+                  toast.success("Logged out successfully");
+                  navigate("/");
+                }}
                 variant="outline"
                 className="flex items-center gap-2"
               >

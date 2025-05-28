@@ -6,6 +6,7 @@ import Papa from 'papaparse';
 import { z } from 'zod';
 import { formSchema as YouthSchema } from '@/lib/schema';
 import { standardizeRecordFields } from '@/lib/standardize';
+import { validateAgeConsistency, validateDropdownValue } from '@/lib/validation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -98,43 +99,60 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
   const validateRecord = (record: any, index: number): ValidationIssue[] => {
     const issues: ValidationIssue[] = [];
     
-    // Age and birthday validation
+    // Enhanced age and birthday validation
     if (record.age && record.birthday) {
       const age = parseInt(record.age);
-      const birthday = new Date(record.birthday);
-      const currentYear = new Date().getFullYear();
-      const birthYear = birthday.getFullYear();
-      const calculatedAge = currentYear - birthYear;
+      const birthdayStr = typeof record.birthday === 'string' ? record.birthday : record.birthday.toISOString?.()?.split('T')[0];
+      const youthAgeGroup = record.youth_age_group;
       
-      if (Math.abs(age - calculatedAge) > 1) {
-        issues.push({
-          row: index + 1,
-          field: 'age/birthday',
-          issue: 'Age does not match birthday',
-          value: `Age: ${age}, Birthday: ${record.birthday}`,
-          suggestion: `Age should be around ${calculatedAge}`
+      const ageValidation = validateAgeConsistency(age, birthdayStr, youthAgeGroup);
+      
+      if (!ageValidation.isValid) {
+        ageValidation.errors.forEach(error => {
+          issues.push({
+            row: index + 1,
+            field: 'age/birthday/youth_age_group',
+            issue: error,
+            value: `Age: ${age}, Birthday: ${birthdayStr}, Age Group: ${youthAgeGroup}`,
+            suggestion: 'Ensure age matches birthday and age group'
+          });
         });
       }
     }
 
-    // Youth classification and age group validation
-    if (record.youth_classification && record.youth_age_group && record.age) {
-      const age = parseInt(record.age);
-      const ageGroup = record.youth_age_group;
-      
-      if (ageGroup === "15-17" && (age < 15 || age > 17)) {
-        issues.push({
-          row: index + 1,
-          field: 'youth_age_group',
-          issue: 'Age group does not match age',
-          value: `Age: ${age}, Group: ${ageGroup}`,
-          suggestion: age < 18 ? "15-17" : age <= 24 ? "18-24" : "25-30"
-        });
+    // Enhanced dropdown validation for fixed answer fields
+    const validOptions: Record<string, readonly string[]> = {
+      sex: YouthSchema.shape.sex.options,
+      civil_status: YouthSchema.shape.civil_status.options,
+      youth_classification: YouthSchema.shape.youth_classification.options,
+      youth_age_group: YouthSchema.shape.youth_age_group.options,
+      highest_education: YouthSchema.shape.highest_education.options,
+      work_status: YouthSchema.shape.work_status.options,
+      registered_voter: YouthSchema.shape.registered_voter.options,
+      voted_last_election: YouthSchema.shape.voted_last_election.options,
+      attended_kk_assembly: YouthSchema.shape.attended_kk_assembly.options,
+    };
+
+    Object.entries(validOptions).forEach(([field, options]) => {
+      const value = record[field];
+      if (value && value !== "N/A") {
+        const validation = validateDropdownValue(value, options, field);
+        if (!validation.isValid) {
+          validation.errors.forEach(error => {
+            issues.push({
+              row: index + 1,
+              field: field,
+              issue: error,
+              value: value,
+              suggestion: `Must be one of: ${options.join(', ')}`
+            });
+          });
+        }
       }
-    }
+    });
 
     // Email validation
-    if (record.email_address && !record.email_address.includes('@')) {
+    if (record.email_address && record.email_address !== "N/A" && !record.email_address.includes('@')) {
       issues.push({
         row: index + 1,
         field: 'email_address',

@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -12,6 +13,7 @@ import CensusPage from "./pages/CensusPage";
 import SuccessPage from "./pages/SuccessPage";
 import DashboardPage from "./pages/DashboardPage";
 import TableViewPage from "./pages/TableViewPage";
+import SettingsPage from "./pages/SettingsPage";
 import AboutPage from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
 import { useInactivityLogout } from "@/hooks/useInactivityLogout";
@@ -45,6 +47,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/dashboard/census" element={<AuthRoute element={<CensusPage />} />} />
       <Route path="/dashboard/table" element={<AuthRoute element={<TableViewPage />} />} />
+      <Route path="/dashboard/settings" element={<AuthRoute element={<SettingsPage />} />} />
       <Route path="/success" element={<SuccessPage />} />
       <Route path="/login" element={<LoginRoute />} />
       <Route path="/dashboard" element={<AuthRoute element={<DashboardPage />} />} />

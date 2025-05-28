@@ -18,6 +18,33 @@ export function formatBirthday(input: string): string {
   });
 }
 
+// Normalize sex values to proper format
+export function normalizeSex(value: string): string {
+  if (!value) return "N/A";
+  const normalized = value.toLowerCase().trim();
+  
+  if (normalized === "male" || normalized === "m") return "MALE";
+  if (normalized === "female" || normalized === "f") return "FEMALE";
+  
+  return toTitleCase(value);
+}
+
+// Normalize civil status values
+export function normalizeCivilStatus(value: string): string {
+  if (!value) return "N/A";
+  const normalized = value.toLowerCase().trim();
+  
+  const statusMap: { [key: string]: string } = {
+    "single": "Single",
+    "married": "Married", 
+    "divorced": "Divorced",
+    "widowed": "Widowed",
+    "separated": "Separated"
+  };
+  
+  return statusMap[normalized] || toTitleCase(value);
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function standardizeRecordFields(record: Record<string, any>): Record<string, any> {
   const copy = { ...record };
@@ -28,11 +55,11 @@ export function standardizeRecordFields(record: Record<string, any>): Record<str
   if (copy.last_name) copy.last_name = toTitleCase(copy.last_name);
   if (copy.name) copy.name = toTitleCase(copy.name);
 
-  // Personal information - Force Title Case for sex and civil_status
-  if (copy.sex) copy.sex = toTitleCase(copy.sex);
-  if (copy.gender) copy.gender = toTitleCase(copy.gender);
-  if (copy.civil_status) copy.civil_status = toTitleCase(copy.civil_status);
-  if (copy.marital_status) copy.marital_status = toTitleCase(copy.marital_status);
+  // Personal information - Enhanced normalization for sex and civil_status
+  if (copy.sex) copy.sex = normalizeSex(copy.sex);
+  if (copy.gender) copy.gender = normalizeSex(copy.gender);
+  if (copy.civil_status) copy.civil_status = normalizeCivilStatus(copy.civil_status);
+  if (copy.marital_status) copy.marital_status = normalizeCivilStatus(copy.marital_status);
 
   // Location fields
   if (copy.barangay) copy.barangay = toTitleCase(copy.barangay);

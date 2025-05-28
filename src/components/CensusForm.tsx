@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -5,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
 
 import { formSchema, type FormValues } from "@/lib/schema";
+import { validateAgeConsistency } from "@/lib/validation";
+import { standardizeRecordFields } from "@/lib/standardize";
 import { pbClient } from "@/lib/pb-client";
 
 import { Button } from "@/components/ui/button";
@@ -40,16 +43,29 @@ export function CensusForm() {
     try {
       setIsSubmitting(true);
       
-      // Ensure all required fields are defined before submission
-      // Note that we're not converting birthday to string - keeping it as a Date object
-      const formattedData = {
+      // Validate age consistency before submission
+      const ageValidation = validateAgeConsistency(
+        data.age, 
+        data.birthday.toISOString().split('T')[0], 
+        data.youth_age_group
+      );
+      
+      if (!ageValidation.isValid) {
+        toast.error("Validation Error", {
+          description: ageValidation.errors.join(". ")
+        });
+        return;
+      }
+
+      // Standardize the data before submission
+      const standardizedData = standardizeRecordFields({
         region: data.region,
         province: data.province,
         city_municipality: data.city_municipality,
         barangay: data.barangay,
         name: data.name,
         age: data.age,
-        birthday: data.birthday, // Keep as Date object as required by YouthRecord
+        birthday: data.birthday,
         sex: data.sex,
         civil_status: data.civil_status,
         youth_classification: data.youth_classification,
@@ -63,9 +79,9 @@ export function CensusForm() {
         voted_last_election: data.voted_last_election,
         attended_kk_assembly: data.attended_kk_assembly,
         kk_assemblies_attended: data.kk_assemblies_attended,
-      };
+      });
       
-      await pbClient.youth.create(formattedData);
+      await pbClient.youth.create(standardizedData);
       
       toast.success("Census form submitted successfully!", {
         description: "Thank you for participating in the Jasaan Youth Census.",
