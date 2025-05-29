@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +27,7 @@ interface User {
 
 const SettingsPage = () => {
   const navigate = useNavigate();
+   
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
