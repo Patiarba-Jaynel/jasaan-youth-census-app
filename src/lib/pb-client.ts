@@ -1,5 +1,6 @@
 
 import PocketBase from 'pocketbase';
+import { activityLogger } from './activity-logger';
 
 // Create a PocketBase client instance
 const pb = new PocketBase('https://pocket.jwisnetwork.com');
@@ -26,6 +27,7 @@ export interface YouthRecord {
   voted_last_election: string;
   attended_kk_assembly: string;
   kk_assemblies_attended: number;
+  batch_id?: string;
   created: string;
   updated: string;
 }
@@ -45,7 +47,7 @@ export const pbClient = {
   // Authentication methods
   auth: {
     login: async (email: string, password: string) => {
-      return await pb.collection('_superusers').authWithPassword(email, password);
+      return await pb.collection('users').authWithPassword(email, password);
     },
     logout: () => {
       pb.authStore.clear();
@@ -64,22 +66,31 @@ export const pbClient = {
     }
   },
   
-  // Youth census records
+  // Youth census records with activity logging
   youth: {
     create: async (data: Omit<YouthRecord, 'id' | 'created' | 'updated'>) => {
-      return await pb.collection('youth').create(data);
+      const record = await pb.collection('youth').create(data);
+      await activityLogger.logYouthCreate(record.id, data.name, data.batch_id);
+      return record;
     },
-    createMany: async (records: Omit<YouthRecord, 'id' | 'created' | 'updated'>[]) => {
+    createMany: async (records: Omit<YouthRecord, 'id' | 'created' | 'updated'>[], batchId?: string) => {
       const createdRecords = [];
       for (const record of records) {
         try {
-          const createdRecord = await pb.collection('youth').create(record);
+          const recordWithBatch = batchId ? { ...record, batch_id: batchId } : record;
+          const createdRecord = await pb.collection('youth').create(recordWithBatch);
           createdRecords.push(createdRecord);
+          await activityLogger.logYouthCreate(createdRecord.id, record.name, batchId);
         } catch (error) {
           console.error("Error creating record:", error);
           throw error;
         }
       }
+      
+      if (batchId) {
+        await activityLogger.logBatchImport(batchId, createdRecords.length);
+      }
+      
       return createdRecords;
     },
     getAll: async () => {
@@ -89,10 +100,16 @@ export const pbClient = {
       return await pb.collection('youth').getOne<YouthRecord>(id);
     },
     update: async (id: string, data: Partial<YouthRecord>) => {
-      return await pb.collection('youth').update(id, data);
+      const record = await pb.collection('youth').update(id, data);
+      const currentRecord = await pb.collection('youth').getOne(id);
+      await activityLogger.logYouthUpdate(id, currentRecord.name, data);
+      return record;
     },
     delete: async (id: string) => {
-      return await pb.collection('youth').delete(id);
+      const record = await pb.collection('youth').getOne(id);
+      await pb.collection('youth').delete(id);
+      await activityLogger.logYouthDelete(id, record.name);
+      return record;
     }
   },
   

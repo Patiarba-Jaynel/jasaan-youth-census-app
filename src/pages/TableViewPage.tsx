@@ -9,13 +9,15 @@ import { DataTable } from "@/components/DataTable";
 import { pbClient, YouthRecord } from "@/lib/pb-client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Import } from "lucide-react";
+import { Import, History, Trash2 } from "lucide-react";
 import { ImportDialog } from "@/components/ImportDialog";
+import { BatchManagementDialog } from "@/components/BatchManagementDialog";
 
 const TableViewPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [youthRecords, setYouthRecords] = useState<YouthRecord[]>([]);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isBatchManagementOpen, setIsBatchManagementOpen] = useState(false);
   const navigate = useNavigate();
 
   const fetchData = async () => {
@@ -48,6 +50,9 @@ const TableViewPage = () => {
     try {
       setIsLoading(true);
       
+      // Generate a unique batch ID
+      const batchId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
       // Ensure each record has kk_assemblies_attended as a number
       const processedRecords = records.map(record => ({
         ...record,
@@ -60,12 +65,10 @@ const TableViewPage = () => {
           : record.barangay
       }));
       
-      // Import records one by one (could be optimized with batch operations)
-      for (const record of processedRecords) {
-        await pbClient.youth.create(record);
-      }
+      // Import records with batch tracking
+      await pbClient.youth.createMany(processedRecords, batchId);
       
-      toast.success(`Successfully imported ${records.length} records`);
+      toast.success(`Successfully imported ${records.length} records (Batch: ${batchId})`);
       fetchData(); // Refresh data
     } catch (error) {
       console.error("Error importing records:", error);
@@ -102,6 +105,15 @@ const TableViewPage = () => {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">Census Records</h1>
             <div className="flex items-center gap-2">
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => setIsBatchManagementOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <History size={16} />
+                Batch Management
+              </Button>
               <Button 
                 variant="outline"
                 size="sm"
@@ -142,6 +154,12 @@ const TableViewPage = () => {
         open={isImportDialogOpen}
         onClose={() => setIsImportDialogOpen(false)}
         onImport={handleImport}
+      />
+
+      <BatchManagementDialog
+        open={isBatchManagementOpen}
+        onClose={() => setIsBatchManagementOpen(false)}
+        onDataChange={fetchData}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -7,6 +8,8 @@ import { toast } from "@/components/ui/sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   Form,
   FormControl,
@@ -26,6 +29,9 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,6 +62,31 @@ const LoginPage = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotPasswordEmail) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    try {
+      setIsResettingPassword(true);
+      // Use PocketBase's password reset functionality
+      await pbClient.collection('users').requestPasswordReset(forgotPasswordEmail);
+      toast.success("Password reset email sent!", {
+        description: "Please check your email for reset instructions.",
+      });
+      setIsForgotPasswordOpen(false);
+      setForgotPasswordEmail("");
+    } catch (error) {
+      console.error("Password reset failed:", error);
+      toast.error("Password reset failed", {
+        description: "Please check your email address and try again.",
+      });
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -115,7 +146,10 @@ const LoginPage = () => {
                   )}
                 />
 
-                <div className="text-right text-sm text-red-500 hover:underline cursor-pointer">
+                <div 
+                  className="text-right text-sm text-red-500 hover:underline cursor-pointer"
+                  onClick={() => setIsForgotPasswordOpen(true)}
+                >
                   Forgot Password?
                 </div>
 
@@ -130,10 +164,9 @@ const LoginPage = () => {
             </Form>
 
             <div className="text-center mt-4 text-sm">
-              Don’t have an account?{" "}
+              Don't have an account?{" "}
               <a
                 href="https://mail.google.com/mail/?view=cm&to=mpojasaan@gmail.com&su=Account%20Registration&body=Good%20day%2C%20this%20email%20serves%20as%20a%20registration%20for%20an%20account.%20Please%20see%20the%20details%20below%20for%20personal%20information%20for%20the%20account%20creation%20as%20an%20admin%3A%0A%0AName%3A%0AEmail%3A%0APassword%3A%0A%0AThank%20you."
-
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-red-600 font-semibold hover:underline"
@@ -151,6 +184,35 @@ const LoginPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="resetEmail">Email Address</Label>
+              <Input
+                id="resetEmail"
+                type="email"
+                placeholder="Enter your email address"
+                value={forgotPasswordEmail}
+                onChange={(e) => setForgotPasswordEmail(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsForgotPasswordOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleForgotPassword} disabled={isResettingPassword}>
+              {isResettingPassword ? "Sending..." : "Send Reset Email"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

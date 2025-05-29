@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/sonner";
@@ -44,7 +45,6 @@ const SettingsPage = () => {
   const [profileForm, setProfileForm] = useState({
     name: "",
     email: "",
-    currentPassword: "",
     newPassword: "",
     confirmPassword: ""
   });
@@ -66,7 +66,6 @@ const SettingsPage = () => {
           setProfileForm({
             name: authData.record.name || "",
             email: authData.record.email || "",
-            currentPassword: "",
             newPassword: "",
             confirmPassword: ""
           });
@@ -187,16 +186,16 @@ const SettingsPage = () => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updateData: any = {
-        name: profileForm.name,
+        name: profileForm.name || "N/A",
         email: profileForm.email
       };
 
       if (profileForm.newPassword) {
-        updateData.oldPassword = profileForm.currentPassword;
         updateData.password = profileForm.newPassword;
         updateData.passwordConfirm = profileForm.confirmPassword;
       }
 
+      console.log("Updating profile with data:", updateData);
       await pbClient.collection('users').update(currentUser.id, updateData);
       toast.success("Profile updated successfully");
       setIsProfileDialogOpen(false);
@@ -405,7 +404,7 @@ const SettingsPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Profile Edit Dialog */}
+      {/* Profile Edit Dialog - Removed current password field */}
       <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -427,15 +426,6 @@ const SettingsPage = () => {
                 type="email"
                 value={profileForm.email}
                 onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
-              />
-            </div>
-            <div>
-              <Label htmlFor="currentPassword">Current Password (required for password change)</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                value={profileForm.currentPassword}
-                onChange={(e) => setProfileForm({...profileForm, currentPassword: e.target.value})}
               />
             </div>
             <div>

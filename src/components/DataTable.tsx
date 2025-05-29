@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
@@ -373,6 +374,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     <div className="w-full">
       <div className="flex justify-between mb-2">
         <div className="flex items-center gap-2">
+          {/* Only show "See Problems" when there are actual issues */}
           {dataIssues.length > 0 && (
             <Button 
               variant="outline" 
