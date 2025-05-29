@@ -14,6 +14,7 @@ import { DataProblemsDialog } from "@/components/dialogs/DataProblemsDialog";
 import { Button } from "@/components/ui/button";
 import { Search, Replace, AlertTriangle } from "lucide-react";
 import { formSchema } from "@/lib/schema";
+import { validateAgeConsistency, validateDropdownValue, validateRequiredFields } from "@/lib/validation";
 
 interface DataTableProps {
   data: YouthRecord[];
@@ -59,12 +60,20 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     if (!selectedRecord) return;
 
     try {
-      // Normalize all string fields to replace empty values with "N/A"
+      // Allow N/A for non-critical fields, but normalize empty strings
       const normalizedData = Object.fromEntries(
-        Object.entries(data).map(([key, value]) => [
-          key,
-          typeof value === 'string' && value.trim() === '' ? 'N/A' : value
-        ])
+        Object.entries(data).map(([key, value]) => {
+          // Critical fields cannot be N/A or empty
+          const criticalFields = ['name', 'age', 'birthday', 'sex', 'barangay'];
+          if (criticalFields.includes(key) && (!value || value === 'N/A' || (typeof value === 'string' && value.trim() === ''))) {
+            throw new Error(`${key} is required and cannot be empty`);
+          }
+          
+          return [
+            key,
+            typeof value === 'string' && value.trim() === '' ? 'N/A' : value
+          ];
+        })
       );
 
       await pbClient.youth.update(selectedRecord.id, normalizedData);
@@ -72,9 +81,9 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       setIsEditDialogOpen(false);
       setSelectedRecord(null);
       onDataChange();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating record:", error);
-      toast.error("Failed to update record");
+      toast.error(error.message || "Failed to update record");
     }
   };
 
@@ -102,11 +111,9 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     try {
       console.log("Batch edit starting:", { field, oldValue, newValue });
       
-      // Use filtered data instead of export data to include all currently visible records
       const recordsToSearch = tableState.filteredData;
       console.log("Records to search:", recordsToSearch.length);
       
-      // Map display field names to actual database field names
       const fieldMapping: { [key: string]: string } = {
         "civil_status": "civil_status",
         "name": "name",
@@ -131,7 +138,6 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
         const recordValue = normalizeForComparison(record[actualFieldName as keyof YouthRecord]);
         const normalizedOldValue = normalizeForComparison(oldValue);
         
-        // Multiple comparison methods for better matching
         const exactMatch = recordValue === normalizedOldValue;
         const caseInsensitiveMatch = recordValue.toLowerCase() === normalizedOldValue.toLowerCase();
         const upperCaseMatch = recordValue.toUpperCase() === normalizedOldValue.toUpperCase();
@@ -156,7 +162,6 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       
       let updatedCount = 0;
       for (const record of recordsToUpdate) {
-        // Normalize the new value
         const normalizedValue = newValue.trim() === '' ? 'N/A' : newValue;
         await pbClient.youth.update(record.id, { [actualFieldName]: normalizedValue });
         updatedCount++;
@@ -170,7 +175,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     }
   };
 
-  // Enhanced data validation with improved duplicate detection (only one report per duplicate group)
+  // Enhanced data validation with improved duplicate detection
   const getDataIssues = () => {
     const issues: Array<{
       recordId: string;
@@ -195,27 +200,24 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       attended_kk_assembly: formSchema.shape.attended_kk_assembly.options,
     };
 
-    // Check for duplicates (excluding N/A values) - only report once per duplicate group
+    // Check for duplicates (excluding N/A values)
     const nameMap = new Map<string, YouthRecord[]>();
     const emailMap = new Map<string, YouthRecord[]>();
     const contactMap = new Map<string, YouthRecord[]>();
 
     data.forEach(record => {
-      // Group by name (exclude N/A)
       if (record.name && normalizeValue(record.name) !== "N/A") {
         const key = record.name.toLowerCase().trim();
         if (!nameMap.has(key)) nameMap.set(key, []);
         nameMap.get(key)!.push(record);
       }
 
-      // Group by email (exclude N/A)
       if (record.email_address && normalizeValue(record.email_address) !== "N/A") {
         const key = record.email_address.toLowerCase().trim();
         if (!emailMap.has(key)) emailMap.set(key, []);
         emailMap.get(key)!.push(record);
       }
 
-      // Group by contact number (exclude N/A)
       if (record.contact_number && normalizeValue(record.contact_number) !== "N/A") {
         const key = record.contact_number.trim();
         if (!contactMap.has(key)) contactMap.set(key, []);
@@ -223,11 +225,11 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       }
     });
 
-    // Add duplicate issues - only one report per duplicate group
+    // Add duplicate issues
     nameMap.forEach((records, name) => {
       if (records.length > 1) {
         issues.push({
-          recordId: records[0].id, // Use first record as representative
+          recordId: records[0].id,
           recordName: records[0].name,
           issue: `Duplicate name found: "${name}" (${records.length} records)`,
           severity: 'warning',
@@ -270,89 +272,59 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
     data.forEach(record => {
       const age = parseInt(record.age);
       const birthday = new Date(record.birthday);
-      const currentYear = new Date().getFullYear();
-      const birthYear = birthday.getFullYear();
-      const calculatedAge = currentYear - birthYear;
       
-      // Check for age/birthday mismatch
-      if (Math.abs(age - calculatedAge) > 1) {
+      // Age/birthday consistency check
+      const ageValidation = validateAgeConsistency(age, record.birthday.toString(), record.youth_age_group);
+      ageValidation.errors.forEach(error => {
         issues.push({
           recordId: record.id,
           recordName: record.name,
-          issue: `Age (${age}) doesn't match birthday (calculated age: ${calculatedAge})`,
+          issue: error,
           severity: 'error',
           field: 'age',
           issueType: 'age_mismatch'
         });
-      }
+      });
 
-      // Check for invalid dropdown values
+      // Invalid dropdown values
       Object.entries(validOptions).forEach(([field, options]) => {
         const value = record[field as keyof YouthRecord];
-        if (value && normalizeValue(value) !== "N/A" && !options.includes(value as any)) {
+        const validation = validateDropdownValue(String(value), options, field);
+        validation.errors.forEach(error => {
           issues.push({
             recordId: record.id,
             recordName: record.name,
-            issue: `Invalid ${field.replace('_', ' ')}: "${value}" (not in allowed options)`,
+            issue: error,
             severity: 'error',
             field: field,
             issueType: 'invalid_dropdown'
           });
-        }
+        });
       });
       
-      // Check for missing required fields
-      const requiredFields = [
-        { field: 'name', label: 'name' },
-        { field: 'age', label: 'age' },
-        { field: 'birthday', label: 'birthday' },
-        { field: 'sex', label: 'sex/gender' },
-        { field: 'barangay', label: 'barangay' },
-        { field: 'youth_classification', label: 'youth classification' },
-        { field: 'youth_age_group', label: 'age group' }
-      ];
-
-      const optionalFields = [
-        { field: 'highest_education', label: 'education level' },
-        { field: 'work_status', label: 'work status' },
-        { field: 'civil_status', label: 'civil status' },
-        { field: 'registered_voter', label: 'voter registration status' },
-        { field: 'voted_last_election', label: 'voting history' },
-        { field: 'attended_kk_assembly', label: 'KK assembly attendance info' },
-        { field: 'home_address', label: 'home address' },
-        { field: 'email_address', label: 'email address' },
-        { field: 'contact_number', label: 'contact number' }
-      ];
-
-      requiredFields.forEach(({ field, label }) => {
-        const value = record[field as keyof YouthRecord];
-        if (!value || normalizeValue(value) === "N/A") {
-          issues.push({
-            recordId: record.id,
-            recordName: record.name,
-            issue: `Missing ${label}`,
-            severity: 'error',
-            field: field,
-            issueType: 'missing_required'
-          });
-        }
+      // Required field validation
+      const fieldValidation = validateRequiredFields(record);
+      fieldValidation.errors.forEach(error => {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: error,
+          severity: 'error',
+          issueType: 'missing_required'
+        });
       });
 
-      optionalFields.forEach(({ field, label }) => {
-        const value = record[field as keyof YouthRecord];
-        if (!value || normalizeValue(value) === "N/A") {
-          issues.push({
-            recordId: record.id,
-            recordName: record.name,
-            issue: `Missing ${label}`,
-            severity: 'warning',
-            field: field,
-            issueType: 'missing_optional'
-          });
-        }
+      fieldValidation.warnings.forEach(warning => {
+        issues.push({
+          recordId: record.id,
+          recordName: record.name,
+          issue: warning,
+          severity: 'warning',
+          issueType: 'missing_optional'
+        });
       });
       
-      // Check for invalid email format
+      // Invalid email format
       if (record.email_address && normalizeValue(record.email_address) !== "N/A" && !record.email_address.includes('@')) {
         issues.push({
           recordId: record.id,

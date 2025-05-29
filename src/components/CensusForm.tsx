@@ -17,6 +17,7 @@ import {
   FormItem,
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 // Import the component sections
 import { LocationSection } from "./census/LocationSection";
@@ -52,9 +53,16 @@ export function CensusForm() {
       
       if (!ageValidation.isValid) {
         toast.error("Validation Error", {
-          description: ageValidation.errors.join(". ")
+          description: ageValidation.errors.join(". ") + " Please correct this before submitting."
         });
         return;
+      }
+
+      // Show warnings if any
+      if (ageValidation.warnings && ageValidation.warnings.length > 0) {
+        toast.warning("Please verify:", {
+          description: ageValidation.warnings.join(". ")
+        });
       }
 
       // Create properly typed youth record
@@ -108,6 +116,17 @@ export function CensusForm() {
         <CardDescription>
           Please fill out this form accurately to register for the Jasaan Youth Census.
         </CardDescription>
+        
+        {/* Youth Classification Reference */}
+        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+          <h4 className="font-semibold mb-2">Youth Classification Reference:</h4>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline">ISY - In-School Youth</Badge>
+            <Badge variant="outline">OSY - Out-of-School Youth</Badge>
+            <Badge variant="outline">WY - Working Youth</Badge>
+            <Badge variant="outline">YSN - Youth with Special Needs</Badge>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <Form {...form}>
