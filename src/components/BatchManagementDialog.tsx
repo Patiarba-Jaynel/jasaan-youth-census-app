@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -28,8 +27,10 @@ export function BatchManagementDialog({ open, onClose, onDataChange }: BatchMana
         activityLogger.getActivityLogs(50),
         activityLogger.getBatchLogs()
       ]);
-      setActivityLogs(activity.items || []);
-      setBatchLogs(batches || []);
+      
+      // Properly type cast the response data
+      setActivityLogs((activity.items || []) as ActivityLog[]);
+      setBatchLogs((batches || []) as ActivityLog[]);
     } catch (error) {
       console.error("Error fetching logs:", error);
       toast.error("Failed to load activity logs");
