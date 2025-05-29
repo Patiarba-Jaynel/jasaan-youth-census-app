@@ -74,11 +74,21 @@ export function useTableState(data: YouthRecord[]) {
 
   const itemsPerPage = 25;
 
-  // Helper function to extract last name from full name
+  // Helper function to extract last name from full name - improved to handle comma-separated names
   const getLastName = (fullName: string): string => {
     if (!fullName || fullName === "N/A") return "ZZZZ"; // Put N/A entries at the end
-    const nameParts = fullName.trim().split(/\s+/);
-    return nameParts.length > 1 ? nameParts[nameParts.length - 1] : fullName;
+    
+    const trimmedName = fullName.trim();
+    
+    // If name contains a comma, assume format is "LASTNAME, FIRSTNAME"
+    if (trimmedName.includes(',')) {
+      const parts = trimmedName.split(',');
+      return parts[0].trim(); // Return the part before the comma as last name
+    }
+    
+    // Otherwise, assume last word is the last name
+    const nameParts = trimmedName.split(/\s+/);
+    return nameParts.length > 1 ? nameParts[nameParts.length - 1] : trimmedName;
   };
 
   // Helper function to normalize values for comparison
