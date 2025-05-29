@@ -28,9 +28,39 @@ export function BatchManagementDialog({ open, onClose, onDataChange }: BatchMana
         activityLogger.getBatchLogs()
       ]);
       
-      // Properly type cast the response data
-      setActivityLogs((activity.items || []) as ActivityLog[]);
-      setBatchLogs((batches || []) as ActivityLog[]);
+      // Convert PocketBase records to ActivityLog format
+      const activityItems = (activity.items || []).map((item: any) => ({
+        id: item.id,
+        action: item.action,
+        entity_type: item.entity_type,
+        entity_id: item.entity_id,
+        entity_name: item.entity_name,
+        user_id: item.user_id,
+        user_name: item.user_name,
+        details: item.details,
+        batch_id: item.batch_id,
+        timestamp: item.timestamp,
+        created: item.created,
+        updated: item.updated
+      })) as ActivityLog[];
+
+      const batchItems = (batches || []).map((item: any) => ({
+        id: item.id,
+        action: item.action,
+        entity_type: item.entity_type,
+        entity_id: item.entity_id,
+        entity_name: item.entity_name,
+        user_id: item.user_id,
+        user_name: item.user_name,
+        details: item.details,
+        batch_id: item.batch_id,
+        timestamp: item.timestamp,
+        created: item.created,
+        updated: item.updated
+      })) as ActivityLog[];
+
+      setActivityLogs(activityItems);
+      setBatchLogs(batchItems);
     } catch (error) {
       console.error("Error fetching logs:", error);
       toast.error("Failed to load activity logs");
