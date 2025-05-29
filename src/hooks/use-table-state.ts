@@ -39,7 +39,6 @@ export function useTableState(data: YouthRecord[]) {
     registeredVoter: [] as string[],
   });
 
-  // Column selection for export
   const [exportColumns, setExportColumns] = useState({
     name: true,
     age: true,
@@ -60,7 +59,6 @@ export function useTableState(data: YouthRecord[]) {
     contactNumber: true,
   });
 
-  // Data filtering for export
   const [exportFilters, setExportFilters] = useState({
     barangays: [] as string[],
     classifications: [] as string[],
@@ -76,6 +74,13 @@ export function useTableState(data: YouthRecord[]) {
 
   const itemsPerPage = 25;
 
+  // Helper function to extract last name from full name
+  const getLastName = (fullName: string): string => {
+    if (!fullName || fullName === "N/A") return "ZZZZ"; // Put N/A entries at the end
+    const nameParts = fullName.trim().split(/\s+/);
+    return nameParts.length > 1 ? nameParts[nameParts.length - 1] : fullName;
+  };
+
   // Helper function to normalize values for comparison
   const normalizeForComparison = (value: any): string => {
     if (value === null || value === undefined || value === "" || (typeof value === 'string' && value.trim() === '')) {
@@ -88,7 +93,7 @@ export function useTableState(data: YouthRecord[]) {
     console.log("Filtering data with advanced filters:", advancedFilters);
     console.log("Total data records:", data.length);
     
-    return data.filter((record) => {
+    const filtered = data.filter((record) => {
       // Case-insensitive search that includes N/A values
       const matchesSearch = searchTerm === "" || Object.values(record).some((value) => {
         const stringValue = value === null || value === undefined || value === "" ? "N/A" : String(value);
@@ -127,20 +132,13 @@ export function useTableState(data: YouthRecord[]) {
         advancedFilters.workStatus.length === 0 || 
         advancedFilters.workStatus.includes(normalizeForComparison(record.work_status));
 
-      // Enhanced civil status matching with debugging
       const recordCivilStatus = normalizeForComparison(record.civil_status);
       const matchesCivilStatus = advancedFilters.civilStatus.length === 0 || 
         advancedFilters.civilStatus.some(filterValue => {
-          // Try exact match first
           if (recordCivilStatus === filterValue) return true;
-          
-          // Try case-insensitive match
           if (recordCivilStatus.toLowerCase() === filterValue.toLowerCase()) return true;
-          
-          // Try normalized comparison (handle SINGLE vs Single, MARRIED vs Married, etc.)
           const normalizedRecord = recordCivilStatus.toUpperCase();
           const normalizedFilter = filterValue.toUpperCase();
-          
           return normalizedRecord === normalizedFilter;
         });
 
@@ -158,6 +156,13 @@ export function useTableState(data: YouthRecord[]) {
              matchesRegisteredVoter;
 
       return passes;
+    });
+
+    // Sort filtered data alphabetically by last name
+    return filtered.sort((a, b) => {
+      const lastNameA = getLastName(a.name).toLowerCase();
+      const lastNameB = getLastName(b.name).toLowerCase();
+      return lastNameA.localeCompare(lastNameB);
     });
   }, [data, searchTerm, advancedFilters]);
 
