@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NavBar } from "@/components/NavBar";
@@ -288,7 +289,7 @@ const DashboardPage = () => {
               title="Youth Classification"
               description="ISY (In-School), OSY (Out-of-School), WY (Working), YSN (Special Needs)"
               data={classificationData}
-              type="area"
+              type="pie"
               nameKey="name"
               dataKey="value"
             />
