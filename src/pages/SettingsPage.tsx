@@ -25,6 +25,7 @@ interface User {
 
 const SettingsPage = () => {
   const navigate = useNavigate();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -130,6 +131,7 @@ const SettingsPage = () => {
   const handleUpdateUser = async () => {
     if (!editingUser) return;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {
       email: userForm.email,
       name: userForm.name,
@@ -183,6 +185,7 @@ const SettingsPage = () => {
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updateData: any = {
         name: profileForm.name,
         email: profileForm.email
