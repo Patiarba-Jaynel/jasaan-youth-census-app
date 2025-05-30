@@ -36,22 +36,21 @@ export function CensusForm() {
       region: "X",
       province: "Misamis Oriental",
       city_municipality: "Jasaan",
-      barangay: undefined,
+      barangay: "",
       name: "",
-      age: "",
-      birthday: undefined,
-      sex: undefined,
-      civil_status: undefined,
-      youth_classification: undefined,
-      youth_age_group: undefined,
+      birthday: null,
+      sex: "",
+      civil_status: "",
+      youth_classification: "",
+      youth_age_group: "",
       email_address: "",
       contact_number: "",
       home_address: "",
-      highest_education: undefined,
-      work_status: undefined,
-      registered_voter: undefined,
-      voted_last_election: undefined,
-      attended_kk_assembly: undefined,
+      highest_education: "",
+      work_status: "",
+      registered_voter: "",
+      voted_last_election: "",
+      attended_kk_assembly: "",
       kk_assemblies_attended: 1,
     },
   });
@@ -72,7 +71,7 @@ export function CensusForm() {
     try {
       setIsSubmitting(true);
       
-      // Calculate age from birthday
+      // Calculate age from birthday - this is now the only place age is handled
       const calculatedAge = data.birthday ? calculateAge(data.birthday) : 0;
       console.log("Calculated age for submission:", calculatedAge);
       
@@ -132,7 +131,7 @@ export function CensusForm() {
         city_municipality: data.city_municipality,
         barangay: data.barangay,
         name: data.name,
-        age: calculatedAge.toString(), // Convert number to string
+        age: calculatedAge.toString(), // Age is automatically calculated from birthday
         birthday: data.birthday,
         sex: data.sex,
         civil_status: data.civil_status,
