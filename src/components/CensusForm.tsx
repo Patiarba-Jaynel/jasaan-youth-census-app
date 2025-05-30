@@ -36,6 +36,22 @@ export function CensusForm() {
       region: "X",
       province: "Misamis Oriental",
       city_municipality: "Jasaan",
+      barangay: undefined,
+      name: "",
+      age: "",
+      birthday: undefined,
+      sex: undefined,
+      civil_status: undefined,
+      youth_classification: undefined,
+      youth_age_group: undefined,
+      email_address: "",
+      contact_number: "",
+      home_address: "",
+      highest_education: undefined,
+      work_status: undefined,
+      registered_voter: undefined,
+      voted_last_election: undefined,
+      attended_kk_assembly: undefined,
       kk_assemblies_attended: 1,
     },
   });
@@ -52,11 +68,13 @@ export function CensusForm() {
   };
 
   async function onSubmit(data: FormValues) {
+    console.log("Form submission started with data:", data);
     try {
       setIsSubmitting(true);
       
       // Calculate age from birthday
       const calculatedAge = data.birthday ? calculateAge(data.birthday) : 0;
+      console.log("Calculated age for submission:", calculatedAge);
       
       // Check for critical fields only
       const criticalFields = ['name', 'birthday', 'sex', 'barangay'];
@@ -150,6 +168,9 @@ export function CensusForm() {
       setIsSubmitting(false);
     }
   }
+
+  console.log("Current form values:", form.watch());
+  console.log("Form errors:", form.formState.errors);
 
   return (
     <Card className="w-full max-w-3xl mx-auto">

@@ -28,6 +28,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
   const [calculatedAge, setCalculatedAge] = useState<number | undefined>();
 
   useEffect(() => {
+    console.log("Birthday changed:", birthday);
     if (birthday) {
       const today = new Date();
       const birthDate = new Date(birthday);
@@ -36,6 +37,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
       if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
         age--;
       }
+      console.log("Calculated age:", age);
       setCalculatedAge(age);
     }
   }, [birthday]);
@@ -52,7 +54,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
             <FormItem>
               <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Input placeholder="Juan Dela Cruz" {...field} />
+                <Input placeholder="Juan Dela Cruz" value={field.value || ''} onChange={field.onChange} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -71,138 +73,155 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
         <FormField
           control={control}
           name="birthday"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Date of Birth</FormLabel>
-              <FormControl>
-                <Input
-                  type="date"
-                  value={field.value ? field.value.toISOString().split('T')[0] : ''}
-                  onChange={(e) => {
-                    const dateValue = e.target.value ? new Date(e.target.value) : null;
-                    field.onChange(dateValue);
-                  }}
-                  max={new Date().toISOString().split('T')[0]}
-                  min="1980-01-01"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            console.log("Birthday field value:", field.value);
+            return (
+              <FormItem>
+                <FormLabel>Date of Birth</FormLabel>
+                <FormControl>
+                  <Input
+                    type="date"
+                    value={field.value ? field.value.toISOString().split('T')[0] : ''}
+                    onChange={(e) => {
+                      console.log("Date input changed:", e.target.value);
+                      const dateValue = e.target.value ? new Date(e.target.value) : null;
+                      console.log("Parsed date:", dateValue);
+                      field.onChange(dateValue);
+                    }}
+                    max={new Date().toISOString().split('T')[0]}
+                    min="1980-01-01"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         {/* Sex */}
         <FormField
           control={control}
           name="sex"
-          render={({ field }) => (
-            <FormItem className="space-y-3">
-              <FormLabel>Sex</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  className="flex flex-col space-y-1"
-                >
-                  <FormItem className="flex items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="MALE" />
-                    </FormControl>
-                    <FormLabel className="font-normal">Male</FormLabel>
-                  </FormItem>
-                  <FormItem className="flex items-center space-x-3 space-y-0">
-                    <FormControl>
-                      <RadioGroupItem value="FEMALE" />
-                    </FormControl>
-                    <FormLabel className="font-normal">Female</FormLabel>
-                  </FormItem>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            console.log("Sex field value:", field.value);
+            return (
+              <FormItem className="space-y-3">
+                <FormLabel>Sex</FormLabel>
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    value={field.value || ''}
+                    className="flex flex-col space-y-1"
+                  >
+                    <FormItem className="flex items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <RadioGroupItem value="MALE" />
+                      </FormControl>
+                      <FormLabel className="font-normal">Male</FormLabel>
+                    </FormItem>
+                    <FormItem className="flex items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <RadioGroupItem value="FEMALE" />
+                      </FormControl>
+                      <FormLabel className="font-normal">Female</FormLabel>
+                    </FormItem>
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         {/* Civil Status */}
         <FormField
           control={control}
           name="civil_status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Civil Status</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="SINGLE">Single</SelectItem>
-                  <SelectItem value="MARRIED">Married</SelectItem>
-                  <SelectItem value="LIVED-IN">Lived-In</SelectItem>
-                  <SelectItem value="WIDOWED">Widowed</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            console.log("Civil status field value:", field.value);
+            return (
+              <FormItem>
+                <FormLabel>Civil Status</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="SINGLE">Single</SelectItem>
+                    <SelectItem value="MARRIED">Married</SelectItem>
+                    <SelectItem value="LIVED-IN">Lived-In</SelectItem>
+                    <SelectItem value="WIDOWED">Widowed</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         {/* Youth Classification */}
         <FormField
           control={control}
           name="youth_classification"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Youth Classification</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select classification" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="ISY">In-School Youth (ISY)</SelectItem>
-                  <SelectItem value="OSY">Out-of-School Youth (OSY)</SelectItem>
-                  <SelectItem value="WY">Working Youth (WY)</SelectItem>
-                  <SelectItem value="YSN">
-                    Youth with Special Needs (YSN)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            console.log("Youth classification field value:", field.value);
+            return (
+              <FormItem>
+                <FormLabel>Youth Classification</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select classification" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="ISY">In-School Youth (ISY)</SelectItem>
+                    <SelectItem value="OSY">Out-of-School Youth (OSY)</SelectItem>
+                    <SelectItem value="WY">Working Youth (WY)</SelectItem>
+                    <SelectItem value="YSN">
+                      Youth with Special Needs (YSN)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         {/* Youth Age Group */}
         <FormField
           control={control}
           name="youth_age_group"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Youth Age Group</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select age group" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="CHILD YOUTH (15-17)">
-                    Child Youth (15-17)
-                  </SelectItem>
-                  <SelectItem value="CORE YOUTH (18-24)">
-                    Core Youth (18-24)
-                  </SelectItem>
-                  <SelectItem value="YOUNG ADULT (25-30)">
-                    Young Adult (25-30)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            console.log("Youth age group field value:", field.value);
+            return (
+              <FormItem>
+                <FormLabel>Youth Age Group</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select age group" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="CHILD YOUTH (15-17)">
+                      Child Youth (15-17)
+                    </SelectItem>
+                    <SelectItem value="CORE YOUTH (18-24)">
+                      Core Youth (18-24)
+                    </SelectItem>
+                    <SelectItem value="YOUNG ADULT (25-30)">
+                      Young Adult (25-30)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
       </div>
     </div>
