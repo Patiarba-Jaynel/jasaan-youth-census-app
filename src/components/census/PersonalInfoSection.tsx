@@ -52,14 +52,14 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
               <FormLabel>Date of Birth</FormLabel>
               <FormControl>
                 <Input
-                  type="date"
-                  value={field.value ? field.value.toISOString().split('T')[0] : ''}
+                  type="datetime-local"
+                  value={field.value ? field.value.toISOString().slice(0, 16) : ''}
                   onChange={(e) => {
                     const dateValue = e.target.value ? new Date(e.target.value) : null;
                     field.onChange(dateValue);
                   }}
-                  max={new Date().toISOString().split('T')[0]}
-                  min="1980-01-01"
+                  max={new Date().toISOString().slice(0, 16)}
+                  min="1980-01-01T00:00"
                 />
               </FormControl>
               <FormMessage />

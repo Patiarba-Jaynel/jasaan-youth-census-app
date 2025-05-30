@@ -1,10 +1,9 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { YouthRecord } from "@/lib/pb-client";
 import { enumOptions } from "@/lib/schema";
 import {
@@ -33,9 +32,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 
 interface EditRecordDialogProps {
   open: boolean;
@@ -208,39 +204,20 @@ export function EditRecordDialog({
                     control={form.control}
                     name="birthday"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem>
                         <FormLabel>Birthday *</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) =>
-                                date > new Date() || date < new Date("1900-01-01")
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
+                        <FormControl>
+                          <Input
+                            type="datetime-local"
+                            value={field.value ? field.value.toISOString().slice(0, 16) : ''}
+                            onChange={(e) => {
+                              const dateValue = e.target.value ? new Date(e.target.value) : null;
+                              field.onChange(dateValue);
+                            }}
+                            max={new Date().toISOString().slice(0, 16)}
+                            min="1980-01-01T00:00"
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
