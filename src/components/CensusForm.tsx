@@ -40,12 +40,26 @@ export function CensusForm() {
     },
   });
 
+  // Helper function to calculate age from birthday
+  const calculateAge = (birthday: Date): number => {
+    const today = new Date();
+    let age = today.getFullYear() - birthday.getFullYear();
+    const m = today.getMonth() - birthday.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthday.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   async function onSubmit(data: FormValues) {
     try {
       setIsSubmitting(true);
       
+      // Calculate age from birthday
+      const calculatedAge = data.birthday ? calculateAge(data.birthday) : 0;
+      
       // Check for critical fields only
-      const criticalFields = ['name', 'age', 'birthday', 'sex', 'barangay'];
+      const criticalFields = ['name', 'birthday', 'sex', 'barangay'];
       const missingCritical = criticalFields.filter(field => {
         const value = data[field as keyof FormValues];
         return !value || (typeof value === 'string' && (value === 'N/A' || value.trim() === ''));
@@ -61,7 +75,7 @@ export function CensusForm() {
       // Validate age consistency only if youth_age_group is provided and not N/A
       if (data.youth_age_group && !['N/A', '', undefined].includes(data.youth_age_group as any)) {
         const ageValidation = validateAgeConsistency(
-          Number(data.age), 
+          calculatedAge, 
           data.birthday.toISOString().split('T')[0], 
           data.youth_age_group
         );
@@ -93,14 +107,14 @@ export function CensusForm() {
         if (!proceed) return;
       }
 
-      // Create properly typed youth record
+      // Create properly typed youth record with calculated age
       const youthRecord: Omit<YouthRecord, 'id' | 'created' | 'updated'> = {
         region: data.region,
         province: data.province,
         city_municipality: data.city_municipality,
         barangay: data.barangay,
         name: data.name,
-        age: data.age,
+        age: calculatedAge, // Use calculated age instead of form input
         birthday: data.birthday,
         sex: data.sex,
         civil_status: data.civil_status,
@@ -155,7 +169,7 @@ export function CensusForm() {
             <Badge variant="outline">YSN - Youth with Special Needs</Badge>
           </div>
           <p className="text-sm mt-2 text-muted-foreground">
-            * Required fields: Name, Age, Birthday, Sex, Barangay. Other fields can be left as "N/A" if unknown.
+            * Required fields: Name, Birthday, Sex, Barangay. Age will be calculated automatically from birthday. Other fields can be left as "N/A" if unknown.
           </p>
         </div>
       </CardHeader>

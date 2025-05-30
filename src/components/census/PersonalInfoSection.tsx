@@ -69,22 +69,15 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           )}
         />
 
-        {/* Age */}
-        <FormField
-          control={control}
-          name="age"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Age</FormLabel>
-              <FormControl>
-                <Input type="number" {...field} value={calculatedAge} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Age Display (calculated from birthday) */}
+        <div className="flex flex-col space-y-2">
+          <label className="text-sm font-medium leading-none">Age</label>
+          <div className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm">
+            {calculatedAge !== undefined ? `${calculatedAge} years old` : "Select birthday to calculate age"}
+          </div>
+        </div>
 
-        {/* Date of Birth - Updated to match EditRecordDialog format */}
+        {/* Date of Birth */}
         <FormField
           control={control}
           name="birthday"
