@@ -350,51 +350,80 @@ const ConsolidatedDashboardPage = () => {
     // Add grand totals row
     exportData.push(grandTotals);
 
-    // Create worksheet
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-
-    // Improve Excel design with formatting
+    // Create workbook and worksheet
     const workbook = XLSX.utils.book_new();
-    
-    // Set column widths
-    const colWidths = [
-      { wch: 15 }, // BARANGAY
-      { wch: 12 }, { wch: 12 }, { wch: 12 }, // UNDER 1
-      { wch: 12 }, { wch: 12 }, { wch: 12 }, // 1-4
-      { wch: 12 }, { wch: 12 }, { wch: 12 }, // 5-9
-      { wch: 12 }, { wch: 12 }, { wch: 12 }, // 10-14
-      { wch: 12 }, { wch: 12 }, { wch: 12 }, // 15-19
-      { wch: 12 }, { wch: 12 }, { wch: 12 }, // 20-24
-      { wch: 12 }, { wch: 12 }, { wch: 12 }, // 25-29
-      { wch: 12 }, { wch: 12 }, { wch: 12 }  // TOTALS
-    ];
-    worksheet['!cols'] = colWidths;
+    const worksheet = XLSX.utils.json_to_sheet([]);
 
-    // Add title and metadata
-    const title = `Youth Census Data - ${exportFilters.month === "All" ? "All Months" : exportFilters.month} ${exportFilters.year === "All" ? "All Years" : exportFilters.year}`;
-    const metadata = [
-      [title],
-      [`Generated on: ${new Date().toLocaleDateString()}`],
-      [`Total Records: ${dataToExport.length}`],
-      []
+    // Improved header design
+    const currentDate = new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    
+    const yearText = exportFilters.year === "All" ? "All Years" : exportFilters.year;
+    const monthText = exportFilters.month === "All" ? "All Months" : exportFilters.month;
+    
+    // Create header section with better spacing and formatting
+    const headerData = [
+      ["YOUTH CENSUS DATA REPORT"],
+      [`Municipality of Jasaan, Misamis Oriental`],
+      [``],
+      [`Report Period: ${monthText} ${yearText}`],
+      [`Generated: ${currentDate}`],
+      [`Total Records: ${dataToExport.length} entries`],
+      [``],
+      [``]
     ];
 
-    // Insert metadata at the top
-    XLSX.utils.sheet_add_aoa(worksheet, metadata, { origin: 'A1' });
-    
-    // Adjust data starting position
-    const dataStartRow = metadata.length + 1;
+    // Add header to worksheet
+    XLSX.utils.sheet_add_aoa(worksheet, headerData, { origin: 'A1' });
+
+    // Add main data starting from row 9
     XLSX.utils.sheet_add_json(worksheet, exportData, { 
-      origin: `A${dataStartRow}`, 
+      origin: 'A9',
       skipHeader: false 
     });
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Consolidated Data");
+    // Enhanced column formatting
+    const colWidths = [
+      { wch: 18 }, // BARANGAY (wider for readability)
+      { wch: 10 }, { wch: 10 }, { wch: 12 }, // UNDER 1
+      { wch: 10 }, { wch: 10 }, { wch: 12 }, // 1-4
+      { wch: 10 }, { wch: 10 }, { wch: 12 }, // 5-9
+      { wch: 10 }, { wch: 10 }, { wch: 12 }, // 10-14
+      { wch: 10 }, { wch: 10 }, { wch: 12 }, // 15-19
+      { wch: 10 }, { wch: 10 }, { wch: 12 }, // 20-24
+      { wch: 10 }, { wch: 10 }, { wch: 12 }, // 25-29
+      { wch: 12 }, { wch: 12 }, { wch: 14 }  // TOTALS (wider)
+    ];
+    worksheet['!cols'] = colWidths;
 
-    const fileName = `consolidated_data_${exportFilters.year}_${exportFilters.month}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    // Merge cells for title and subtitle
+    if (!worksheet['!merges']) worksheet['!merges'] = [];
+    worksheet['!merges'].push(
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 24 } }, // Title row
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 24 } }, // Subtitle row
+      { s: { r: 3, c: 0 }, e: { r: 3, c: 24 } }, // Period row
+      { s: { r: 4, c: 0 }, e: { r: 4, c: 24 } }, // Generated row
+      { s: { r: 5, c: 0 }, e: { r: 5, c: 24 } }  // Total records row
+    );
+
+    // Add the worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Youth Census Data");
+
+    // Generate improved filename
+    const yearPart = exportFilters.year === "All" ? "AllYears" : exportFilters.year;
+    const monthPart = exportFilters.month === "All" ? "AllMonths" : exportFilters.month.replace(/\s+/g, "");
+    const datePart = new Date().toISOString().split('T')[0];
+    const fileName = `YouthCensus_${yearPart}_${monthPart}_${datePart}.xlsx`;
+
+    // Write file
     XLSX.writeFile(workbook, fileName);
     
-    toast.success(`Data exported successfully for ${exportFilters.month === "All" ? "all months" : exportFilters.month} ${exportFilters.year === "All" ? "all years" : exportFilters.year}`);
+    toast.success(`Excel report exported: ${fileName}`, {
+      description: `Data for ${monthText} ${yearText} has been successfully exported.`
+    });
   };
 
   const handleImportData = async (importedData: any[]) => {
