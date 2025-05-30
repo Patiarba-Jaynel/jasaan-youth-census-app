@@ -75,6 +75,7 @@ const SettingsPage = () => {
   const [profileForm, setProfileForm] = useState({
     name: "",
     email: "",
+    oldPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
@@ -99,6 +100,7 @@ const SettingsPage = () => {
           setProfileForm({
             name: authData.record.name || "",
             email: authData.record.email || "",
+            oldPassword: "",
             newPassword: "",
             confirmPassword: "",
           });
@@ -276,6 +278,7 @@ const SettingsPage = () => {
       if (profileForm.newPassword) {
         updateData.password = profileForm.newPassword;
         updateData.passwordConfirm = profileForm.confirmPassword;
+        updateData.oldPassword = profileForm.oldPassword;
       }
 
       console.log("Updating profile with data:", updateData);
@@ -296,6 +299,7 @@ const SettingsPage = () => {
         setProfileForm({
           name: authData.record.name || "",
           email: authData.record.email || "",
+          oldPassword: "",
           newPassword: "",
           confirmPassword: "",
         });
@@ -659,6 +663,21 @@ const SettingsPage = () => {
                   setProfileForm({ ...profileForm, email: e.target.value })
                 }
                 placeholder="Enter your email address"
+              />
+            </div>
+            <div>
+              <Label htmlFor="oldPassword">Old Password</Label>
+              <Input
+                id="o"
+                type="password"
+                value={profileForm.oldPassword}
+                onChange={(e) =>
+                  setProfileForm({
+                    ...profileForm,
+                    oldPassword: e.target.value,
+                  })
+                }
+                placeholder="Leave blank to keep current password"
               />
             </div>
             <div>
