@@ -1,10 +1,7 @@
 
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 import { Control, useWatch } from "react-hook-form";
 import { FormValues } from "@/lib/schema";
-import { cn } from "@/lib/utils";
 import {
   FormField,
   FormItem,
@@ -20,13 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface PersonalInfoSectionProps {
@@ -82,40 +72,21 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           control={control}
           name="birthday"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem>
               <FormLabel>Date of Birth</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1980-01-01")
-                    }
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <FormControl>
+                <Input
+                  type="date"
+                  {...field}
+                  value={field.value ? field.value.toISOString().split('T')[0] : ''}
+                  onChange={(e) => {
+                    const dateValue = e.target.value ? new Date(e.target.value) : undefined;
+                    field.onChange(dateValue);
+                  }}
+                  max={new Date().toISOString().split('T')[0]}
+                  min="1980-01-01"
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
