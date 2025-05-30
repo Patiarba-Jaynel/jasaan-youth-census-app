@@ -1,4 +1,3 @@
-
 import PocketBase from 'pocketbase';
 import { activityLogger } from './activity-logger';
 
@@ -28,6 +27,18 @@ export interface YouthRecord {
   attended_kk_assembly: string;
   kk_assemblies_attended: number;
   batch_id?: string;
+  created: string;
+  updated: string;
+}
+
+export interface ConsolidatedData {
+  id: string;
+  barangay: string;
+  age_bracket: string;
+  gender: string;
+  year: number;
+  month: string;
+  count: number;
   created: string;
   updated: string;
 }
@@ -110,6 +121,25 @@ export const pbClient = {
       await pb.collection('youth').delete(id);
       await activityLogger.logYouthDelete(id, record.name);
       return record;
+    }
+  },
+  
+  // Consolidated data methods
+  consolidated: {
+    create: async (data: Omit<ConsolidatedData, 'id' | 'created' | 'updated'>) => {
+      return await pb.collection('consolidated_data').create(data);
+    },
+    getAll: async () => {
+      return await pb.collection('consolidated_data').getFullList<ConsolidatedData>();
+    },
+    getOne: async (id: string) => {
+      return await pb.collection('consolidated_data').getOne<ConsolidatedData>(id);
+    },
+    update: async (id: string, data: Partial<ConsolidatedData>) => {
+      return await pb.collection('consolidated_data').update(id, data);
+    },
+    delete: async (id: string) => {
+      return await pb.collection('consolidated_data').delete(id);
     }
   },
   

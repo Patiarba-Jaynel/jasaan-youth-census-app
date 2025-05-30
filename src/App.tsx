@@ -15,6 +15,7 @@ import DashboardPage from "./pages/DashboardPage";
 import TableViewPage from "./pages/TableViewPage";
 import SettingsPage from "./pages/SettingsPage";
 import AboutPage from "./pages/AboutPage";
+import ConsolidatedDashboardPage from "./pages/ConsolidatedDashboardPage";
 import NotFound from "./pages/NotFound";
 import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 
@@ -47,6 +48,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Index />} />
       <Route path="/dashboard/census" element={<AuthRoute element={<CensusPage />} />} />
       <Route path="/dashboard/table" element={<AuthRoute element={<TableViewPage />} />} />
+      <Route path="/dashboard/consolidated" element={<AuthRoute element={<ConsolidatedDashboardPage />} />} />
       <Route path="/dashboard/settings" element={<AuthRoute element={<SettingsPage />} />} />
       <Route path="/success" element={<SuccessPage />} />
       <Route path="/login" element={<LoginRoute />} />

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NavBar } from "@/components/NavBar";
@@ -8,7 +7,7 @@ import { AnalyticsCard } from "@/components/AnalyticsCard";
 import { pbClient, YouthRecord } from "@/lib/pb-client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
-import { Eye, Plus, LogOut, Table, Settings } from "lucide-react";
+import { Eye, Plus, LogOut, Table, Settings, BarChart3 } from "lucide-react";
 
 interface AnalyticsData {
   name: string;
@@ -201,6 +200,14 @@ const DashboardPage = () => {
               >
                 <Settings size={16} />
                 Settings
+              </Button>
+              <Button
+                onClick={() => navigate("/dashboard/consolidated")}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <BarChart3 size={16} />
+                Consolidated Data
               </Button>
               <Button
                 onClick={() => navigate("/dashboard/table")}
