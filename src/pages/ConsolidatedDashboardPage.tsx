@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConsolidatedAnalytics } from "@/components/ConsolidatedAnalytics";
 import { ConsolidatedDataForm } from "@/components/ConsolidatedDataForm";
 import { ConsolidatedImportDialog } from "@/components/ConsolidatedImportDialog";
@@ -55,6 +56,10 @@ const ConsolidatedDashboardPage = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<ConsolidatedData | null>(null);
+  const [exportFilters, setExportFilters] = useState({
+    year: new Date().getFullYear().toString(),
+    month: "All"
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -226,6 +231,21 @@ const ConsolidatedDashboardPage = () => {
   };
 
   const exportToExcel = () => {
+    // Filter data based on export filters
+    let dataToExport = consolidatedData;
+    
+    if (exportFilters.year !== "All") {
+      dataToExport = dataToExport.filter(record => 
+        record.year.toString() === exportFilters.year
+      );
+    }
+    
+    if (exportFilters.month !== "All") {
+      dataToExport = dataToExport.filter(record => 
+        record.month === exportFilters.month
+      );
+    }
+
     // Transform data to match the format in the image
     const barangayData = new Map();
     
@@ -250,8 +270,8 @@ const ConsolidatedDashboardPage = () => {
       });
     });
 
-    // Populate data from consolidatedData
-    filteredData.forEach(record => {
+    // Populate data from filtered consolidated data
+    dataToExport.forEach(record => {
       const barangayRow = barangayData.get(record.barangay);
       if (barangayRow) {
         const genderSuffix = record.gender === "Male" ? " M" : " F";
@@ -292,12 +312,83 @@ const ConsolidatedDashboardPage = () => {
       };
     });
 
+    // Calculate grand totals
+    const grandTotals = {
+      BARANGAY: "GRAND TOTAL",
+      "UNDER 1 M": exportData.reduce((sum, row) => sum + row["UNDER 1 M"], 0),
+      "UNDER 1 F": exportData.reduce((sum, row) => sum + row["UNDER 1 F"], 0),
+      "UNDER 1 TOTAL": exportData.reduce((sum, row) => sum + row["UNDER 1 TOTAL"], 0),
+      "1-4 M": exportData.reduce((sum, row) => sum + row["1-4 M"], 0),
+      "1-4 F": exportData.reduce((sum, row) => sum + row["1-4 F"], 0),
+      "1-4 TOTAL": exportData.reduce((sum, row) => sum + row["1-4 TOTAL"], 0),
+      "5-9 M": exportData.reduce((sum, row) => sum + row["5-9 M"], 0),
+      "5-9 F": exportData.reduce((sum, row) => sum + row["5-9 F"], 0),
+      "5-9 TOTAL": exportData.reduce((sum, row) => sum + row["5-9 TOTAL"], 0),
+      "10-14 M": exportData.reduce((sum, row) => sum + row["10-14 M"], 0),
+      "10-14 F": exportData.reduce((sum, row) => sum + row["10-14 F"], 0),
+      "10-14 TOTAL": exportData.reduce((sum, row) => sum + row["10-14 TOTAL"], 0),
+      "15-19 M": exportData.reduce((sum, row) => sum + row["15-19 M"], 0),
+      "15-19 F": exportData.reduce((sum, row) => sum + row["15-19 F"], 0),
+      "15-19 TOTAL": exportData.reduce((sum, row) => sum + row["15-19 TOTAL"], 0),
+      "20-24 M": exportData.reduce((sum, row) => sum + row["20-24 M"], 0),
+      "20-24 F": exportData.reduce((sum, row) => sum + row["20-24 F"], 0),
+      "20-24 TOTAL": exportData.reduce((sum, row) => sum + row["20-24 TOTAL"], 0),
+      "25-29 M": exportData.reduce((sum, row) => sum + row["25-29 M"], 0),
+      "25-29 F": exportData.reduce((sum, row) => sum + row["25-29 F"], 0),
+      "25-29 TOTAL": exportData.reduce((sum, row) => sum + row["25-29 TOTAL"], 0),
+      "TOTAL M": exportData.reduce((sum, row) => sum + row["TOTAL M"], 0),
+      "TOTAL F": exportData.reduce((sum, row) => sum + row["TOTAL F"], 0),
+      "TOTAL": exportData.reduce((sum, row) => sum + row["TOTAL"], 0)
+    };
+
+    // Add grand totals row
+    exportData.push(grandTotals);
+
+    // Create worksheet
     const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+    // Improve Excel design with formatting
     const workbook = XLSX.utils.book_new();
+    
+    // Set column widths
+    const colWidths = [
+      { wch: 15 }, // BARANGAY
+      { wch: 12 }, { wch: 12 }, { wch: 12 }, // UNDER 1
+      { wch: 12 }, { wch: 12 }, { wch: 12 }, // 1-4
+      { wch: 12 }, { wch: 12 }, { wch: 12 }, // 5-9
+      { wch: 12 }, { wch: 12 }, { wch: 12 }, // 10-14
+      { wch: 12 }, { wch: 12 }, { wch: 12 }, // 15-19
+      { wch: 12 }, { wch: 12 }, { wch: 12 }, // 20-24
+      { wch: 12 }, { wch: 12 }, { wch: 12 }, // 25-29
+      { wch: 12 }, { wch: 12 }, { wch: 12 }  // TOTALS
+    ];
+    worksheet['!cols'] = colWidths;
+
+    // Add title and metadata
+    const title = `Youth Census Data - ${exportFilters.month === "All" ? "All Months" : exportFilters.month} ${exportFilters.year === "All" ? "All Years" : exportFilters.year}`;
+    const metadata = [
+      [title],
+      [`Generated on: ${new Date().toLocaleDateString()}`],
+      [`Total Records: ${dataToExport.length}`],
+      []
+    ];
+
+    // Insert metadata at the top
+    XLSX.utils.sheet_add_aoa(worksheet, metadata, { origin: 'A1' });
+    
+    // Adjust data starting position
+    const dataStartRow = metadata.length + 1;
+    XLSX.utils.sheet_add_json(worksheet, exportData, { 
+      origin: `A${dataStartRow}`, 
+      skipHeader: false 
+    });
+
     XLSX.utils.book_append_sheet(workbook, worksheet, "Consolidated Data");
 
-    XLSX.writeFile(workbook, `consolidated_data_${new Date().toISOString().split('T')[0]}.xlsx`);
-    toast.success("Data exported to Excel successfully");
+    const fileName = `consolidated_data_${exportFilters.year}_${exportFilters.month}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    
+    toast.success(`Data exported successfully for ${exportFilters.month === "All" ? "all months" : exportFilters.month} ${exportFilters.year === "All" ? "all years" : exportFilters.year}`);
   };
 
   const handleImportData = async (importedData: any[]) => {
@@ -436,10 +527,67 @@ const ConsolidatedDashboardPage = () => {
             </TabsContent>
 
             <TabsContent value="data" className="mt-6">
+              {/* Export Controls */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">Export Settings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Export Year</label>
+                      <Select 
+                        value={exportFilters.year} 
+                        onValueChange={(value) => setExportFilters(prev => ({ ...prev, year: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="All">All Years</SelectItem>
+                          {Array.from(new Set(consolidatedData.map(d => d.year.toString()))).sort().map(year => (
+                            <SelectItem key={year} value={year}>{year}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Export Month</label>
+                      <Select 
+                        value={exportFilters.month} 
+                        onValueChange={(value) => setExportFilters(prev => ({ ...prev, month: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="All">All Months</SelectItem>
+                          {enumOptions.month.map(month => (
+                            <SelectItem key={month} value={month}>{month}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end">
+                      <Button onClick={exportToExcel} className="flex items-center gap-2 w-full">
+                        <Download size={16} />
+                        Export Excel
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {exportFilters.year === "All" && exportFilters.month === "All" 
+                      ? `Exporting all ${consolidatedData.length} records`
+                      : `Exporting filtered data for ${exportFilters.month === "All" ? "all months" : exportFilters.month} ${exportFilters.year === "All" ? "all years" : exportFilters.year}`
+                    }
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Filters Section */}
               <Card className="mb-6">
                 <CardHeader>
-                  <CardTitle className="text-lg">Filters & Actions</CardTitle>
+                  <CardTitle className="text-lg">Data Filters & Actions</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
@@ -491,10 +639,6 @@ const ConsolidatedDashboardPage = () => {
                     <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2">
                       <Plus size={16} />
                       Add Record
-                    </Button>
-                    <Button variant="outline" onClick={exportToExcel} className="flex items-center gap-2">
-                      <Download size={16} />
-                      Export Excel
                     </Button>
                     <Button 
                       variant="outline" 
