@@ -9,11 +9,39 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Edit, Trash2, Save, Users, Settings, Database } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Edit,
+  Trash2,
+  Save,
+  Users,
+  Settings,
+  Database,
+} from "lucide-react";
 import { pbClient } from "@/lib/pb-client";
 
 interface User {
@@ -27,31 +55,31 @@ interface User {
 
 const SettingsPage = () => {
   const navigate = useNavigate();
-   
+
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
-  
+
   const [userForm, setUserForm] = useState({
     email: "",
     name: "",
     password: "",
     confirmPassword: "",
-    role: "user"
+    role: "user",
   });
 
   const [profileForm, setProfileForm] = useState({
     name: "",
     email: "",
     newPassword: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
 
   // Check if current user is admin
-  const isAdmin = currentUser?.role === 'admin';
+  const isAdmin = currentUser?.is_admin;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -65,18 +93,18 @@ const SettingsPage = () => {
       try {
         const authData = pbClient.auth.getAuthData();
         setCurrentUser(authData?.record);
-        
+
         if (authData?.record) {
           setProfileForm({
             name: authData.record.name || "",
             email: authData.record.email || "",
             newPassword: "",
-            confirmPassword: ""
+            confirmPassword: "",
           });
         }
 
         // Only load users if current user is admin
-        if (authData?.record?.role === 'admin') {
+        if (authData?.record?.is_admin) {
           await loadUsers();
         }
       } catch (error) {
@@ -92,14 +120,14 @@ const SettingsPage = () => {
 
   const loadUsers = async () => {
     try {
-      const records = await pbClient.collection('users').getFullList();
-      const typedUsers: User[] = records.map(record => ({
+      const records = await pbClient.collection("users").getFullList();
+      const typedUsers: User[] = records.map((record) => ({
         id: record.id,
-        email: record.email || "",
-        name: record.name || "",
-        role: record.role || "user",
+        email: record.email,
+        name: record.name,
+        role: record.role,
         created: record.created,
-        updated: record.updated
+        updated: record.updated,
       }));
       setUsers(typedUsers);
     } catch (error) {
@@ -123,7 +151,7 @@ const SettingsPage = () => {
       console.log("Creating user with data:", {
         email: userForm.email,
         name: userForm.name,
-        role: userForm.role
+        role: userForm.role,
       });
 
       const userData = {
@@ -131,19 +159,26 @@ const SettingsPage = () => {
         name: userForm.name,
         password: userForm.password,
         passwordConfirm: userForm.confirmPassword,
-        role: userForm.role
+        role: userForm.role,
       };
 
-      const createdUser = await pbClient.collection('users').create(userData);
+      const createdUser = await pbClient.collection("users").create(userData);
       console.log("User created successfully:", createdUser);
 
       toast.success("User created successfully");
       setIsUserDialogOpen(false);
-      setUserForm({ email: "", name: "", password: "", confirmPassword: "", role: "user" });
+      setUserForm({
+        email: "",
+        name: "",
+        password: "",
+        confirmPassword: "",
+        role: "user",
+      });
       await loadUsers();
     } catch (error: any) {
       console.error("Error creating user:", error);
-      const errorMessage = error?.data?.message || error?.message || "Failed to create user";
+      const errorMessage =
+        error?.data?.message || error?.message || "Failed to create user";
       toast.error(errorMessage);
     }
   };
@@ -159,7 +194,7 @@ const SettingsPage = () => {
     const updateData: any = {
       email: userForm.email,
       name: userForm.name,
-      role: userForm.role
+      role: userForm.role,
     };
 
     if (userForm.password) {
@@ -173,17 +208,26 @@ const SettingsPage = () => {
 
     try {
       console.log("Updating user with data:", updateData);
-      const updatedUser = await pbClient.collection('users').update(editingUser.id, updateData);
+      const updatedUser = await pbClient
+        .collection("users")
+        .update(editingUser.id, updateData);
       console.log("User updated successfully:", updatedUser);
-      
+
       toast.success("User updated successfully");
       setIsUserDialogOpen(false);
       setEditingUser(null);
-      setUserForm({ email: "", name: "", password: "", confirmPassword: "", role: "user" });
+      setUserForm({
+        email: "",
+        name: "",
+        password: "",
+        confirmPassword: "",
+        role: "user",
+      });
       await loadUsers();
     } catch (error: any) {
       console.error("Error updating user:", error);
-      const errorMessage = error?.data?.message || error?.message || "Failed to update user";
+      const errorMessage =
+        error?.data?.message || error?.message || "Failed to update user";
       toast.error(errorMessage);
     }
   };
@@ -197,7 +241,7 @@ const SettingsPage = () => {
     if (!confirm("Are you sure you want to delete this user?")) return;
 
     try {
-      await pbClient.collection('users').delete(userId);
+      await pbClient.collection("users").delete(userId);
       toast.success("User deleted successfully");
       await loadUsers();
     } catch (error) {
@@ -207,7 +251,10 @@ const SettingsPage = () => {
   };
 
   const handleUpdateProfile = async () => {
-    if (profileForm.newPassword && profileForm.newPassword !== profileForm.confirmPassword) {
+    if (
+      profileForm.newPassword &&
+      profileForm.newPassword !== profileForm.confirmPassword
+    ) {
       toast.error("New passwords do not match");
       return;
     }
@@ -220,7 +267,7 @@ const SettingsPage = () => {
     try {
       const updateData: any = {
         name: profileForm.name,
-        email: profileForm.email
+        email: profileForm.email,
       };
 
       if (profileForm.newPassword) {
@@ -229,28 +276,31 @@ const SettingsPage = () => {
       }
 
       console.log("Updating profile with data:", updateData);
-      const updatedUser = await pbClient.collection('users').update(currentUser.id, updateData);
+      const updatedUser = await pbClient
+        .collection("users")
+        .update(currentUser.id, updateData);
       console.log("Profile updated successfully:", updatedUser);
-      
+
       toast.success("Profile updated successfully");
       setIsProfileDialogOpen(false);
-      
+
       // Refresh auth data
       const authData = pbClient.auth.getAuthData();
       setCurrentUser(authData?.record);
-      
+
       // Update profile form with new data
       if (authData?.record) {
         setProfileForm({
           name: authData.record.name || "",
           email: authData.record.email || "",
           newPassword: "",
-          confirmPassword: ""
+          confirmPassword: "",
         });
       }
     } catch (error: any) {
       console.error("Error updating profile:", error);
-      const errorMessage = error?.data?.message || error?.message || "Failed to update profile";
+      const errorMessage =
+        error?.data?.message || error?.message || "Failed to update profile";
       toast.error(errorMessage);
     }
   };
@@ -262,7 +312,7 @@ const SettingsPage = () => {
       name: user.name,
       password: "",
       confirmPassword: "",
-      role: user.role
+      role: user.role,
     });
     setIsUserDialogOpen(true);
   };
@@ -270,14 +320,16 @@ const SettingsPage = () => {
   const setSpecificUserAsAdmin = async () => {
     try {
       // Find the user with email saguilayan.keshiadawn21@gmail.com
-      const users = await pbClient.collection('users').getFullList({
-        filter: 'email = "saguilayan.keshiadawn21@gmail.com"'
+      const users = await pbClient.collection("users").getFullList({
+        filter: 'email = "saguilayan.keshiadawn21@gmail.com"',
       });
-      
+
       if (users.length > 0) {
         const user = users[0];
-        await pbClient.collection('users').update(user.id, { role: 'admin' });
-        toast.success("User saguilayan.keshiadawn21@gmail.com has been set as admin");
+        await pbClient.collection("users").update(user.id, { role: "admin" });
+        toast.success(
+          "User saguilayan.keshiadawn21@gmail.com has been set as admin",
+        );
         if (isAdmin) {
           await loadUsers();
         }
@@ -312,8 +364,8 @@ const SettingsPage = () => {
       <main className="flex-1 py-12">
         <div className="container px-4 md:px-6">
           <div className="mb-6">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => navigate("/dashboard")}
               className="mb-4"
             >
@@ -337,16 +389,24 @@ const SettingsPage = () => {
                 <div className="space-y-4">
                   <div>
                     <Label>Name</Label>
-                    <p className="text-sm text-muted-foreground">{currentUser?.name || "N/A"}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {currentUser?.name || "N/A"}
+                    </p>
                   </div>
                   <div>
                     <Label>Email</Label>
-                    <p className="text-sm text-muted-foreground">{currentUser?.email || "N/A"}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {currentUser?.email || "N/A"}
+                    </p>
                   </div>
                   <div>
                     <Label>Role</Label>
-                    <Badge variant={currentUser?.role === 'admin' ? 'default' : 'secondary'}>
-                      {currentUser?.role === 'admin' ? 'Admin' : 'User'}
+                    <Badge
+                      variant={
+                        currentUser?.role === "admin" ? "default" : "secondary"
+                      }
+                    >
+                      {currentUser?.role === "admin" ? "Admin" : "User"}
                     </Badge>
                   </div>
                   <Button onClick={() => setIsProfileDialogOpen(true)}>
@@ -366,9 +426,6 @@ const SettingsPage = () => {
                     User Management
                   </CardTitle>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={setSpecificUserAsAdmin}>
-                      Set Keshia as Admin
-                    </Button>
                     <Button onClick={() => setIsUserDialogOpen(true)}>
                       <Plus className="mr-2 h-4 w-4" />
                       Add User
@@ -392,20 +449,30 @@ const SettingsPage = () => {
                           <TableCell>{user.name || "N/A"}</TableCell>
                           <TableCell>{user.email || "N/A"}</TableCell>
                           <TableCell>
-                            <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                              {user.role === 'admin' ? 'Admin' : 'User'}
+                            <Badge
+                              variant={
+                                user.role === "admin" ? "default" : "secondary"
+                              }
+                            >
+                              {user.role === "admin" ? "Admin" : "User"}
                             </Badge>
                           </TableCell>
-                          <TableCell>{new Date(user.created).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            {new Date(user.created).toLocaleDateString()}
+                          </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              <Button size="sm" variant="outline" onClick={() => openEditDialog(user)}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEditDialog(user)}
+                              >
                                 <Edit className="h-3 w-3" />
                               </Button>
                               {user.id !== currentUser?.id && (
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
+                                <Button
+                                  size="sm"
+                                  variant="outline"
                                   onClick={() => handleDeleteUser(user.id)}
                                 >
                                   <Trash2 className="h-3 w-3" />
@@ -434,13 +501,15 @@ const SettingsPage = () => {
                   <div>
                     <h4 className="font-semibold text-green-600">Admin Role</h4>
                     <p className="text-sm text-muted-foreground">
-                      Full access to all features including data management (CRUD operations) and user management
+                      Full access to all features including data management
+                      (CRUD operations) and user management
                     </p>
                   </div>
                   <div>
                     <h4 className="font-semibold text-blue-600">User Role</h4>
                     <p className="text-sm text-muted-foreground">
-                      Access to data operations (Create, Read, Update, Delete) but cannot manage users
+                      Access to data operations (Create, Read, Update, Delete)
+                      but cannot manage users
                     </p>
                   </div>
                 </div>
@@ -456,7 +525,9 @@ const SettingsPage = () => {
         <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingUser ? 'Edit User' : 'Create New User'}</DialogTitle>
+              <DialogTitle>
+                {editingUser ? "Edit User" : "Create New User"}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -464,7 +535,9 @@ const SettingsPage = () => {
                 <Input
                   id="name"
                   value={userForm.name}
-                  onChange={(e) => setUserForm({...userForm, name: e.target.value})}
+                  onChange={(e) =>
+                    setUserForm({ ...userForm, name: e.target.value })
+                  }
                   placeholder="Enter full name"
                 />
               </div>
@@ -474,30 +547,47 @@ const SettingsPage = () => {
                   id="email"
                   type="email"
                   value={userForm.email}
-                  onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+                  onChange={(e) =>
+                    setUserForm({ ...userForm, email: e.target.value })
+                  }
                   placeholder="Enter email address"
                 />
               </div>
               <div>
                 <Label htmlFor="role">Role</Label>
-                <Select value={userForm.role} onValueChange={(value) => setUserForm({...userForm, role: value})}>
+                <Select
+                  value={userForm.role}
+                  onValueChange={(value) =>
+                    setUserForm({ ...userForm, role: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="user">User (CRUD access only)</SelectItem>
+                    <SelectItem value="user">
+                      User (CRUD access only)
+                    </SelectItem>
                     <SelectItem value="admin">Admin (Full access)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="password">{editingUser ? 'New Password (optional)' : 'Password *'}</Label>
+                <Label htmlFor="password">
+                  {editingUser ? "New Password (optional)" : "Password *"}
+                </Label>
                 <Input
                   id="password"
                   type="password"
                   value={userForm.password}
-                  onChange={(e) => setUserForm({...userForm, password: e.target.value})}
-                  placeholder={editingUser ? "Leave blank to keep current password" : "Enter password"}
+                  onChange={(e) =>
+                    setUserForm({ ...userForm, password: e.target.value })
+                  }
+                  placeholder={
+                    editingUser
+                      ? "Leave blank to keep current password"
+                      : "Enter password"
+                  }
                 />
               </div>
               <div>
@@ -506,18 +596,28 @@ const SettingsPage = () => {
                   id="confirmPassword"
                   type="password"
                   value={userForm.confirmPassword}
-                  onChange={(e) => setUserForm({...userForm, confirmPassword: e.target.value})}
+                  onChange={(e) =>
+                    setUserForm({
+                      ...userForm,
+                      confirmPassword: e.target.value,
+                    })
+                  }
                   placeholder="Confirm password"
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsUserDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsUserDialogOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button onClick={editingUser ? handleUpdateUser : handleCreateUser}>
+              <Button
+                onClick={editingUser ? handleUpdateUser : handleCreateUser}
+              >
                 <Save className="mr-2 h-4 w-4" />
-                {editingUser ? 'Update' : 'Create'}
+                {editingUser ? "Update" : "Create"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -536,7 +636,9 @@ const SettingsPage = () => {
               <Input
                 id="profileName"
                 value={profileForm.name}
-                onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
+                onChange={(e) =>
+                  setProfileForm({ ...profileForm, name: e.target.value })
+                }
                 placeholder="Enter your full name"
               />
             </div>
@@ -546,7 +648,9 @@ const SettingsPage = () => {
                 id="profileEmail"
                 type="email"
                 value={profileForm.email}
-                onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                onChange={(e) =>
+                  setProfileForm({ ...profileForm, email: e.target.value })
+                }
                 placeholder="Enter your email address"
               />
             </div>
@@ -556,7 +660,12 @@ const SettingsPage = () => {
                 id="newPassword"
                 type="password"
                 value={profileForm.newPassword}
-                onChange={(e) => setProfileForm({...profileForm, newPassword: e.target.value})}
+                onChange={(e) =>
+                  setProfileForm({
+                    ...profileForm,
+                    newPassword: e.target.value,
+                  })
+                }
                 placeholder="Leave blank to keep current password"
               />
             </div>
@@ -566,13 +675,21 @@ const SettingsPage = () => {
                 id="confirmNewPassword"
                 type="password"
                 value={profileForm.confirmPassword}
-                onChange={(e) => setProfileForm({...profileForm, confirmPassword: e.target.value})}
+                onChange={(e) =>
+                  setProfileForm({
+                    ...profileForm,
+                    confirmPassword: e.target.value,
+                  })
+                }
                 placeholder="Confirm new password"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsProfileDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsProfileDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button onClick={handleUpdateProfile}>
