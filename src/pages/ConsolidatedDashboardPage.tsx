@@ -41,6 +41,12 @@ interface ConsolidatedData {
   updated: string;
 }
 
+// Define months array locally since it's not in enumOptions
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
 const ConsolidatedDashboardPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [consolidatedData, setConsolidatedData] = useState<ConsolidatedData[]>([]);
@@ -562,7 +568,7 @@ const ConsolidatedDashboardPage = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="All">All Months</SelectItem>
-                          {enumOptions.month.map(month => (
+                          {months.map(month => (
                             <SelectItem key={month} value={month}>{month}</SelectItem>
                           ))}
                         </SelectContent>
