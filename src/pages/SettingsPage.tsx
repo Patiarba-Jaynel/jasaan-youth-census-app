@@ -48,7 +48,7 @@ interface User {
   id: string;
   email: string;
   name: string;
-  role: string;
+  is_admin: boolean;
   created: string;
   updated: string;
 }
@@ -68,7 +68,8 @@ const SettingsPage = () => {
     name: "",
     password: "",
     confirmPassword: "",
-    role: "user",
+    emailVisibility: true,
+    is_admin: false,
   });
 
   const [profileForm, setProfileForm] = useState({
@@ -125,7 +126,7 @@ const SettingsPage = () => {
         id: record.id,
         email: record.email,
         name: record.name,
-        role: record.role,
+        is_admin: record.is_admin,
         created: record.created,
         updated: record.updated,
       }));
@@ -151,7 +152,7 @@ const SettingsPage = () => {
       console.log("Creating user with data:", {
         email: userForm.email,
         name: userForm.name,
-        role: userForm.role,
+        is_admin: userForm.is_admin,
       });
 
       const userData = {
@@ -159,7 +160,7 @@ const SettingsPage = () => {
         name: userForm.name,
         password: userForm.password,
         passwordConfirm: userForm.confirmPassword,
-        role: userForm.role,
+        is_admin: userForm.is_admin,
       };
 
       const createdUser = await pbClient.collection("users").create(userData);
@@ -172,7 +173,8 @@ const SettingsPage = () => {
         name: "",
         password: "",
         confirmPassword: "",
-        role: "user",
+        emailVisibility: true,
+        is_admin: false,
       });
       await loadUsers();
     } catch (error: any) {
@@ -194,7 +196,7 @@ const SettingsPage = () => {
     const updateData: any = {
       email: userForm.email,
       name: userForm.name,
-      role: userForm.role,
+      is_admin: userForm.is_admin,
     };
 
     if (userForm.password) {
@@ -221,7 +223,8 @@ const SettingsPage = () => {
         name: "",
         password: "",
         confirmPassword: "",
-        role: "user",
+        emailVisibility: true,
+        is_admin: false,
       });
       await loadUsers();
     } catch (error: any) {
@@ -312,7 +315,8 @@ const SettingsPage = () => {
       name: user.name,
       password: "",
       confirmPassword: "",
-      role: user.role,
+      emailVisibility: true,
+      is_admin: user.is_admin,
     });
     setIsUserDialogOpen(true);
   };
@@ -403,10 +407,10 @@ const SettingsPage = () => {
                     <Label>Role</Label>
                     <Badge
                       variant={
-                        currentUser?.role === "admin" ? "default" : "secondary"
+                        currentUser?.is_admin === true ? "default" : "secondary"
                       }
                     >
-                      {currentUser?.role === "admin" ? "Admin" : "User"}
+                      {currentUser?.is_admin === true ? "Admin" : "User"}
                     </Badge>
                   </div>
                   <Button onClick={() => setIsProfileDialogOpen(true)}>
@@ -451,10 +455,10 @@ const SettingsPage = () => {
                           <TableCell>
                             <Badge
                               variant={
-                                user.role === "admin" ? "default" : "secondary"
+                                user.is_admin == true ? "default" : "secondary"
                               }
                             >
-                              {user.role === "admin" ? "Admin" : "User"}
+                              {user.is_admin == true ? "Admin" : "User"}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -556,16 +560,19 @@ const SettingsPage = () => {
               <div>
                 <Label htmlFor="role">Role</Label>
                 <Select
-                  value={userForm.role}
+                  value={userForm.is_admin ? "admin" : "user"}
                   onValueChange={(value) =>
-                    setUserForm({ ...userForm, role: value })
+                    setUserForm({
+                      ...userForm,
+                      is_admin: value === "admin" ? true : false,
+                    })
                   }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="user">
+                    <SelectItem value={"user"}>
                       User (CRUD access only)
                     </SelectItem>
                     <SelectItem value="admin">Admin (Full access)</SelectItem>
