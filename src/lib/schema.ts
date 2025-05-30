@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 
 export const formSchema = z.object({
@@ -44,13 +45,31 @@ export const formSchema = z.object({
 
 export type FormValues = z.infer<typeof formSchema>;
 
-// Helper function to get enum values from schema
+// Helper function to get enum values from schema - now handles optional enums
 export const getSchemaEnumValues = (field: keyof FormValues): string[] => {
   const fieldSchema = formSchema.shape[field];
   if (fieldSchema instanceof z.ZodEnum) {
     return fieldSchema.options;
   }
+  // Handle optional enums
+  if (fieldSchema instanceof z.ZodOptional && fieldSchema._def.innerType instanceof z.ZodEnum) {
+    return fieldSchema._def.innerType.options;
+  }
   return [];
+};
+
+// Export individual enum options for easier access
+export const enumOptions = {
+  sex: ["MALE", "FEMALE"] as const,
+  civil_status: ["SINGLE", "MARRIED", "LIVED-IN", "WIDOWED"] as const,
+  youth_classification: ["ISY", "OSY", "WY", "YSN"] as const,
+  youth_age_group: ["CORE YOUTH (18-24)", "CHILD YOUTH (15-17)", "YOUNG ADULT (25-30)"] as const,
+  highest_education: ["Elementary", "High School", "College Undergraduate", "College Graduate", "Masters Degree", "College Level", "Doctorate Degree", "Vocational", "Other"] as const,
+  work_status: ["Employed", "Unemployed", "Student", "Self-Employed"] as const,
+  registered_voter: ["Yes", "No"] as const,
+  voted_last_election: ["Yes", "No"] as const,
+  attended_kk_assembly: ["Yes", "No"] as const,
+  barangay: ["Aplaya", "Bobontugan", "Corrales", "Danao", "Jampason", "Kimaya", "Lower Jasaan (Pob.)", "Luz Banzon", "Natubo", "San Antonio", "San Isidro", "San Nicolas", "Upper Jasaan (Pob.)", "I. S. Cruz"] as const,
 };
 
 // Generate template data for CSV/Excel export

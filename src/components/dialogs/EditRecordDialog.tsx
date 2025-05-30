@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -7,7 +6,7 @@ import { z } from "zod";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { YouthRecord } from "@/lib/pb-client";
-import { formSchema } from "@/lib/schema";
+import { enumOptions } from "@/lib/schema";
 import {
   Dialog,
   DialogContent,
@@ -259,7 +258,7 @@ export function EditRecordDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {formSchema.shape.sex.options.map((option) => (
+                            {enumOptions.sex.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -284,7 +283,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {formSchema.shape.civil_status.options.map((option) => (
+                            {enumOptions.civil_status.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -399,7 +398,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {formSchema.shape.youth_classification.options.map((option) => (
+                            {enumOptions.youth_classification.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -424,7 +423,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {formSchema.shape.youth_age_group.options.map((option) => (
+                            {enumOptions.youth_age_group.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -456,7 +455,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {formSchema.shape.highest_education.options.map((option) => (
+                            {enumOptions.highest_education.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -481,7 +480,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {formSchema.shape.work_status.options.map((option) => (
+                            {enumOptions.work_status.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -546,7 +545,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {formSchema.shape.registered_voter.options.map((option) => (
+                            {enumOptions.registered_voter.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -571,7 +570,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {formSchema.shape.voted_last_election.options.map((option) => (
+                            {enumOptions.voted_last_election.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -604,7 +603,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {formSchema.shape.attended_kk_assembly.options.map((option) => (
+                            {enumOptions.attended_kk_assembly.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>

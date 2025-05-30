@@ -13,7 +13,7 @@ import { BatchEditDialog } from "@/components/dialogs/BatchEditDialog";
 import { DataProblemsDialog } from "@/components/dialogs/DataProblemsDialog";
 import { Button } from "@/components/ui/button";
 import { Search, Replace, AlertTriangle } from "lucide-react";
-import { formSchema } from "@/lib/schema";
+import { enumOptions } from "@/lib/schema";
 import { validateAgeConsistency, validateDropdownValue, validateRequiredFields } from "@/lib/validation";
 
 interface DataTableProps {
@@ -189,15 +189,15 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
 
     // Get valid options from schema with proper typing
     const validOptions: Record<string, readonly string[]> = {
-      sex: formSchema.shape.sex.options,
-      civil_status: formSchema.shape.civil_status.options,
-      youth_classification: formSchema.shape.youth_classification.options,
-      youth_age_group: formSchema.shape.youth_age_group.options,
-      highest_education: formSchema.shape.highest_education.options,
-      work_status: formSchema.shape.work_status.options,
-      registered_voter: formSchema.shape.registered_voter.options,
-      voted_last_election: formSchema.shape.voted_last_election.options,
-      attended_kk_assembly: formSchema.shape.attended_kk_assembly.options,
+      sex: enumOptions.sex,
+      civil_status: enumOptions.civil_status,
+      youth_classification: enumOptions.youth_classification,
+      youth_age_group: enumOptions.youth_age_group,
+      highest_education: enumOptions.highest_education,
+      work_status: enumOptions.work_status,
+      registered_voter: enumOptions.registered_voter,
+      voted_last_election: enumOptions.voted_last_election,
+      attended_kk_assembly: enumOptions.attended_kk_assembly,
     };
 
     // Check for duplicates (excluding N/A values)

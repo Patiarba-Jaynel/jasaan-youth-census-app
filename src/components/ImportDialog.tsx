@@ -1,10 +1,9 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { z } from 'zod';
-import { formSchema as YouthSchema } from '@/lib/schema';
+import { formSchema as YouthSchema, enumOptions } from '@/lib/schema';
 import { standardizeRecordFields } from '@/lib/standardize';
 import { validateAgeConsistency, validateDropdownValue } from '@/lib/validation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -122,15 +121,15 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
 
     // Enhanced dropdown validation for fixed answer fields
     const validOptions: Record<string, readonly string[]> = {
-      sex: YouthSchema.shape.sex.options,
-      civil_status: YouthSchema.shape.civil_status.options,
-      youth_classification: YouthSchema.shape.youth_classification.options,
-      youth_age_group: YouthSchema.shape.youth_age_group.options,
-      highest_education: YouthSchema.shape.highest_education.options,
-      work_status: YouthSchema.shape.work_status.options,
-      registered_voter: YouthSchema.shape.registered_voter.options,
-      voted_last_election: YouthSchema.shape.voted_last_election.options,
-      attended_kk_assembly: YouthSchema.shape.attended_kk_assembly.options,
+      sex: enumOptions.sex,
+      civil_status: enumOptions.civil_status,
+      youth_classification: enumOptions.youth_classification,
+      youth_age_group: enumOptions.youth_age_group,
+      highest_education: enumOptions.highest_education,
+      work_status: enumOptions.work_status,
+      registered_voter: enumOptions.registered_voter,
+      voted_last_election: enumOptions.voted_last_election,
+      attended_kk_assembly: enumOptions.attended_kk_assembly,
     };
 
     Object.entries(validOptions).forEach(([field, options]) => {

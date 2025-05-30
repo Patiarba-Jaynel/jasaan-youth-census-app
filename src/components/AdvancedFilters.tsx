@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Filter } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { formSchema } from "@/lib/schema";
+import { enumOptions } from "@/lib/schema";
 
 interface AdvancedFiltersProps {
   selectedFilters: {
@@ -42,14 +42,14 @@ export function AdvancedFilters({
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
 
-  const sexOptions = formSchema.shape.sex.options;
-  const votedOptions = formSchema.shape.voted_last_election.options;
-  const assemblyOptions = formSchema.shape.attended_kk_assembly.options;
-  const educationOptions = formSchema.shape.highest_education.options;
-  const classificationOptions = formSchema.shape.youth_classification.options;
-  const workStatusOptions = formSchema.shape.work_status.options;
-  const civilStatusOptions = formSchema.shape.civil_status.options;
-  const registeredVoterOptions = formSchema.shape.registered_voter.options;
+  const sexOptions = enumOptions.sex;
+  const votedOptions = enumOptions.voted_last_election;
+  const assemblyOptions = enumOptions.attended_kk_assembly;
+  const educationOptions = enumOptions.highest_education;
+  const classificationOptions = enumOptions.youth_classification;
+  const workStatusOptions = enumOptions.work_status;
+  const civilStatusOptions = enumOptions.civil_status;
+  const registeredVoterOptions = enumOptions.registered_voter;
 
   const barangayOptions = [
     "Aplaya", "Bobontugan", "Corrales", "I.S. Cruz", "Danao", "Jampason", "Kimaya",
