@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -208,14 +207,14 @@ export function EditRecordDialog({
                         <FormLabel>Birthday *</FormLabel>
                         <FormControl>
                           <Input
-                            type="datetime-local"
-                            value={field.value ? field.value.toISOString().slice(0, 16) : ''}
+                            type="date"
+                            value={field.value ? field.value.toISOString().slice(0, 10) : ''}
                             onChange={(e) => {
                               const dateValue = e.target.value ? new Date(e.target.value) : null;
                               field.onChange(dateValue);
                             }}
-                            max={new Date().toISOString().slice(0, 16)}
-                            min="1980-01-01T00:00"
+                            max={new Date().toISOString().slice(0, 10)}
+                            min="1980-01-01"
                           />
                         </FormControl>
                         <FormMessage />

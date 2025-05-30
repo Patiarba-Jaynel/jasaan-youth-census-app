@@ -1,4 +1,3 @@
-
 export function toTitleCase(str: string): string {
   if (!str) return str;
   return str
@@ -12,15 +11,12 @@ export function formatBirthday(input: string): string {
   const date = new Date(input);
   if (isNaN(date.getTime())) return input;
   
-  // Format as YYYY-MM-DD HH:mm:ss (24-hour format with time)
+  // Format as YYYY-MM-DD 00:00:00 (always set time to midnight)
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
   
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  return `${year}-${month}-${day} 00:00:00`;
 }
 
 // Normalize sex values to proper format
