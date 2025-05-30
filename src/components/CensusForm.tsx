@@ -114,7 +114,7 @@ export function CensusForm() {
         city_municipality: data.city_municipality,
         barangay: data.barangay,
         name: data.name,
-        age: calculatedAge, // Use calculated age instead of form input
+        age: calculatedAge.toString(), // Convert number to string
         birthday: data.birthday,
         sex: data.sex,
         civil_status: data.civil_status,
