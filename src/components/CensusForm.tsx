@@ -58,8 +58,8 @@ export function CensusForm() {
         return;
       }
       
-      // Validate age consistency only if youth_age_group is provided
-      if (data.youth_age_group && data.youth_age_group !== "N/A") {
+      // Validate age consistency only if youth_age_group is provided and not N/A
+      if (data.youth_age_group && !['N/A', '', undefined].includes(data.youth_age_group as any)) {
         const ageValidation = validateAgeConsistency(
           Number(data.age), 
           data.birthday.toISOString().split('T')[0], 
