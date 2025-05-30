@@ -77,10 +77,9 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
               <FormControl>
                 <Input
                   type="date"
-                  {...field}
                   value={field.value ? field.value.toISOString().split('T')[0] : ''}
                   onChange={(e) => {
-                    const dateValue = e.target.value ? new Date(e.target.value) : undefined;
+                    const dateValue = e.target.value ? new Date(e.target.value) : null;
                     field.onChange(dateValue);
                   }}
                   max={new Date().toISOString().split('T')[0]}
@@ -102,7 +101,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
               <FormControl>
                 <RadioGroup
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  value={field.value}
                   className="flex flex-col space-y-1"
                 >
                   <FormItem className="flex items-center space-x-3 space-y-0">
@@ -131,7 +130,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Civil Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
@@ -156,7 +155,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Youth Classification</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select classification" />
@@ -183,7 +182,7 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Youth Age Group</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select age group" />
