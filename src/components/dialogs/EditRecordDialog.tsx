@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -39,11 +40,10 @@ interface EditRecordDialogProps {
   onSave: (data: any) => void;
 }
 
-// Updated schema to allow N/A or blank for non-critical fields
+// Updated schema to remove age field since it's calculated from birthday
 const editFormSchema = z.object({
   // Critical fields - required for identification
   name: z.string().min(1, "Name is required for identification"),
-  age: z.string().min(1, "Age is required"),
   birthday: z.date({
     required_error: "Birthday is required",
   }),
@@ -82,7 +82,6 @@ export function EditRecordDialog({
     resolver: zodResolver(editFormSchema),
     defaultValues: {
       name: "",
-      age: "",
       birthday: new Date(),
       sex: "MALE",
       civil_status: "N/A",
@@ -108,7 +107,6 @@ export function EditRecordDialog({
     if (selectedRecord) {
       form.reset({
         name: selectedRecord.name || "",
-        age: selectedRecord.age || "",
         birthday: selectedRecord.birthday ? new Date(selectedRecord.birthday) : new Date(),
         sex: (selectedRecord.sex as any) || "MALE",
         civil_status: selectedRecord.civil_status || "N/A",
@@ -135,7 +133,7 @@ export function EditRecordDialog({
     console.log("Form data being submitted:", data);
     
     // Check for critical missing fields and suggest deletion if necessary
-    const criticalFields = ['name', 'age', 'barangay'];
+    const criticalFields = ['name', 'barangay'];
     const missingCritical = criticalFields.filter(field => {
       const value = data[field as keyof EditFormValues];
       return !value || value === 'N/A' || (typeof value === 'string' && value.trim() === '');
@@ -188,23 +186,10 @@ export function EditRecordDialog({
                   />
                   <FormField
                     control={form.control}
-                    name="age"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Age *</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
                     name="birthday"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Birthday *</FormLabel>
+                        <FormLabel>Date of Birth *</FormLabel>
                         <FormControl>
                           <Input
                             type="date"
