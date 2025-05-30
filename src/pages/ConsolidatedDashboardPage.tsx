@@ -24,7 +24,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConsolidatedAnalytics } from "@/components/ConsolidatedAnalytics";
 import { ConsolidatedDataForm } from "@/components/ConsolidatedDataForm";
+import { ConsolidatedImportDialog } from "@/components/ConsolidatedImportDialog";
 import * as XLSX from 'xlsx';
+import { enumOptions } from "@/lib/schema";
 
 interface ConsolidatedData {
   id: string;
@@ -51,6 +53,7 @@ const ConsolidatedDashboardPage = () => {
   });
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<ConsolidatedData | null>(null);
   const navigate = useNavigate();
 
@@ -184,18 +187,112 @@ const ConsolidatedDashboardPage = () => {
     }
   };
 
-  const exportToExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(filteredData.map(record => ({
-      Barangay: record.barangay,
-      'Age Bracket': record.age_bracket,
-      Gender: record.gender,
-      Year: record.year,
-      Month: record.month,
-      Count: record.count,
-      Created: new Date(record.created).toLocaleDateString(),
-      Updated: new Date(record.updated).toLocaleDateString()
-    })));
+  const downloadTemplate = () => {
+    // Create template with proper format matching the image
+    const template = [{
+      BARANGAY: "APLAYA",
+      "UNDER 1 M": 0,
+      "UNDER 1 F": 0,
+      "UNDER 1 TOTAL": 0,
+      "1-4 M": 0,
+      "1-4 F": 0,
+      "1-4 TOTAL": 0,
+      "5-9 M": 0,
+      "5-9 F": 0,
+      "5-9 TOTAL": 0,
+      "10-14 M": 0,
+      "10-14 F": 0,
+      "10-14 TOTAL": 0,
+      "15-19 M": 0,
+      "15-19 F": 0,
+      "15-19 TOTAL": 0,
+      "20-24 M": 0,
+      "20-24 F": 0,
+      "20-24 TOTAL": 0,
+      "25-29 M": 0,
+      "25-29 F": 0,
+      "25-29 TOTAL": 0,
+      "TOTAL M": 0,
+      "TOTAL F": 0,
+      "TOTAL": 0
+    }];
 
+    const worksheet = XLSX.utils.json_to_sheet(template);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Consolidated Data Template");
+
+    XLSX.writeFile(workbook, "consolidated_data_template.xlsx");
+    toast.success("Template downloaded successfully");
+  };
+
+  const exportToExcel = () => {
+    // Transform data to match the format in the image
+    const barangayData = new Map();
+    
+    // Initialize all barangays with zero counts
+    enumOptions.barangay.forEach(barangay => {
+      barangayData.set(barangay, {
+        BARANGAY: barangay,
+        "UNDER 1 M": 0,
+        "UNDER 1 F": 0,
+        "1-4 M": 0,
+        "1-4 F": 0,
+        "5-9 M": 0,
+        "5-9 F": 0,
+        "10-14 M": 0,
+        "10-14 F": 0,
+        "15-19 M": 0,
+        "15-19 F": 0,
+        "20-24 M": 0,
+        "20-24 F": 0,
+        "25-29 M": 0,
+        "25-29 F": 0,
+      });
+    });
+
+    // Populate data from consolidatedData
+    filteredData.forEach(record => {
+      const barangayRow = barangayData.get(record.barangay);
+      if (barangayRow) {
+        const genderSuffix = record.gender === "Male" ? " M" : " F";
+        const ageKey = record.age_bracket + genderSuffix;
+        if (barangayRow[ageKey] !== undefined) {
+          barangayRow[ageKey] += record.count;
+        }
+      }
+    });
+
+    // Calculate totals for each row
+    const exportData = Array.from(barangayData.values()).map(row => {
+      const under1Total = row["UNDER 1 M"] + row["UNDER 1 F"];
+      const age1to4Total = row["1-4 M"] + row["1-4 F"];
+      const age5to9Total = row["5-9 M"] + row["5-9 F"];
+      const age10to14Total = row["10-14 M"] + row["10-14 F"];
+      const age15to19Total = row["15-19 M"] + row["15-19 F"];
+      const age20to24Total = row["20-24 M"] + row["20-24 F"];
+      const age25to29Total = row["25-29 M"] + row["25-29 F"];
+      
+      const totalM = row["UNDER 1 M"] + row["1-4 M"] + row["5-9 M"] + row["10-14 M"] + 
+                     row["15-19 M"] + row["20-24 M"] + row["25-29 M"];
+      const totalF = row["UNDER 1 F"] + row["1-4 F"] + row["5-9 F"] + row["10-14 F"] + 
+                     row["15-19 F"] + row["20-24 F"] + row["25-29 F"];
+
+      return {
+        ...row,
+        "UNDER 1 TOTAL": under1Total,
+        "1-4 TOTAL": age1to4Total,
+        "5-9 TOTAL": age5to9Total,
+        "10-14 TOTAL": age10to14Total,
+        "15-19 TOTAL": age15to19Total,
+        "20-24 TOTAL": age20to24Total,
+        "25-29 TOTAL": age25to29Total,
+        "TOTAL M": totalM,
+        "TOTAL F": totalF,
+        "TOTAL": totalM + totalF
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Consolidated Data");
 
@@ -203,51 +300,59 @@ const ConsolidatedDashboardPage = () => {
     toast.success("Data exported to Excel successfully");
   };
 
-  const handleImportExcel = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleImportData = async (importedData: any[]) => {
+    try {
+      console.log("Processing imported data:", importedData);
+      let totalRecordsAdded = 0;
+      
+      for (const row of importedData) {
+        // Process each age group and gender combination
+        const ageGroups = ["UNDER 1", "1-4", "5-9", "10-14", "15-19", "20-24", "25-29"];
+        
+        for (const ageGroup of ageGroups) {
+          const maleKey = `${ageGroup} M`;
+          const femaleKey = `${ageGroup} F`;
+          
+          const maleCount = parseInt(row[maleKey]) || 0;
+          const femaleCount = parseInt(row[femaleKey]) || 0;
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        console.log('Imported data:', jsonData);
-        toast.info(`Imported ${jsonData.length} records. Processing...`);
-
-        // Process and validate the imported data
-        // This is a basic implementation - you might want to add more validation
-        for (const row of jsonData as any[]) {
-          if (row.Barangay && row['Age Bracket'] && row.Gender && row.Count) {
+          // Create records for male count if > 0
+          if (maleCount > 0) {
             await pbClient.consolidated.create({
-              barangay: row.Barangay,
-              age_bracket: row['Age Bracket'],
-              gender: row.Gender,
-              year: row.Year || new Date().getFullYear(),
-              month: row.Month || 'January',
-              count: parseInt(row.Count) || 0
+              barangay: row.BARANGAY,
+              age_bracket: ageGroup,
+              gender: "Male",
+              year: new Date().getFullYear(),
+              month: "January",
+              count: maleCount
             });
+            totalRecordsAdded++;
+          }
+
+          // Create records for female count if > 0
+          if (femaleCount > 0) {
+            await pbClient.consolidated.create({
+              barangay: row.BARANGAY,
+              age_bracket: ageGroup,
+              gender: "Female",
+              year: new Date().getFullYear(),
+              month: "January",
+              count: femaleCount
+            });
+            totalRecordsAdded++;
           }
         }
-
-        // Refresh data
-        const records = await pbClient.consolidated.getAll();
-        setConsolidatedData(records);
-        setFilteredData(records);
-        toast.success("Data imported successfully");
-      } catch (error) {
-        console.error("Error importing data:", error);
-        toast.error("Failed to import data");
       }
-    };
-    reader.readAsArrayBuffer(file);
-    
-    // Reset input
-    event.target.value = '';
+
+      // Refresh data
+      const records = await pbClient.consolidated.getAll();
+      setConsolidatedData(records);
+      setFilteredData(records);
+      toast.success(`Successfully imported ${totalRecordsAdded} records from ${importedData.length} barangays`);
+    } catch (error) {
+      console.error("Error importing data:", error);
+      toast.error(`Failed to import data: ${error.message}`);
+    }
   };
 
   if (isLoading) {
@@ -391,18 +496,13 @@ const ConsolidatedDashboardPage = () => {
                       <Download size={16} />
                       Export Excel
                     </Button>
-                    <Button variant="outline" className="flex items-center gap-2" asChild>
-                      <label htmlFor="excel-import">
-                        <Upload size={16} />
-                        Import Excel
-                        <input
-                          id="excel-import"
-                          type="file"
-                          accept=".xlsx,.xls"
-                          onChange={handleImportExcel}
-                          className="hidden"
-                        />
-                      </label>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsImportDialogOpen(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Upload size={16} />
+                      Import Excel
                     </Button>
                   </div>
                 </CardContent>
@@ -529,6 +629,13 @@ const ConsolidatedDashboardPage = () => {
               )}
             </DialogContent>
           </Dialog>
+
+          {/* Import Dialog */}
+          <ConsolidatedImportDialog
+            open={isImportDialogOpen}
+            onClose={() => setIsImportDialogOpen(false)}
+            onImport={handleImportData}
+          />
         </div>
       </main>
       <Footer />
