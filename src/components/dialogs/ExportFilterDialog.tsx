@@ -1,6 +1,6 @@
 
 import React from "react";
-import { formSchema } from "@/lib/schema";
+import { enumOptions } from "@/lib/schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -47,15 +47,15 @@ export function ExportFilterDialog({
     "Lower Jasaan (Pob.)", "Luz Banzon", "Natubo", "San Antonio", 
     "San Isidro", "San Nicolas", "Solana", "Upper Jasaan (Pob.)", "I. S. Cruz",
   ];
-  const youthClassificationOptions = formSchema.shape.youth_classification.options;
-  const youthAgeGroupOptions = formSchema.shape.youth_age_group.options;
-  const workStatusOptions = formSchema.shape.work_status.options;
-  const educationOptions = formSchema.shape.highest_education.options;
-  const sexOptions = formSchema.shape.sex.options;
-  const civilStatusOptions = formSchema.shape.civil_status.options;
-  const voterOptions = formSchema.shape.registered_voter.options;
-  const votedOptions = formSchema.shape.voted_last_election.options;
-  const assemblyOptions = formSchema.shape.attended_kk_assembly.options;
+  const youthClassificationOptions = enumOptions.youth_classification;
+  const youthAgeGroupOptions = enumOptions.youth_age_group;
+  const workStatusOptions = enumOptions.work_status;
+  const educationOptions = enumOptions.highest_education;
+  const sexOptions = enumOptions.sex;
+  const civilStatusOptions = enumOptions.civil_status;
+  const voterOptions = enumOptions.registered_voter;
+  const votedOptions = enumOptions.voted_last_election;
+  const assemblyOptions = enumOptions.attended_kk_assembly;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -42,14 +42,14 @@ export function AdvancedFilters({
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
 
-  const sexOptions = enumOptions.sex;
-  const votedOptions = enumOptions.voted_last_election;
-  const assemblyOptions = enumOptions.attended_kk_assembly;
-  const educationOptions = enumOptions.highest_education;
-  const classificationOptions = enumOptions.youth_classification;
-  const workStatusOptions = enumOptions.work_status;
-  const civilStatusOptions = enumOptions.civil_status;
-  const registeredVoterOptions = enumOptions.registered_voter;
+  const sexOptions = [...enumOptions.sex];
+  const votedOptions = [...enumOptions.voted_last_election];
+  const assemblyOptions = [...enumOptions.attended_kk_assembly];
+  const educationOptions = [...enumOptions.highest_education];
+  const classificationOptions = [...enumOptions.youth_classification];
+  const workStatusOptions = [...enumOptions.work_status];
+  const civilStatusOptions = [...enumOptions.civil_status];
+  const registeredVoterOptions = [...enumOptions.registered_voter];
 
   const barangayOptions = [
     "Aplaya", "Bobontugan", "Corrales", "I.S. Cruz", "Danao", "Jampason", "Kimaya",
