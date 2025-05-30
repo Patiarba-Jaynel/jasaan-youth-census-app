@@ -21,7 +21,7 @@ export function validateAgeConsistency(age: number, birthday: string, youthAgeGr
     }
   }
   
-  // Check age vs youth age group
+  // Check age vs youth age group (only if not N/A)
   if (youthAgeGroup && youthAgeGroup !== "N/A") {
     const ageGroupRanges: { [key: string]: [number, number] } = {
       "CHILD YOUTH (15-17)": [15, 17],
@@ -46,6 +46,7 @@ export function validateDropdownValue(value: string, allowedValues: readonly str
   const errors: string[] = [];
   const warnings: string[] = [];
   
+  // Allow N/A for all dropdown fields
   if (value && value !== "N/A" && !allowedValues.includes(value as any)) {
     errors.push(`Invalid ${fieldName}: "${value}" (not in allowed options)`);
   }
@@ -61,7 +62,7 @@ export function validateRequiredFields(record: any): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
   
-  // Critical fields that cannot be N/A or blank
+  // Critical fields that cannot be N/A or blank - essential for identification
   const criticalFields = [
     { field: 'name', label: 'name' },
     { field: 'age', label: 'age' },
@@ -76,7 +77,7 @@ export function validateRequiredFields(record: any): ValidationResult {
     { field: 'youth_age_group', label: 'age group' }
   ];
   
-  // Optional fields
+  // Optional fields - can be N/A or blank without warnings
   const optionalFields = [
     { field: 'civil_status', label: 'civil status' },
     { field: 'highest_education', label: 'education level' },
@@ -89,7 +90,7 @@ export function validateRequiredFields(record: any): ValidationResult {
     { field: 'contact_number', label: 'contact number' }
   ];
 
-  // Check critical fields
+  // Check critical fields - these must have actual values
   criticalFields.forEach(({ field, label }) => {
     const value = record[field];
     if (!value || value === "N/A" || (typeof value === 'string' && value.trim() === '')) {
@@ -97,21 +98,16 @@ export function validateRequiredFields(record: any): ValidationResult {
     }
   });
 
-  // Check important fields
+  // Check important fields - warn if missing but don't treat as error
   importantFields.forEach(({ field, label }) => {
     const value = record[field];
-    if (!value || (typeof value === 'string' && value.trim() === '')) {
-      warnings.push(`Missing important field: ${label}`);
+    if (!value || value === "N/A" || (typeof value === 'string' && value.trim() === '')) {
+      warnings.push(`Consider filling: ${label} (helpful for categorization)`);
     }
   });
 
-  // Optional fields only generate warnings if completely missing
-  optionalFields.forEach(({ field, label }) => {
-    const value = record[field];
-    if (!value || (typeof value === 'string' && value.trim() === '')) {
-      warnings.push(`Missing optional field: ${label}`);
-    }
-  });
+  // Optional fields - no warnings for N/A values
+  // Only warn if completely missing from the record structure
   
   return {
     isValid: errors.length === 0,

@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -44,29 +45,35 @@ interface EditRecordDialogProps {
   onSave: (data: any) => void;
 }
 
+// Updated schema to allow N/A or blank for non-critical fields
 const editFormSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  // Critical fields - required for identification
+  name: z.string().min(1, "Name is required for identification"),
   age: z.string().min(1, "Age is required"),
   birthday: z.date({
     required_error: "Birthday is required",
   }),
   sex: z.enum(["MALE", "FEMALE"]),
-  civil_status: z.enum(["SINGLE", "MARRIED", "LIVED-IN", "WIDOWED"]),
-  barangay: z.string().min(1, "Barangay is required"),
-  youth_classification: z.enum(["ISY", "OSY", "WY", "YSN"]),
-  youth_age_group: z.enum(["CORE YOUTH (18-24)", "CHILD YOUTH (15-17)", "YOUNG ADULT (25-30)"]),
-  highest_education: z.string().min(1, "Education is required"),
-  work_status: z.string().min(1, "Work status is required"),
-  registered_voter: z.enum(["Yes", "No"]),
-  voted_last_election: z.enum(["Yes", "No"]),
-  attended_kk_assembly: z.enum(["Yes", "No"]),
-  kk_assemblies_attended: z.coerce.number().int().nonnegative(),
-  home_address: z.string().min(1, "Address is required"),
-  email_address: z.string().email("Invalid email address"),
-  contact_number: z.string().min(7, "Contact number must be at least 7 characters"),
-  region: z.string().optional(),
-  province: z.string().optional(),
-  city_municipality: z.string().optional(),
+  barangay: z.string().min(1, "Barangay is required for location identification"),
+  
+  // Semi-important fields - can be N/A but should be filled when possible
+  civil_status: z.string().optional().default("N/A"),
+  youth_classification: z.string().optional().default("N/A"),
+  youth_age_group: z.string().optional().default("N/A"),
+  
+  // Optional fields - can be N/A or blank
+  highest_education: z.string().optional().default("N/A"),
+  work_status: z.string().optional().default("N/A"),
+  registered_voter: z.string().optional().default("N/A"),
+  voted_last_election: z.string().optional().default("N/A"),
+  attended_kk_assembly: z.string().optional().default("N/A"),
+  kk_assemblies_attended: z.coerce.number().int().nonnegative().optional().default(0),
+  home_address: z.string().optional().default("N/A"),
+  email_address: z.string().optional().default("N/A"),
+  contact_number: z.string().optional().default("N/A"),
+  region: z.string().optional().default("N/A"),
+  province: z.string().optional().default("N/A"),
+  city_municipality: z.string().optional().default("N/A"),
 });
 
 type EditFormValues = z.infer<typeof editFormSchema>;
@@ -84,22 +91,22 @@ export function EditRecordDialog({
       age: "",
       birthday: new Date(),
       sex: "MALE",
-      civil_status: "SINGLE",
+      civil_status: "N/A",
       barangay: "",
-      youth_classification: "ISY",
-      youth_age_group: "CORE YOUTH (18-24)",
-      highest_education: "",
-      work_status: "",
-      registered_voter: "Yes",
-      voted_last_election: "Yes",
-      attended_kk_assembly: "Yes",
+      youth_classification: "N/A",
+      youth_age_group: "N/A",
+      highest_education: "N/A",
+      work_status: "N/A",
+      registered_voter: "N/A",
+      voted_last_election: "N/A",
+      attended_kk_assembly: "N/A",
       kk_assemblies_attended: 0,
-      home_address: "",
-      email_address: "",
-      contact_number: "",
-      region: "",
-      province: "",
-      city_municipality: "",
+      home_address: "N/A",
+      email_address: "N/A",
+      contact_number: "N/A",
+      region: "N/A",
+      province: "N/A",
+      city_municipality: "N/A",
     },
   });
 
@@ -110,29 +117,43 @@ export function EditRecordDialog({
         age: selectedRecord.age || "",
         birthday: selectedRecord.birthday ? new Date(selectedRecord.birthday) : new Date(),
         sex: (selectedRecord.sex as any) || "MALE",
-        civil_status: (selectedRecord.civil_status as any) || "SINGLE",
+        civil_status: selectedRecord.civil_status || "N/A",
         barangay: selectedRecord.barangay || "",
-        youth_classification: (selectedRecord.youth_classification as any) || "ISY",
-        youth_age_group: (selectedRecord.youth_age_group as any) || "CORE YOUTH (18-24)",
-        highest_education: selectedRecord.highest_education || "",
-        work_status: selectedRecord.work_status || "",
-        registered_voter: (selectedRecord.registered_voter as any) || "Yes",
-        voted_last_election: (selectedRecord.voted_last_election as any) || "Yes",
-        attended_kk_assembly: (selectedRecord.attended_kk_assembly as any) || "Yes",
+        youth_classification: selectedRecord.youth_classification || "N/A",
+        youth_age_group: selectedRecord.youth_age_group || "N/A",
+        highest_education: selectedRecord.highest_education || "N/A",
+        work_status: selectedRecord.work_status || "N/A",
+        registered_voter: selectedRecord.registered_voter || "N/A",
+        voted_last_election: selectedRecord.voted_last_election || "N/A",
+        attended_kk_assembly: selectedRecord.attended_kk_assembly || "N/A",
         kk_assemblies_attended: selectedRecord.kk_assemblies_attended || 0,
-        home_address: selectedRecord.home_address || "",
-        email_address: selectedRecord.email_address || "",
-        contact_number: selectedRecord.contact_number || "",
-        region: selectedRecord.region || "",
-        province: selectedRecord.province || "",
-        city_municipality: selectedRecord.city_municipality || "",
+        home_address: selectedRecord.home_address || "N/A",
+        email_address: selectedRecord.email_address || "N/A",
+        contact_number: selectedRecord.contact_number || "N/A",
+        region: selectedRecord.region || "N/A",
+        province: selectedRecord.province || "N/A",
+        city_municipality: selectedRecord.city_municipality || "N/A",
       });
     }
   }, [selectedRecord, form]);
 
   const handleSubmit = (data: EditFormValues) => {
     console.log("Form data being submitted:", data);
-    onSave(data);
+    
+    // Check for critical missing fields and suggest deletion if necessary
+    const criticalFields = ['name', 'age', 'barangay'];
+    const missingCritical = criticalFields.filter(field => {
+      const value = data[field as keyof EditFormValues];
+      return !value || value === 'N/A' || (typeof value === 'string' && value.trim() === '');
+    });
+    
+    if (missingCritical.length > 0) {
+      if (confirm(`Missing critical identification fields: ${missingCritical.join(', ')}. This record may not be useful without this information. Do you want to continue saving or consider deleting this record instead?`)) {
+        onSave(data);
+      }
+    } else {
+      onSave(data);
+    }
   };
 
   // Get options from schema
@@ -148,7 +169,7 @@ export function EditRecordDialog({
         <DialogHeader>
           <DialogTitle>Edit Youth Record</DialogTitle>
           <DialogDescription>
-            Update the information for this youth record. All fields can be edited.
+            Update the information for this youth record. Fields marked with * are required for identification. Other fields can be left as "N/A" if unknown.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[70vh] pr-4">
@@ -163,7 +184,7 @@ export function EditRecordDialog({
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Full Name</FormLabel>
+                        <FormLabel>Full Name *</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -176,7 +197,7 @@ export function EditRecordDialog({
                     name="age"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Age</FormLabel>
+                        <FormLabel>Age *</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -189,7 +210,7 @@ export function EditRecordDialog({
                     name="birthday"
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
-                        <FormLabel>Birthday</FormLabel>
+                        <FormLabel>Birthday *</FormLabel>
                         <Popover>
                           <PopoverTrigger asChild>
                             <FormControl>
@@ -230,7 +251,7 @@ export function EditRecordDialog({
                     name="sex"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Sex</FormLabel>
+                        <FormLabel>Sex *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -262,6 +283,7 @@ export function EditRecordDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="N/A">N/A</SelectItem>
                             {formSchema.shape.civil_status.options.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
@@ -287,7 +309,7 @@ export function EditRecordDialog({
                       <FormItem>
                         <FormLabel>Region</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="e.g., Region X" />
+                          <Input {...field} placeholder="e.g., Region X or N/A" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -300,7 +322,7 @@ export function EditRecordDialog({
                       <FormItem>
                         <FormLabel>Province</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="e.g., Misamis Oriental" />
+                          <Input {...field} placeholder="e.g., Misamis Oriental or N/A" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -313,7 +335,7 @@ export function EditRecordDialog({
                       <FormItem>
                         <FormLabel>City/Municipality</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="e.g., Jasaan" />
+                          <Input {...field} placeholder="e.g., Jasaan or N/A" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -324,7 +346,7 @@ export function EditRecordDialog({
                     name="barangay"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Barangay</FormLabel>
+                        <FormLabel>Barangay *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -350,7 +372,7 @@ export function EditRecordDialog({
                       <FormItem className="col-span-2">
                         <FormLabel>Home Address</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Complete home address" />
+                          <Input {...field} placeholder="Complete home address or N/A" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -376,6 +398,7 @@ export function EditRecordDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="N/A">N/A</SelectItem>
                             {formSchema.shape.youth_classification.options.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
@@ -400,6 +423,7 @@ export function EditRecordDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="N/A">N/A</SelectItem>
                             {formSchema.shape.youth_age_group.options.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
@@ -431,6 +455,7 @@ export function EditRecordDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="N/A">N/A</SelectItem>
                             {formSchema.shape.highest_education.options.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
@@ -455,6 +480,7 @@ export function EditRecordDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="N/A">N/A</SelectItem>
                             {formSchema.shape.work_status.options.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
@@ -480,7 +506,7 @@ export function EditRecordDialog({
                       <FormItem>
                         <FormLabel>Email Address</FormLabel>
                         <FormControl>
-                          <Input {...field} type="email" />
+                          <Input {...field} type="email" placeholder="email@example.com or N/A" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -493,7 +519,7 @@ export function EditRecordDialog({
                       <FormItem>
                         <FormLabel>Contact Number</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} placeholder="Phone number or N/A" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -519,6 +545,7 @@ export function EditRecordDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="N/A">N/A</SelectItem>
                             {formSchema.shape.registered_voter.options.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
@@ -543,6 +570,7 @@ export function EditRecordDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="N/A">N/A</SelectItem>
                             {formSchema.shape.voted_last_election.options.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
@@ -575,6 +603,7 @@ export function EditRecordDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="N/A">N/A</SelectItem>
                             {formSchema.shape.attended_kk_assembly.options.map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}

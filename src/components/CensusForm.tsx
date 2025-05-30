@@ -44,25 +44,53 @@ export function CensusForm() {
     try {
       setIsSubmitting(true);
       
-      // Validate age consistency before submission
-      const ageValidation = validateAgeConsistency(
-        Number(data.age), 
-        data.birthday.toISOString().split('T')[0], 
-        data.youth_age_group
-      );
+      // Check for critical fields only
+      const criticalFields = ['name', 'age', 'birthday', 'sex', 'barangay'];
+      const missingCritical = criticalFields.filter(field => {
+        const value = data[field as keyof FormValues];
+        return !value || (typeof value === 'string' && (value === 'N/A' || value.trim() === ''));
+      });
       
-      if (!ageValidation.isValid) {
-        toast.error("Validation Error", {
-          description: ageValidation.errors.join(". ") + " Please correct this before submitting."
+      if (missingCritical.length > 0) {
+        toast.error("Missing Critical Information", {
+          description: `Please fill in: ${missingCritical.join(', ')}. These fields are required for identification.`
         });
         return;
       }
+      
+      // Validate age consistency only if youth_age_group is provided
+      if (data.youth_age_group && data.youth_age_group !== "N/A") {
+        const ageValidation = validateAgeConsistency(
+          Number(data.age), 
+          data.birthday.toISOString().split('T')[0], 
+          data.youth_age_group
+        );
+        
+        if (!ageValidation.isValid) {
+          toast.error("Age Validation Error", {
+            description: ageValidation.errors.join(". ") + " Please correct this before submitting."
+          });
+          return;
+        }
 
-      // Show warnings if any
-      if (ageValidation.warnings && ageValidation.warnings.length > 0) {
-        toast.warning("Please verify:", {
-          description: ageValidation.warnings.join(". ")
-        });
+        // Show warnings if any
+        if (ageValidation.warnings && ageValidation.warnings.length > 0) {
+          toast.warning("Please verify:", {
+            description: ageValidation.warnings.join(". ")
+          });
+        }
+      }
+
+      // Show info toast about optional fields if many are missing
+      const optionalFields = ['youth_classification', 'civil_status', 'highest_education', 'work_status', 'email_address', 'contact_number'];
+      const missingOptional = optionalFields.filter(field => {
+        const value = data[field as keyof FormValues];
+        return !value || (typeof value === 'string' && value.trim() === '');
+      });
+      
+      if (missingOptional.length > 3) {
+        const proceed = confirm(`Several optional fields are blank. The record will be saved with "N/A" for missing information. Continue?`);
+        if (!proceed) return;
       }
 
       // Create properly typed youth record
@@ -114,7 +142,7 @@ export function CensusForm() {
       <CardHeader>
         <CardTitle className="text-2xl">Youth Census Registration</CardTitle>
         <CardDescription>
-          Please fill out this form accurately to register for the Jasaan Youth Census.
+          Please fill out this form accurately to register for the Jasaan Youth Census. Fields marked with * are required.
         </CardDescription>
         
         {/* Youth Classification Reference */}
@@ -126,6 +154,9 @@ export function CensusForm() {
             <Badge variant="outline">WY - Working Youth</Badge>
             <Badge variant="outline">YSN - Youth with Special Needs</Badge>
           </div>
+          <p className="text-sm mt-2 text-muted-foreground">
+            * Required fields: Name, Age, Birthday, Sex, Barangay. Other fields can be left as "N/A" if unknown.
+          </p>
         </div>
       </CardHeader>
       <CardContent>
