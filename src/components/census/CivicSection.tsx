@@ -30,8 +30,8 @@ export const CivicSection = ({ control }: CivicSectionProps) => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="YES">Yes</SelectItem>
-                  <SelectItem value="NO">No</SelectItem>
+                  <SelectItem value="Yes">Yes</SelectItem>
+                  <SelectItem value="No">No</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -52,8 +52,8 @@ export const CivicSection = ({ control }: CivicSectionProps) => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="YES">Yes</SelectItem>
-                  <SelectItem value="NO">No</SelectItem>
+                  <SelectItem value="Yes">Yes</SelectItem>
+                  <SelectItem value="No">No</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -69,8 +69,8 @@ export const CivicSection = ({ control }: CivicSectionProps) => {
               <FormLabel>Have you attended any KK assemblies?</FormLabel>
               <Select onValueChange={(value) => {
                 field.onChange(value);
-                // Reset assemblies count to 0 if changing to "NO"
-                if (value === "NO") {
+                // Reset assemblies count to 0 if changing to "No"
+                if (value === "No") {
                   const kk_assemblies_field = document.querySelector('[name="kk_assemblies_attended"]') as HTMLInputElement;
                   if (kk_assemblies_field) {
                     kk_assemblies_field.value = "0";
@@ -83,8 +83,8 @@ export const CivicSection = ({ control }: CivicSectionProps) => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="YES">Yes</SelectItem>
-                  <SelectItem value="NO">No</SelectItem>
+                  <SelectItem value="Yes">Yes</SelectItem>
+                  <SelectItem value="No">No</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -103,12 +103,12 @@ export const CivicSection = ({ control }: CivicSectionProps) => {
                   type="number" 
                   min={0} 
                   {...field}
-                  disabled={watchAttendedAssembly !== "YES"}
+                  disabled={watchAttendedAssembly !== "Yes"}
                   onChange={(e) => {
                     const value = parseInt(e.target.value);
                     field.onChange(isNaN(value) ? 0 : value);
                   }}
-                  defaultValue={watchAttendedAssembly === "YES" ? field.value || "0" : "0"}
+                  defaultValue={watchAttendedAssembly === "Yes" ? field.value || "0" : "0"}
                 />
               </FormControl>
               <FormMessage />
