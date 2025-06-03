@@ -35,6 +35,8 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December"
 ];
 
+const YEARS = Array.from({ length: 11 }, (_, i) => 2020 + i); // 2020-2030
+
 export function ConsolidatedDataForm({ 
   initialData, 
   onSubmit, 
@@ -116,14 +118,18 @@ export function ConsolidatedDataForm({
 
           <div>
             <Label htmlFor="year">Year</Label>
-            <Input
-              id="year"
-              type="number"
-              value={formData.year}
-              onChange={(e) => handleChange('year', parseInt(e.target.value))}
-              min="2020"
-              max="2030"
-            />
+            <Select value={formData.year.toString()} onValueChange={(value) => handleChange('year', parseInt(value))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select year" />
+              </SelectTrigger>
+              <SelectContent>
+                {YEARS.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>

@@ -82,8 +82,10 @@ const ConsolidatedDashboardPage = () => {
 
       try {
         const records = await pbClient.consolidated.getAll();
-        setConsolidatedData(records);
-        setFilteredData(records);
+        // Sort records alphabetically by barangay
+        const sortedRecords = records.sort((a, b) => a.barangay.localeCompare(b.barangay));
+        setConsolidatedData(sortedRecords);
+        setFilteredData(sortedRecords);
       } catch (error) {
         console.error("Error fetching consolidated data:", error);
         toast.error("Failed to load consolidated data");
@@ -98,32 +100,34 @@ const ConsolidatedDashboardPage = () => {
   useEffect(() => {
     let filtered = consolidatedData;
 
-    if (filters.barangay) {
+    if (filters.barangay && filters.barangay !== "All") {
       filtered = filtered.filter(item => 
         item.barangay.toLowerCase().includes(filters.barangay.toLowerCase())
       );
     }
-    if (filters.ageBracket) {
+    if (filters.ageBracket && filters.ageBracket !== "All") {
       filtered = filtered.filter(item => 
         item.age_bracket.toLowerCase().includes(filters.ageBracket.toLowerCase())
       );
     }
-    if (filters.gender) {
+    if (filters.gender && filters.gender !== "All") {
       filtered = filtered.filter(item => 
         item.gender.toLowerCase().includes(filters.gender.toLowerCase())
       );
     }
-    if (filters.year) {
+    if (filters.year && filters.year !== "All") {
       filtered = filtered.filter(item => 
         item.year.toString().includes(filters.year)
       );
     }
-    if (filters.month) {
+    if (filters.month && filters.month !== "All") {
       filtered = filtered.filter(item => 
         item.month.toLowerCase().includes(filters.month.toLowerCase())
       );
     }
 
+    // Sort filtered data alphabetically by barangay
+    filtered.sort((a, b) => a.barangay.localeCompare(b.barangay));
     setFilteredData(filtered);
   }, [filters, consolidatedData]);
 
@@ -151,8 +155,9 @@ const ConsolidatedDashboardPage = () => {
       setIsAddDialogOpen(false);
       // Refresh data
       const records = await pbClient.consolidated.getAll();
-      setConsolidatedData(records);
-      setFilteredData(records);
+      const sortedRecords = records.sort((a, b) => a.barangay.localeCompare(b.barangay));
+      setConsolidatedData(sortedRecords);
+      setFilteredData(sortedRecords);
     } catch (error) {
       console.error("Error adding record:", error);
       toast.error("Failed to add record");
@@ -174,8 +179,9 @@ const ConsolidatedDashboardPage = () => {
       setSelectedRecord(null);
       // Refresh data
       const records = await pbClient.consolidated.getAll();
-      setConsolidatedData(records);
-      setFilteredData(records);
+      const sortedRecords = records.sort((a, b) => a.barangay.localeCompare(b.barangay));
+      setConsolidatedData(sortedRecords);
+      setFilteredData(sortedRecords);
     } catch (error) {
       console.error("Error updating record:", error);
       toast.error("Failed to update record");
@@ -189,8 +195,9 @@ const ConsolidatedDashboardPage = () => {
         toast.success("Record deleted successfully");
         // Refresh data
         const records = await pbClient.consolidated.getAll();
-        setConsolidatedData(records);
-        setFilteredData(records);
+        const sortedRecords = records.sort((a, b) => a.barangay.localeCompare(b.barangay));
+        setConsolidatedData(sortedRecords);
+        setFilteredData(sortedRecords);
       } catch (error) {
         console.error("Error deleting record:", error);
         toast.error("Failed to delete record");
@@ -472,8 +479,9 @@ const ConsolidatedDashboardPage = () => {
 
       // Refresh data
       const records = await pbClient.consolidated.getAll();
-      setConsolidatedData(records);
-      setFilteredData(records);
+      const sortedRecords = records.sort((a, b) => a.barangay.localeCompare(b.barangay));
+      setConsolidatedData(sortedRecords);
+      setFilteredData(sortedRecords);
       toast.success(`Successfully imported ${totalRecordsAdded} records from ${importedData.length} barangays`);
     } catch (error) {
       console.error("Error importing data:", error);
@@ -509,7 +517,7 @@ const ConsolidatedDashboardPage = () => {
             <div>
               <h1 className="text-3xl font-bold">Consolidated Data Dashboard</h1>
               <p className="text-muted-foreground">
-                Demographics and analytics for consolidated youth census data
+                Demographics and analytics for consolidated population census data
               </p>
             </div>
             <div className="flex flex-col md:flex-row gap-4 mt-4 md:mt-0">
@@ -583,6 +591,10 @@ const ConsolidatedDashboardPage = () => {
                           {Array.from(new Set(consolidatedData.map(d => d.year.toString()))).sort().map(year => (
                             <SelectItem key={year} value={year}>{year}</SelectItem>
                           ))}
+                          {/* Add future years dynamically */}
+                          {Array.from({ length: 6 }, (_, i) => new Date().getFullYear() + i + 1).map(year => (
+                            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -628,43 +640,78 @@ const ConsolidatedDashboardPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
                     <div>
                       <label className="text-sm font-medium mb-2 block">Barangay</label>
-                      <Input
-                        placeholder="Filter by barangay..."
-                        value={filters.barangay}
-                        onChange={(e) => handleFilterChange("barangay", e.target.value)}
-                      />
+                      <Select value={filters.barangay} onValueChange={(value) => handleFilterChange("barangay", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select barangay" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="All">All Barangays</SelectItem>
+                          {enumOptions.barangay.map((barangay) => (
+                            <SelectItem key={barangay} value={barangay}>
+                              {barangay}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-2 block">Age Bracket</label>
-                      <Input
-                        placeholder="e.g., 0-4, 5-9..."
-                        value={filters.ageBracket}
-                        onChange={(e) => handleFilterChange("ageBracket", e.target.value)}
-                      />
+                      <Select value={filters.ageBracket} onValueChange={(value) => handleFilterChange("ageBracket", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select age bracket" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="All">All Age Brackets</SelectItem>
+                          {["UNDER 1", "1-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+"].map((bracket) => (
+                            <SelectItem key={bracket} value={bracket}>
+                              {bracket}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-2 block">Gender</label>
-                      <Input
-                        placeholder="Male/Female"
-                        value={filters.gender}
-                        onChange={(e) => handleFilterChange("gender", e.target.value)}
-                      />
+                      <Select value={filters.gender} onValueChange={(value) => handleFilterChange("gender", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="All">All Genders</SelectItem>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-2 block">Year</label>
-                      <Input
-                        placeholder="e.g., 2025"
-                        value={filters.year}
-                        onChange={(e) => handleFilterChange("year", e.target.value)}
-                      />
+                      <Select value={filters.year} onValueChange={(value) => handleFilterChange("year", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="All">All Years</SelectItem>
+                          {Array.from(new Set(consolidatedData.map(d => d.year.toString()))).sort().map(year => (
+                            <SelectItem key={year} value={year}>{year}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-2 block">Month</label>
-                      <Input
-                        placeholder="e.g., Jan, Feb..."
-                        value={filters.month}
-                        onChange={(e) => handleFilterChange("month", e.target.value)}
-                      />
+                      <Select value={filters.month} onValueChange={(value) => handleFilterChange("month", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="All">All Months</SelectItem>
+                          {months.map((month) => (
+                            <SelectItem key={month} value={month}>
+                              {month}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="flex gap-2 flex-wrap">

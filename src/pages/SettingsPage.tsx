@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect } from "react";
@@ -41,8 +42,10 @@ import {
   Users,
   Settings,
   Database,
+  Activity,
 } from "lucide-react";
 import { pbClient } from "@/lib/pb-client";
+import { activityLogger } from "@/lib/activity-logger";
 
 interface User {
   id: string;
@@ -53,11 +56,23 @@ interface User {
   updated: string;
 }
 
+interface ActivityLog {
+  id: string;
+  action: string;
+  entity_type: string;
+  entity_name: string;
+  user_name: string;
+  details: string;
+  timestamp: string;
+  created: string;
+}
+
 const SettingsPage = () => {
   const navigate = useNavigate();
 
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -109,6 +124,7 @@ const SettingsPage = () => {
         // Only load users if current user is admin
         if (authData?.record?.is_admin) {
           await loadUsers();
+          await loadActivityLogs();
         }
       } catch (error) {
         console.error("Error loading data:", error);
@@ -136,6 +152,16 @@ const SettingsPage = () => {
     } catch (error) {
       console.error("Error loading users:", error);
       toast.error("Failed to load users");
+    }
+  };
+
+  const loadActivityLogs = async () => {
+    try {
+      const logs = await activityLogger.getUserLogs();
+      setActivityLogs(logs);
+    } catch (error) {
+      console.error("Error loading activity logs:", error);
+      toast.error("Failed to load activity logs");
     }
   };
 
@@ -168,6 +194,9 @@ const SettingsPage = () => {
       const createdUser = await pbClient.collection("users").create(userData);
       console.log("User created successfully:", createdUser);
 
+      // Log the user creation
+      await activityLogger.logUserCreate(createdUser.id, createdUser.name, createdUser.email);
+
       toast.success("User created successfully");
       setIsUserDialogOpen(false);
       setUserForm({
@@ -179,6 +208,7 @@ const SettingsPage = () => {
         is_admin: false,
       });
       await loadUsers();
+      await loadActivityLogs();
     } catch (error: any) {
       console.error("Error creating user:", error);
       const errorMessage =
@@ -217,6 +247,9 @@ const SettingsPage = () => {
         .update(editingUser.id, updateData);
       console.log("User updated successfully:", updatedUser);
 
+      // Log the user update
+      await activityLogger.logUserUpdate(editingUser.id, editingUser.name, updateData);
+
       toast.success("User updated successfully");
       setIsUserDialogOpen(false);
       setEditingUser(null);
@@ -229,6 +262,7 @@ const SettingsPage = () => {
         is_admin: false,
       });
       await loadUsers();
+      await loadActivityLogs();
     } catch (error: any) {
       console.error("Error updating user:", error);
       const errorMessage =
@@ -246,9 +280,17 @@ const SettingsPage = () => {
     if (!confirm("Are you sure you want to delete this user?")) return;
 
     try {
+      const userToDelete = users.find(u => u.id === userId);
       await pbClient.collection("users").delete(userId);
+      
+      // Log the user deletion
+      if (userToDelete) {
+        await activityLogger.logUserDelete(userId, userToDelete.name);
+      }
+
       toast.success("User deleted successfully");
       await loadUsers();
+      await loadActivityLogs();
     } catch (error) {
       console.error("Error deleting user:", error);
       toast.error("Failed to delete user");
@@ -287,6 +329,9 @@ const SettingsPage = () => {
         .update(currentUser.id, updateData);
       console.log("Profile updated successfully:", updatedUser);
 
+      // Log the profile update
+      await activityLogger.logUserUpdate(currentUser.id, currentUser.name, updateData);
+
       toast.success("Profile updated successfully");
       setIsProfileDialogOpen(false);
 
@@ -304,6 +349,8 @@ const SettingsPage = () => {
           confirmPassword: "",
         });
       }
+
+      await loadActivityLogs();
     } catch (error: any) {
       console.error("Error updating profile:", error);
       const errorMessage =
@@ -321,6 +368,19 @@ const SettingsPage = () => {
       confirmPassword: "",
       emailVisibility: true,
       is_admin: user.is_admin,
+    });
+    setIsUserDialogOpen(true);
+  };
+
+  const openAddDialog = () => {
+    setEditingUser(null);
+    setUserForm({
+      email: "",
+      name: "",
+      password: "",
+      confirmPassword: "",
+      emailVisibility: true,
+      is_admin: false,
     });
     setIsUserDialogOpen(true);
   };
@@ -384,145 +444,196 @@ const SettingsPage = () => {
 
           <h1 className="text-3xl font-bold mb-8">Settings</h1>
 
-          <div className="grid gap-6">
-            {/* Profile Settings */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Profile Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Name</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {currentUser?.name || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <Label>Email</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {currentUser?.email || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <Label>Role</Label>
-                    <Badge
-                      variant={
-                        currentUser?.is_admin === true ? "default" : "secondary"
-                      }
-                    >
-                      {currentUser?.is_admin === true ? "Admin" : "User"}
-                    </Badge>
-                  </div>
-                  <Button onClick={() => setIsProfileDialogOpen(true)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Profile
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* User Management - Only show for admins */}
-            {isAdmin && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Column */}
+            <div className="space-y-6">
+              {/* Profile Settings */}
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
+                <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    User Management
+                    <Settings className="h-5 w-5" />
+                    Profile Settings
                   </CardTitle>
-                  <div className="flex gap-2">
-                    <Button onClick={() => setIsUserDialogOpen(true)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add User
-                    </Button>
-                  </div>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell>{user.name || "N/A"}</TableCell>
-                          <TableCell>{user.email || "N/A"}</TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                user.is_admin == true ? "default" : "secondary"
-                              }
-                            >
-                              {user.is_admin == true ? "Admin" : "User"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(user.created).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openEditDialog(user)}
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Name</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {currentUser?.name || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <Label>Email</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {currentUser?.email || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <Label>Role</Label>
+                      <Badge
+                        variant={
+                          currentUser?.is_admin === true ? "default" : "secondary"
+                        }
+                      >
+                        {currentUser?.is_admin === true ? "Admin" : "User"}
+                      </Badge>
+                    </div>
+                    <Button onClick={() => setIsProfileDialogOpen(true)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Profile
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Role Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Database className="h-5 w-5" />
+                    Role Permissions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-green-600">Admin Role</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Full access to all features including data management
+                        (CRUD operations) and user management
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-blue-600">User Role</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Access to data operations (Create, Read, Update, Delete)
+                        but cannot manage users
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-6">
+              {/* User Management - Only show for admins */}
+              {isAdmin && (
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      User Management
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      <Button onClick={openAddDialog}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add User
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {users.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell>{user.name || "N/A"}</TableCell>
+                            <TableCell>{user.email || "N/A"}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  user.is_admin == true ? "default" : "secondary"
+                                }
                               >
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                              {user.id !== currentUser?.id && (
+                                {user.is_admin == true ? "Admin" : "User"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(user.created).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleDeleteUser(user.id)}
+                                  onClick={() => openEditDialog(user)}
                                 >
-                                  <Trash2 className="h-3 w-3" />
+                                  <Edit className="h-3 w-3" />
                                 </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            )}
+                                {user.id !== currentUser?.id && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleDeleteUser(user.id)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Role Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Database className="h-5 w-5" />
-                  Role Permissions
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold text-green-600">Admin Role</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Full access to all features including data management
-                      (CRUD operations) and user management
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-blue-600">User Role</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Access to data operations (Create, Read, Update, Delete)
-                      but cannot manage users
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Activity Logs - Only show for admins */}
+              {isAdmin && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="h-5 w-5" />
+                      Recent Activity
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {activityLogs.slice(0, 10).map((log) => (
+                        <div
+                          key={log.id}
+                          className="flex items-start space-x-3 p-3 bg-muted/50 rounded-lg"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge variant="outline" className="text-xs">
+                                {log.action}
+                              </Badge>
+                              <span className="text-sm font-medium">
+                                {log.entity_name}
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {log.details}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              by {log.user_name} •{" "}
+                              {new Date(log.created).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      {activityLogs.length === 0 && (
+                        <p className="text-center text-muted-foreground py-4">
+                          No activity logs found
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
         </div>
       </main>
@@ -668,7 +779,7 @@ const SettingsPage = () => {
             <div>
               <Label htmlFor="oldPassword">Old Password</Label>
               <Input
-                id="o"
+                id="oldPassword"
                 type="password"
                 value={profileForm.oldPassword}
                 onChange={(e) =>

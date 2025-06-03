@@ -3,8 +3,8 @@ import { pbClient } from './pb-client';
 
 export interface ActivityLog {
   id?: string;
-  action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'IMPORT';
-  entity_type: 'youth' | 'user';
+  action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'IMPORT' | 'LOGIN' | 'LOGOUT';
+  entity_type: 'youth' | 'user' | 'consolidated' | 'session';
   entity_id: string;
   entity_name: string;
   user_id: string;
@@ -38,6 +38,7 @@ export const activityLogger = {
     }
   },
 
+  // Youth operations
   async logYouthCreate(youthId: string, youthName: string, batchId?: string) {
     await this.log({
       action: 'CREATE',
@@ -82,6 +83,102 @@ export const activityLogger = {
     });
   },
 
+  // Consolidated data operations
+  async logConsolidatedCreate(recordId: string, barangay: string, details: string) {
+    await this.log({
+      action: 'CREATE',
+      entity_type: 'consolidated',
+      entity_id: recordId,
+      entity_name: `${barangay} Record`,
+      details: details
+    });
+  },
+
+  async logConsolidatedUpdate(recordId: string, barangay: string, changes: Record<string, any>) {
+    const changedFields = Object.keys(changes).join(', ');
+    await this.log({
+      action: 'UPDATE',
+      entity_type: 'consolidated',
+      entity_id: recordId,
+      entity_name: `${barangay} Record`,
+      details: `Updated fields: ${changedFields}`
+    });
+  },
+
+  async logConsolidatedDelete(recordId: string, barangay: string) {
+    await this.log({
+      action: 'DELETE',
+      entity_type: 'consolidated',
+      entity_id: recordId,
+      entity_name: `${barangay} Record`,
+      details: 'Consolidated record deleted manually'
+    });
+  },
+
+  async logConsolidatedImport(batchId: string, recordCount: number) {
+    await this.log({
+      action: 'IMPORT',
+      entity_type: 'consolidated',
+      entity_id: batchId,
+      entity_name: `Consolidated Batch ${batchId}`,
+      details: `Imported ${recordCount} consolidated records`,
+      batch_id: batchId
+    });
+  },
+
+  // User operations
+  async logUserCreate(userId: string, userName: string, userEmail: string) {
+    await this.log({
+      action: 'CREATE',
+      entity_type: 'user',
+      entity_id: userId,
+      entity_name: userName,
+      details: `User created with email: ${userEmail}`
+    });
+  },
+
+  async logUserUpdate(userId: string, userName: string, changes: Record<string, any>) {
+    const changedFields = Object.keys(changes).join(', ');
+    await this.log({
+      action: 'UPDATE',
+      entity_type: 'user',
+      entity_id: userId,
+      entity_name: userName,
+      details: `Updated user fields: ${changedFields}`
+    });
+  },
+
+  async logUserDelete(userId: string, userName: string) {
+    await this.log({
+      action: 'DELETE',
+      entity_type: 'user',
+      entity_id: userId,
+      entity_name: userName,
+      details: 'User account deleted'
+    });
+  },
+
+  // Session operations
+  async logLogin(userId: string, userName: string) {
+    await this.log({
+      action: 'LOGIN',
+      entity_type: 'session',
+      entity_id: userId,
+      entity_name: userName,
+      details: 'User logged in'
+    });
+  },
+
+  async logLogout(userId: string, userName: string) {
+    await this.log({
+      action: 'LOGOUT',
+      entity_type: 'session',
+      entity_id: userId,
+      entity_name: userName,
+      details: 'User logged out'
+    });
+  },
+
   async getActivityLogs(limit = 100) {
     try {
       return await pbClient.collection('activity_logs').getList(1, limit, {
@@ -101,6 +198,30 @@ export const activityLogger = {
       });
     } catch (error) {
       console.error('Failed to fetch batch logs:', error);
+      return [];
+    }
+  },
+
+  async getConsolidatedLogs() {
+    try {
+      return await pbClient.collection('activity_logs').getFullList({
+        filter: 'entity_type = "consolidated"',
+        sort: '-created'
+      });
+    } catch (error) {
+      console.error('Failed to fetch consolidated logs:', error);
+      return [];
+    }
+  },
+
+  async getUserLogs() {
+    try {
+      return await pbClient.collection('activity_logs').getFullList({
+        filter: 'entity_type = "user" || entity_type = "session"',
+        sort: '-created'
+      });
+    } catch (error) {
+      console.error('Failed to fetch user logs:', error);
       return [];
     }
   },
