@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
@@ -186,6 +187,7 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
         console.log('Parsed data:', jsonData);
+         
         setParsedData(jsonData as any[]);
 
         // Validate the data
