@@ -1,4 +1,3 @@
-
 import { pbClient } from './pb-client';
 
 export interface ActivityLog {
@@ -19,9 +18,13 @@ export interface ActivityLog {
 export const activityLogger = {
   async log(activity: Omit<ActivityLog, 'id' | 'timestamp' | 'created' | 'updated'>) {
     try {
+      console.log('activityLogger.log: Starting to log activity:', activity);
+      
       const authData = pbClient.auth.getAuthData();
+      console.log('activityLogger.log: Auth data:', authData);
+      
       if (!authData?.record) {
-        console.warn('No authenticated user for activity logging');
+        console.warn('activityLogger.log: No authenticated user for activity logging');
         return;
       }
 
@@ -32,22 +35,36 @@ export const activityLogger = {
         timestamp: new Date().toISOString()
       };
 
-      await pbClient.collection('activity_logs').create(logEntry);
+      console.log('activityLogger.log: Creating log entry:', logEntry);
+      
+      const result = await pbClient.collection('activity_logs').create(logEntry);
+      console.log('activityLogger.log: Activity logged successfully:', result.id);
+      
+      return result;
     } catch (error) {
-      console.error('Failed to log activity:', error);
+      console.error('activityLogger.log: Failed to log activity:', error);
+      throw error;
     }
   },
 
   // Youth operations
   async logYouthCreate(youthId: string, youthName: string, batchId?: string) {
-    await this.log({
-      action: 'CREATE',
-      entity_type: 'youth',
-      entity_id: youthId,
-      entity_name: youthName,
-      details: batchId ? `Youth record created via batch import (batch: ${batchId})` : 'Youth record created manually',
-      batch_id: batchId
-    });
+    console.log('activityLogger.logYouthCreate: Starting for youth:', youthId, youthName);
+    
+    try {
+      await this.log({
+        action: 'CREATE',
+        entity_type: 'youth',
+        entity_id: youthId,
+        entity_name: youthName,
+        details: batchId ? `Youth record created via batch import (batch: ${batchId})` : 'Youth record created manually',
+        batch_id: batchId
+      });
+      console.log('activityLogger.logYouthCreate: Successfully logged youth creation');
+    } catch (error) {
+      console.error('activityLogger.logYouthCreate: Failed to log youth creation:', error);
+      throw error;
+    }
   },
 
   async logYouthUpdate(youthId: string, youthName: string, changes: Record<string, any>) {

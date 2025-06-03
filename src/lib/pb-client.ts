@@ -13,10 +13,10 @@ export interface YouthRecord {
   name: string;
   age: string;
   birthday: Date;
-  sex: "MALE" | "FEMALE";
-  civil_status: "SINGLE" | "MARRIED" | "LIVED-IN" | "WIDOWED";
+  sex: "Male" | "Female";
+  civil_status: "Single" | "Married" | "Lived-In" | "Widowed";
   youth_classification: "ISY" | "OSY" | "WY" | "YSN";
-  youth_age_group: "CORE YOUTH (18-24)" | "CHILD YOUTH (15-17)" | "YOUNG ADULT (25-30)";
+  youth_age_group: "Core Youth (18-24)" | "Child Youth (15-17)" | "Young Adult (25-30)";
   email_address: string;
   contact_number: string;
   home_address: string;
@@ -80,9 +80,20 @@ export const pbClient = {
   // Youth census records with activity logging
   youth: {
     create: async (data: Omit<YouthRecord, 'id' | 'created' | 'updated'>) => {
-      const record = await pb.collection('youth').create(data);
-      await activityLogger.logYouthCreate(record.id, data.name, data.batch_id);
-      return record;
+      console.log('pbClient.youth.create: Starting with data:', data);
+      try {
+        const record = await pb.collection('youth').create(data);
+        console.log('pbClient.youth.create: Record created successfully:', record.id);
+        
+        // Log the activity
+        await activityLogger.logYouthCreate(record.id, data.name, data.batch_id);
+        console.log('pbClient.youth.create: Activity logged successfully');
+        
+        return record;
+      } catch (error) {
+        console.error('pbClient.youth.create: Error creating record:', error);
+        throw error;
+      }
     },
     createMany: async (records: Omit<YouthRecord, 'id' | 'created' | 'updated'>[], batchId?: string) => {
       const createdRecords = [];

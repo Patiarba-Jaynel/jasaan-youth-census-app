@@ -67,13 +67,13 @@ export function CensusForm() {
   };
 
   async function onSubmit(data: FormValues) {
-    console.log("Form submission started with data:", data);
+    console.log("CensusForm.onSubmit: Form submission started with data:", data);
     try {
       setIsSubmitting(true);
       
       // Calculate age from birthday - this is now the only place age is handled
       const calculatedAge = data.birthday ? calculateAge(data.birthday) : 0;
-      console.log("Calculated age for submission:", calculatedAge);
+      console.log("CensusForm.onSubmit: Calculated age for submission:", calculatedAge);
       
       // Check for critical fields only
       const criticalFields = ['name', 'birthday', 'sex', 'barangay'];
@@ -130,29 +130,33 @@ export function CensusForm() {
         region: data.region,
         province: data.province,
         city_municipality: data.city_municipality,
-        barangay: data.barangay,
+        barangay: data.barangay || "",
         name: data.name,
-        age: calculatedAge.toString(), // Age is automatically calculated from birthday
-        birthday: data.birthday,
-        sex: data.sex,
-        civil_status: data.civil_status,
-        youth_classification: data.youth_classification,
-        youth_age_group: data.youth_age_group,
-        email_address: data.email_address,
-        contact_number: data.contact_number,
-        home_address: data.home_address,
-        highest_education: data.highest_education,
-        work_status: data.work_status,
-        registered_voter: data.registered_voter,
-        voted_last_election: data.voted_last_election,
-        attended_kk_assembly: data.attended_kk_assembly,
-        kk_assemblies_attended: data.kk_assemblies_attended,
+        age: calculatedAge.toString(),
+        birthday: data.birthday!,
+        sex: data.sex || "Male",
+        civil_status: data.civil_status || "Single",
+        youth_classification: data.youth_classification || "ISY",
+        youth_age_group: data.youth_age_group || "Core Youth (18-24)",
+        email_address: data.email_address || "",
+        contact_number: data.contact_number || "",
+        home_address: data.home_address || "",
+        highest_education: data.highest_education || "",
+        work_status: data.work_status || "",
+        registered_voter: data.registered_voter || "No",
+        voted_last_election: data.voted_last_election || "No",
+        attended_kk_assembly: data.attended_kk_assembly || "No",
+        kk_assemblies_attended: data.kk_assemblies_attended || 0,
       };
+
+      console.log("CensusForm.onSubmit: Creating youth record:", youthRecord);
 
       // Standardize the data before submission
       const standardizedData = standardizeYouthRecord(youthRecord);
+      console.log("CensusForm.onSubmit: Standardized data:", standardizedData);
       
-      await pbClient.youth.create(standardizedData);
+      const result = await pbClient.youth.create(standardizedData);
+      console.log("CensusForm.onSubmit: Youth record created successfully:", result);
       
       toast.success("Census form submitted successfully!", {
         description: "Thank you for participating in the Jasaan Youth Census.",
@@ -160,7 +164,7 @@ export function CensusForm() {
       
       navigate("/success");
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("CensusForm.onSubmit: Error submitting form:", error);
       toast.error("Failed to submit form", {
         description: "Please try again or contact support if the problem persists.",
       });
