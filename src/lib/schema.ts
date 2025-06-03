@@ -25,53 +25,53 @@ export interface Youth {
 }
 
 export const enumOptions = {
-  sex: ["MALE", "FEMALE"] as const,
-  civil_status: ["SINGLE", "MARRIED", "LIVED-IN", "WIDOWED"] as const,
-  youth_classification: ["ISY", "OSY", "WY", "YSN"] as const,
-  youth_age_group: ["CORE YOUTH (18-24)", "CHILD YOUTH (15-17)", "YOUNG ADULT (25-30)"] as const,
+  sex: ["Male", "Female"] as const,
+  civil_status: ["Single", "Married", "Lived-In", "Widowed"] as const,
+  youth_classification: ["Isy", "Osy", "Wy", "Ysn"] as const,
+  youth_age_group: ["Core Youth (18-24)", "Child Youth (15-17)", "Young Adult (25-30)"] as const,
   educational_background: [
-    "ELEMENTARY UNDERGRADUATE",
-    "ELEMENTARY GRADUATE", 
-    "HIGH SCHOOL UNDERGRADUATE",
-    "HIGH SCHOOL GRADUATE",
-    "VOCATIONAL UNDERGRADUATE",
-    "VOCATIONAL GRADUATE",
-    "COLLEGE UNDERGRADUATE",
-    "COLLEGE GRADUATE",
-    "MASTERAL UNDERGRADUATE",
-    "MASTERAL GRADUATE",
-    "DOCTORAL UNDERGRADUATE",
-    "DOCTORAL GRADUATE"
+    "Elementary Undergraduate",
+    "Elementary Graduate", 
+    "High School Undergraduate",
+    "High School Graduate",
+    "Vocational Undergraduate",
+    "Vocational Graduate",
+    "College Undergraduate",
+    "College Graduate",
+    "Masteral Undergraduate",
+    "Masteral Graduate",
+    "Doctoral Undergraduate",
+    "Doctoral Graduate"
   ] as const,
-  work_status: ["EMPLOYED", "UNEMPLOYED", "STUDENT", "SELF-EMPLOYED"] as const,
-  registered_sk_voter: ["YES", "NO"] as const,
-  registered_national_voter: ["YES", "NO"] as const,
-  attended_kk_assembly: ["YES", "NO"] as const,
-  voted_last_sk_election: ["YES", "NO"] as const,
-  voted_last_national_election: ["YES", "NO"] as const,
-  assembly_attendance: ["NEVER", "SOMETIMES", "ALWAYS"] as const,
+  work_status: ["Employed", "Unemployed", "Student", "Self-Employed"] as const,
+  registered_sk_voter: ["Yes", "No"] as const,
+  registered_national_voter: ["Yes", "No"] as const,
+  attended_kk_assembly: ["Yes", "No"] as const,
+  voted_last_sk_election: ["Yes", "No"] as const,
+  voted_last_national_election: ["Yes", "No"] as const,
+  assembly_attendance: ["Never", "Sometimes", "Always"] as const,
   barangay: [
-    "APLAYA", "BOBONTUGAN", "CORRALES", "DANSOLIHON", "I. S. CRUZ", "JAMPASON",
-    "KIMAYA", "LIGHT HOUSE (POB.)", "LOWER JASAAN", "NATUBO", "SAN ANTONIO",
-    "SAN NICOLAS", "SANTA CRUZ", "SOLANA", "UPPER JASAAN"
+    "Aplaya", "Bobontugan", "Corrales", "Dansolihon", "I. S. Cruz", "Jampason",
+    "Kimaya", "Light House (Pob.)", "Lower Jasaan", "Natubo", "San Antonio",
+    "San Nicolas", "Santa Cruz", "Solana", "Upper Jasaan"
   ] as const,
   // Add aliases for form compatibility
   highest_education: [
-    "ELEMENTARY UNDERGRADUATE",
-    "ELEMENTARY GRADUATE", 
-    "HIGH SCHOOL UNDERGRADUATE",
-    "HIGH SCHOOL GRADUATE",
-    "VOCATIONAL UNDERGRADUATE",
-    "VOCATIONAL GRADUATE",
-    "COLLEGE UNDERGRADUATE",
-    "COLLEGE GRADUATE",
-    "MASTERAL UNDERGRADUATE",
-    "MASTERAL GRADUATE",
-    "DOCTORAL UNDERGRADUATE",
-    "DOCTORAL GRADUATE"
+    "Elementary Undergraduate",
+    "Elementary Graduate", 
+    "High School Undergraduate",
+    "High School Graduate",
+    "Vocational Undergraduate",
+    "Vocational Graduate",
+    "College Undergraduate",
+    "College Graduate",
+    "Masteral Undergraduate",
+    "Masteral Graduate",
+    "Doctoral Undergraduate",
+    "Doctoral Graduate"
   ] as const,
-  registered_voter: ["YES", "NO"] as const,
-  voted_last_election: ["YES", "NO"] as const
+  registered_voter: ["Yes", "No"] as const,
+  voted_last_election: ["Yes", "No"] as const
 };
 
 // Form schema and types for Census form
@@ -110,3 +110,33 @@ export const consolidatedDataSchema = z.object({
 });
 
 export type ConsolidatedDataValues = z.infer<typeof consolidatedDataSchema>;
+
+// Activity log schema
+export const activityLogSchema = z.object({
+  id: z.string().optional(),
+  user_id: z.string(),
+  action: z.string(),
+  table_name: z.string(),
+  record_id: z.string().optional(),
+  details: z.string().optional(),
+  timestamp: z.string().optional(),
+  created: z.string().optional(),
+  updated: z.string().optional(),
+});
+
+export type ActivityLog = z.infer<typeof activityLogSchema>;
+
+// Batch operation schema
+export const batchOperationSchema = z.object({
+  id: z.string().optional(),
+  user_id: z.string(),
+  operation_type: z.string(),
+  table_name: z.string(),
+  affected_records: z.number(),
+  details: z.string().optional(),
+  timestamp: z.string().optional(),
+  created: z.string().optional(),
+  updated: z.string().optional(),
+});
+
+export type BatchOperation = z.infer<typeof batchOperationSchema>;
