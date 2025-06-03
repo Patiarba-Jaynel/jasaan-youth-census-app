@@ -1,4 +1,3 @@
-
 import { pbClient } from './pb-client';
 
 export interface ActivityLog {
@@ -192,10 +191,24 @@ export const activityLogger = {
 
   async getBatchLogs() {
     try {
-      return await pbClient.collection('activity_logs').getFullList({
+      const logs = await pbClient.collection('activity_logs').getFullList({
         filter: 'batch_id != ""',
         sort: '-created'
       });
+      return logs.map(log => ({
+        id: log.id,
+        action: log.action,
+        entity_type: log.entity_type,
+        entity_id: log.entity_id,
+        entity_name: log.entity_name,
+        user_id: log.user_id,
+        user_name: log.user_name,
+        details: log.details,
+        batch_id: log.batch_id,
+        timestamp: log.timestamp,
+        created: log.created,
+        updated: log.updated
+      })) as ActivityLog[];
     } catch (error) {
       console.error('Failed to fetch batch logs:', error);
       return [];
@@ -204,10 +217,24 @@ export const activityLogger = {
 
   async getConsolidatedLogs() {
     try {
-      return await pbClient.collection('activity_logs').getFullList({
+      const logs = await pbClient.collection('activity_logs').getFullList({
         filter: 'entity_type = "consolidated"',
         sort: '-created'
       });
+      return logs.map(log => ({
+        id: log.id,
+        action: log.action,
+        entity_type: log.entity_type,
+        entity_id: log.entity_id,
+        entity_name: log.entity_name,
+        user_id: log.user_id,
+        user_name: log.user_name,
+        details: log.details,
+        batch_id: log.batch_id,
+        timestamp: log.timestamp,
+        created: log.created,
+        updated: log.updated
+      })) as ActivityLog[];
     } catch (error) {
       console.error('Failed to fetch consolidated logs:', error);
       return [];
@@ -216,10 +243,24 @@ export const activityLogger = {
 
   async getUserLogs() {
     try {
-      return await pbClient.collection('activity_logs').getFullList({
+      const logs = await pbClient.collection('activity_logs').getFullList({
         filter: 'entity_type = "user" || entity_type = "session"',
         sort: '-created'
       });
+      return logs.map(log => ({
+        id: log.id,
+        action: log.action,
+        entity_type: log.entity_type,
+        entity_id: log.entity_id,
+        entity_name: log.entity_name,
+        user_id: log.user_id,
+        user_name: log.user_name,
+        details: log.details,
+        batch_id: log.batch_id,
+        timestamp: log.timestamp,
+        created: log.created,
+        updated: log.updated
+      })) as ActivityLog[];
     } catch (error) {
       console.error('Failed to fetch user logs:', error);
       return [];

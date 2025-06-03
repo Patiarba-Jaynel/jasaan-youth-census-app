@@ -1,3 +1,6 @@
+
+import { z } from "zod";
+
 export interface Youth {
   id?: string;
   name: string;
@@ -53,3 +56,28 @@ export const enumOptions = {
     "SAN NICOLAS", "SANTA CRUZ", "UPPER JASAAN", "SOLANA"
   ] as const
 };
+
+// Form schema and types for Census form
+export const formSchema = z.object({
+  region: z.string().min(1, "Region is required"),
+  province: z.string().min(1, "Province is required"),
+  city_municipality: z.string().min(1, "City/Municipality is required"),
+  barangay: z.enum(enumOptions.barangay).optional(),
+  name: z.string().min(1, "Name is required"),
+  birthday: z.date().nullable(),
+  sex: z.enum(enumOptions.sex).optional(),
+  civil_status: z.enum(enumOptions.civil_status).optional(),
+  youth_classification: z.enum(enumOptions.youth_classification).optional(),
+  youth_age_group: z.enum(enumOptions.youth_age_group).optional(),
+  email_address: z.string().optional(),
+  contact_number: z.string().optional(),
+  home_address: z.string().optional(),
+  highest_education: z.enum(enumOptions.educational_background).optional(),
+  work_status: z.enum(enumOptions.work_status).optional(),
+  registered_voter: z.enum(enumOptions.registered_sk_voter).optional(),
+  voted_last_election: z.enum(enumOptions.voted_last_sk_election).optional(),
+  attended_kk_assembly: z.enum(enumOptions.attended_kk_assembly).optional(),
+  kk_assemblies_attended: z.number().min(0).default(1),
+});
+
+export type FormValues = z.infer<typeof formSchema>;
