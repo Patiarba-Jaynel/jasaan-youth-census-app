@@ -1,7 +1,8 @@
+
 import { pbClient } from './pb-client';
 
 export interface ActivityLog {
-  id?: string;
+  id: string;
   action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'IMPORT' | 'LOGIN' | 'LOGOUT';
   entity_type: 'youth' | 'user' | 'consolidated' | 'session';
   entity_id: string;
@@ -11,8 +12,8 @@ export interface ActivityLog {
   details: string;
   batch_id?: string;
   timestamp: string;
-  created?: string;
-  updated?: string;
+  created: string;
+  updated: string;
 }
 
 export const activityLogger = {

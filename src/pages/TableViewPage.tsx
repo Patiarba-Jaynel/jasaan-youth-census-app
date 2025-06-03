@@ -18,12 +18,17 @@ const TableViewPage = () => {
   const [youthRecords, setYouthRecords] = useState<YouthRecord[]>([]);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isBatchManagementOpen, setIsBatchManagementOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const fetchData = async () => {
+    console.log("TableViewPage: Starting fetchData");
     try {
       setIsLoading(true);
+      setError(null);
+      console.log("TableViewPage: Calling pbClient.youth.getAll()");
       const records = await pbClient.youth.getAll();
+      console.log("TableViewPage: Retrieved records:", records?.length);
 
       // Ensure kk_assemblies_attended is always a number
       const processedRecords = records.map(record => ({
@@ -37,12 +42,15 @@ const TableViewPage = () => {
           : record.barangay
       }));
 
+      console.log("TableViewPage: Processed records:", processedRecords?.length);
       setYouthRecords(processedRecords);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("TableViewPage: Error fetching data:", error);
+      setError(error?.message || "Failed to load youth records");
       toast.error("Failed to load youth records");
     } finally {
       setIsLoading(false);
+      console.log("TableViewPage: fetchData completed");
     }
   };
 
@@ -80,8 +88,11 @@ const TableViewPage = () => {
   };
 
   useEffect(() => {
+    console.log("TableViewPage: useEffect triggered");
     const checkAuth = async () => {
+      console.log("TableViewPage: Checking authentication");
       const isLoggedIn = pbClient.auth.isLoggedIn();
+      console.log("TableViewPage: Is logged in:", isLoggedIn);
 
       if (!isLoggedIn) {
         toast.error("Authentication required", {
@@ -91,11 +102,33 @@ const TableViewPage = () => {
         return;
       }
 
-      fetchData();
+      await fetchData();
     };
 
     checkAuth();
   }, [navigate]);
+
+  console.log("TableViewPage: Rendering - isLoading:", isLoading, "error:", error, "records:", youthRecords?.length);
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <NavBar />
+        <main className="flex-1 py-12">
+          <div className="container px-4 md:px-6">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-red-600 mb-4">Error Loading Data</h1>
+              <p className="text-gray-600 mb-4">{error}</p>
+              <Button onClick={() => window.location.reload()}>
+                Reload Page
+              </Button>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen">

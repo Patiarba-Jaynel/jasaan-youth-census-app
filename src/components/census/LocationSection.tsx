@@ -3,18 +3,15 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Control } from "react-hook-form";
-import { FormValues } from "@/lib/schema";
+import { FormValues, enumOptions } from "@/lib/schema";
 
 interface LocationSectionProps {
   control: Control<FormValues>;
 }
 
 export const LocationSection = ({ control }: LocationSectionProps) => {
-  const barangays = [
-    "Aplaya", "Bobontugan", "Corrales", "Danao", "Jampason", "Kimaya",
-    "Lower Jasaan (Pob.)", "Luz Banzon", "Natubo", "San Antonio", 
-    "San Isidro", "San Nicolas", "Solana", "Upper Jasaan (Pob.)", "I. S. Cruz",
-  ];
+  // Sort barangays alphabetically
+  const sortedBarangays = [...enumOptions.barangay].sort();
 
   return (
     <div className="md:col-span-2">
@@ -72,7 +69,7 @@ export const LocationSection = ({ control }: LocationSectionProps) => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {barangays.map((barangay) => (
+                  {sortedBarangays.map((barangay) => (
                     <SelectItem key={barangay} value={barangay}>
                       {barangay}
                     </SelectItem>

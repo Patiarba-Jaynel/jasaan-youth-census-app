@@ -53,8 +53,25 @@ export const enumOptions = {
   barangay: [
     "APLAYA", "BOBONTUGAN", "CORRALES", "DANSOLIHON", "I. S. CRUZ", "JAMPASON",
     "KIMAYA", "LIGHT HOUSE (POB.)", "LOWER JASAAN", "NATUBO", "SAN ANTONIO",
-    "SAN NICOLAS", "SANTA CRUZ", "UPPER JASAAN", "SOLANA"
-  ] as const
+    "SAN NICOLAS", "SANTA CRUZ", "SOLANA", "UPPER JASAAN"
+  ] as const,
+  // Add aliases for form compatibility
+  highest_education: [
+    "ELEMENTARY UNDERGRADUATE",
+    "ELEMENTARY GRADUATE", 
+    "HIGH SCHOOL UNDERGRADUATE",
+    "HIGH SCHOOL GRADUATE",
+    "VOCATIONAL UNDERGRADUATE",
+    "VOCATIONAL GRADUATE",
+    "COLLEGE UNDERGRADUATE",
+    "COLLEGE GRADUATE",
+    "MASTERAL UNDERGRADUATE",
+    "MASTERAL GRADUATE",
+    "DOCTORAL UNDERGRADUATE",
+    "DOCTORAL GRADUATE"
+  ] as const,
+  registered_voter: ["YES", "NO"] as const,
+  voted_last_election: ["YES", "NO"] as const
 };
 
 // Form schema and types for Census form
@@ -81,3 +98,15 @@ export const formSchema = z.object({
 });
 
 export type FormValues = z.infer<typeof formSchema>;
+
+// Consolidated data schema
+export const consolidatedDataSchema = z.object({
+  barangay: z.enum(enumOptions.barangay),
+  age_bracket: z.string(),
+  gender: z.enum(["Male", "Female"] as const),
+  year: z.number(),
+  month: z.string(),
+  count: z.number().min(0),
+});
+
+export type ConsolidatedDataValues = z.infer<typeof consolidatedDataSchema>;

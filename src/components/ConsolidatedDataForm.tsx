@@ -35,7 +35,15 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December"
 ];
 
-const YEARS = Array.from({ length: 11 }, (_, i) => 2020 + i); // 2020-2030
+// Dynamic year generation - automatically includes current year + 6 future years
+const generateYears = () => {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let i = 2020; i <= currentYear + 6; i++) {
+    years.push(i);
+  }
+  return years;
+};
 
 export function ConsolidatedDataForm({ 
   initialData, 
@@ -51,6 +59,10 @@ export function ConsolidatedDataForm({
     month: initialData?.month || "",
     count: initialData?.count || 0,
   });
+
+  // Sort barangays alphabetically
+  const sortedBarangays = [...enumOptions.barangay].sort();
+  const YEARS = generateYears();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,7 +90,7 @@ export function ConsolidatedDataForm({
                 <SelectValue placeholder="Select barangay" />
               </SelectTrigger>
               <SelectContent>
-                {enumOptions.barangay.map((barangay) => (
+                {sortedBarangays.map((barangay) => (
                   <SelectItem key={barangay} value={barangay}>
                     {barangay}
                   </SelectItem>

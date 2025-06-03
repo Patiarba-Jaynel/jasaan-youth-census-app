@@ -69,69 +69,88 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Left side with logo */}
-      <div className="flex-1 flex items-center justify-center bg-blue-600">
-        <div className="text-center text-white">
-          <img
-            src="/jasaan-logo.png"
-            alt="Jasaan Logo"
-            className="h-32 w-32 mx-auto mb-6 object-contain"
-          />
-          <h1 className="text-4xl font-bold mb-2">Municipality of Jasaan</h1>
-          <p className="text-xl">Misamis Oriental</p>
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto px-4 py-16">
+        <div className="flex flex-col lg:flex-row items-center justify-center min-h-[70vh] gap-12">
+          {/* Left side - Logo and Branding */}
+          <div className="flex-1 max-w-md text-center lg:text-left">
+            <div className="mb-8">
+              <img
+                src="/jasaan-logo.png"
+                alt="Jasaan Logo"
+                className="h-32 w-32 mx-auto lg:mx-0 mb-6 object-contain"
+              />
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                Municipality of Jasaan
+              </h1>
+              <p className="text-xl text-gray-600 mb-4">Misamis Oriental</p>
+              <div className="space-y-2 text-gray-600">
+                <p className="text-lg">Data Management System</p>
+                <p className="text-sm">Secure access to consolidated data and analytics</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right side - Login Form */}
+          <div className="flex-1 max-w-md w-full">
+            <Card className="shadow-lg">
+              <CardHeader className="text-center pb-6">
+                <CardTitle className="text-2xl font-bold text-gray-900">
+                  Admin Portal
+                </CardTitle>
+                <CardDescription className="text-gray-600">
+                  Enter your credentials to access the dashboard
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-gray-700">Email Address</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-gray-700">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-11 bg-blue-600 hover:bg-blue-700" 
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Signing in..." : "Sign In"}
+                  </Button>
+                </form>
+                
+                <div className="text-center">
+                  <Button
+                    type="button"
+                    variant="link"
+                    onClick={() => setIsForgotPasswordOpen(true)}
+                    className="text-blue-600 hover:text-blue-700 text-sm"
+                  >
+                    Forgot your password?
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
-      
-      {/* Right side with login form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Admin Portal</CardTitle>
-            <CardDescription>
-              Enter your credentials to access the dashboard
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
-              </Button>
-              <div className="text-center">
-                <Button
-                  type="button"
-                  variant="link"
-                  onClick={() => setIsForgotPasswordOpen(true)}
-                  className="text-sm"
-                >
-                  Forgot your password?
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Forgot Password Dialog */}
