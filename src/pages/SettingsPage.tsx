@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect } from "react";
@@ -183,14 +182,18 @@ const SettingsPage = () => {
         is_admin: userForm.is_admin,
       });
 
+      // Create user data with proper field names
       const userData = {
         email: userForm.email,
+        emailVisibility: true,
         name: userForm.name,
         password: userForm.password,
         passwordConfirm: userForm.confirmPassword,
         is_admin: userForm.is_admin,
+        verified: true // Auto-verify new users created by admin
       };
 
+      console.log("Sending user data to PocketBase:", userData);
       const createdUser = await pbClient.collection("users").create(userData);
       console.log("User created successfully:", createdUser);
 
@@ -211,8 +214,8 @@ const SettingsPage = () => {
       await loadActivityLogs();
     } catch (error: any) {
       console.error("Error creating user:", error);
-      const errorMessage =
-        error?.data?.message || error?.message || "Failed to create user";
+      const errorMessage = error?.data?.message || error?.message || "Failed to create user";
+      console.error("Detailed error:", error?.data || error);
       toast.error(errorMessage);
     }
   };

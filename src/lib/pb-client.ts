@@ -39,6 +39,7 @@ export interface ConsolidatedData {
   year: number;
   month: string;
   count: number;
+  batch_id?: string;
   created: string;
   updated: string;
 }
@@ -80,20 +81,12 @@ export const pbClient = {
   // Youth census records with activity logging
   youth: {
     create: async (data: Omit<YouthRecord, 'id' | 'created' | 'updated'>) => {
-      console.log('pbClient.youth.create: Starting with data:', data);
-      try {
-        const record = await pb.collection('youth').create(data);
-        console.log('pbClient.youth.create: Record created successfully:', record.id);
-        
-        // Log the activity
-        await activityLogger.logYouthCreate(record.id, data.name, data.batch_id);
-        console.log('pbClient.youth.create: Activity logged successfully');
-        
-        return record;
-      } catch (error) {
-        console.error('pbClient.youth.create: Error creating record:', error);
-        throw error;
-      }
+      console.log('Creating youth record with data:', data);
+      const record = await pb.collection('youth').create(data);
+      console.log('Created youth record:', record);
+      await activityLogger.logYouthCreate(record.id, data.name, data.batch_id);
+      console.log('Logged youth creation activity');
+      return record;
     },
     createMany: async (records: Omit<YouthRecord, 'id' | 'created' | 'updated'>[], batchId?: string) => {
       const createdRecords = [];
@@ -135,10 +128,34 @@ export const pbClient = {
     }
   },
   
-  // Consolidated data methods
+  // Consolidated data methods with activity logging
   consolidated: {
     create: async (data: Omit<ConsolidatedData, 'id' | 'created' | 'updated'>) => {
-      return await pb.collection('consolidated_data').create(data);
+      console.log('Creating consolidated record with data:', data);
+      const record = await pb.collection('consolidated_data').create(data);
+      console.log('Created consolidated record:', record);
+      await activityLogger.logConsolidatedCreate(record.id, data.barangay, `${data.age_bracket} - ${data.gender} (${data.count} records)`);
+      return record;
+    },
+    createMany: async (records: Omit<ConsolidatedData, 'id' | 'created' | 'updated'>[], batchId?: string) => {
+      const createdRecords = [];
+      for (const record of records) {
+        try {
+          const recordWithBatch = batchId ? { ...record, batch_id: batchId } : record;
+          const createdRecord = await pb.collection('consolidated_data').create(recordWithBatch);
+          createdRecords.push(createdRecord);
+          await activityLogger.logConsolidatedCreate(createdRecord.id, record.barangay, `${record.age_bracket} - ${record.gender} (${record.count} records) - Batch: ${batchId}`);
+        } catch (error) {
+          console.error("Error creating consolidated record:", error);
+          throw error;
+        }
+      }
+      
+      if (batchId) {
+        await activityLogger.logConsolidatedImport(batchId, createdRecords.length);
+      }
+      
+      return createdRecords;
     },
     getAll: async () => {
       return await pb.collection('consolidated_data').getFullList<ConsolidatedData>();
@@ -147,10 +164,16 @@ export const pbClient = {
       return await pb.collection('consolidated_data').getOne<ConsolidatedData>(id);
     },
     update: async (id: string, data: Partial<ConsolidatedData>) => {
-      return await pb.collection('consolidated_data').update(id, data);
+      const record = await pb.collection('consolidated_data').update(id, data);
+      const currentRecord = await pb.collection('consolidated_data').getOne(id);
+      await activityLogger.logConsolidatedUpdate(id, currentRecord.barangay, data);
+      return record;
     },
     delete: async (id: string) => {
-      return await pb.collection('consolidated_data').delete(id);
+      const record = await pb.collection('consolidated_data').getOne(id);
+      await pb.collection('consolidated_data').delete(id);
+      await activityLogger.logConsolidatedDelete(id, record.barangay);
+      return record;
     }
   },
   

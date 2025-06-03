@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
@@ -114,60 +113,61 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       const recordsToSearch = tableState.filteredData;
       console.log("Records to search:", recordsToSearch.length);
       
-      const fieldMapping: { [key: string]: string } = {
-        "civil_status": "civil_status",
-        "name": "name",
-        "age": "age",
-        "sex": "sex",
-        "barangay": "barangay",
-        "youth_classification": "youth_classification",
-        "youth_age_group": "youth_age_group",
-        "highest_education": "highest_education",
-        "work_status": "work_status",
-        "registered_voter": "registered_voter",
-        "voted_last_election": "voted_last_election",
-        "attended_kk_assembly": "attended_kk_assembly",
-        "kk_assemblies_attended": "kk_assemblies_attended",
-        "home_address": "home_address"
+      // Improved normalization function
+      const normalizeForMatch = (value: any): string => {
+        if (value === null || value === undefined || value === "") return "N/A";
+        return String(value).trim().toLowerCase();
       };
 
-      const actualFieldName = fieldMapping[field] || field;
-      console.log("Field mapping:", field, "->", actualFieldName);
+      const normalizedOldValue = normalizeForMatch(oldValue);
+      console.log("Normalized old value:", normalizedOldValue);
       
       const recordsToUpdate = recordsToSearch.filter((record) => {
-        const recordValue = normalizeForComparison(record[actualFieldName as keyof YouthRecord]);
-        const normalizedOldValue = normalizeForComparison(oldValue);
+        const recordValue = normalizeForMatch(record[field as keyof YouthRecord]);
         
+        // Try exact match first, then partial match
         const exactMatch = recordValue === normalizedOldValue;
-        const caseInsensitiveMatch = recordValue.toLowerCase() === normalizedOldValue.toLowerCase();
-        const upperCaseMatch = recordValue.toUpperCase() === normalizedOldValue.toUpperCase();
+        const partialMatch = recordValue.includes(normalizedOldValue) || normalizedOldValue.includes(recordValue);
         
-        const matches = exactMatch || caseInsensitiveMatch || upperCaseMatch;
+        const matches = exactMatch || partialMatch;
         
-        console.log(`Record ${record.id}: ${actualFieldName}="${recordValue}" vs "${normalizedOldValue}" - matches: ${matches}`);
+        console.log(`Record ${record.id}: ${field}="${record[field as keyof YouthRecord]}" -> normalized: "${recordValue}" vs "${normalizedOldValue}" - matches: ${matches}`);
         return record.id && matches;
       });
       
       console.log("Records to update:", recordsToUpdate.length);
       
       if (recordsToUpdate.length === 0) {
-        console.log("No matching records found. Sample values for field:", actualFieldName);
+        console.log("No matching records found. Sample values for field:", field);
         recordsToSearch.slice(0, 5).forEach(record => {
-          const value = record[actualFieldName as keyof YouthRecord];
-          console.log(`Record ${record.id}: ${actualFieldName}="${value}" (normalized: "${normalizeForComparison(value)}")`);
+          const value = record[field as keyof YouthRecord];
+          console.log(`Record ${record.id}: ${field}="${value}" (normalized: "${normalizeForMatch(value)}")`);
         });
         toast.info("No matching records found to update");
         return;
       }
       
       let updatedCount = 0;
+      const errors = [];
+      
       for (const record of recordsToUpdate) {
-        const normalizedValue = newValue.trim() === '' ? 'N/A' : newValue;
-        await pbClient.youth.update(record.id, { [actualFieldName]: normalizedValue });
-        updatedCount++;
+        try {
+          const normalizedValue = newValue.trim() === '' ? 'N/A' : newValue;
+          await pbClient.youth.update(record.id, { [field]: normalizedValue });
+          updatedCount++;
+        } catch (error) {
+          console.error(`Error updating record ${record.id}:`, error);
+          errors.push(`Failed to update ${record.name}: ${error}`);
+        }
       }
       
-      toast.success(`Updated ${updatedCount} records`);
+      if (errors.length > 0) {
+        toast.error(`Updated ${updatedCount} records, but ${errors.length} failed`);
+        console.error("Batch update errors:", errors);
+      } else {
+        toast.success(`Successfully updated ${updatedCount} records`);
+      }
+      
       onDataChange();
     } catch (error) {
       console.error("Error during batch update:", error);

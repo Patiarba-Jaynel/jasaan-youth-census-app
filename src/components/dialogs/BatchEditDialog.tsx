@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Dialog,
@@ -70,13 +71,23 @@ export function BatchEditDialog({
     onOpenChange(false);
   };
 
-  // Count occurrences of the search term in the selected field
+  // Enhanced match counting with better normalization
   const getMatchCount = () => {
     if (!field || !oldValue) return 0;
 
-    return selectedRecords.filter(record =>
-      String(record[field as keyof YouthRecord]) === oldValue
-    ).length;
+    const normalizeValue = (value: any): string => {
+      if (value === null || value === undefined || value === "") return "N/A";
+      return String(value).trim();
+    };
+
+    const normalizedOldValue = normalizeValue(oldValue).toLowerCase();
+
+    return selectedRecords.filter(record => {
+      const recordValue = normalizeValue(record[field as keyof YouthRecord]).toLowerCase();
+      return recordValue === normalizedOldValue || 
+             recordValue.includes(normalizedOldValue) ||
+             normalizedOldValue.includes(recordValue);
+    }).length;
   };
 
   const matchCount = getMatchCount();
