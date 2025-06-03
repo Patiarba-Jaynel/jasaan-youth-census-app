@@ -138,10 +138,10 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Isy">In-School Youth (ISY)</SelectItem>
-                  <SelectItem value="Osy">Out-of-School Youth (OSY)</SelectItem>
-                  <SelectItem value="Wy">Working Youth (WY)</SelectItem>
-                  <SelectItem value="Ysn">
+                  <SelectItem value="ISY">In-School Youth (ISY)</SelectItem>
+                  <SelectItem value="OSY">Out-of-School Youth (OSY)</SelectItem>
+                  <SelectItem value="WY">Working Youth (WY)</SelectItem>
+                  <SelectItem value="YSN">
                     Youth with Special Needs (YSN)
                   </SelectItem>
                 </SelectContent>

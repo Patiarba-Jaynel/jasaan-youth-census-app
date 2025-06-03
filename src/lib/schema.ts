@@ -27,7 +27,7 @@ export interface Youth {
 export const enumOptions = {
   sex: ["Male", "Female"] as const,
   civil_status: ["Single", "Married", "Lived-In", "Widowed"] as const,
-  youth_classification: ["Isy", "Osy", "Wy", "Ysn"] as const,
+  youth_classification: ["ISY", "OSY", "WY", "YSN"] as const, // Keep as acronyms
   youth_age_group: ["Core Youth (18-24)", "Child Youth (15-17)", "Young Adult (25-30)"] as const,
   educational_background: [
     "Elementary Undergraduate",
