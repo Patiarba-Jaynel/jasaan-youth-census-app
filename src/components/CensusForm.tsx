@@ -200,6 +200,7 @@ export function CensusForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <LocationSection control={form.control} />
               <PersonalInfoSection control={form.control} />
+
               <ContactSection control={form.control} />
               <EducationSection control={form.control} />
               <CivicSection control={form.control} />
