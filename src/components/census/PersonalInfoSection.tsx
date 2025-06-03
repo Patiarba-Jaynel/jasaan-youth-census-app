@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Control, useWatch } from "react-hook-form";
 import { FormValues } from "@/lib/schema";
@@ -81,13 +82,13 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                 >
                   <FormItem className="flex items-center space-x-3 space-y-0">
                     <FormControl>
-                      <RadioGroupItem value="MALE" />
+                      <RadioGroupItem value="Male" />
                     </FormControl>
                     <FormLabel className="font-normal">Male</FormLabel>
                   </FormItem>
                   <FormItem className="flex items-center space-x-3 space-y-0">
                     <FormControl>
-                      <RadioGroupItem value="FEMALE" />
+                      <RadioGroupItem value="Female" />
                     </FormControl>
                     <FormLabel className="font-normal">Female</FormLabel>
                   </FormItem>
@@ -112,10 +113,10 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="SINGLE">Single</SelectItem>
-                  <SelectItem value="MARRIED">Married</SelectItem>
-                  <SelectItem value="LIVED-IN">Lived-In</SelectItem>
-                  <SelectItem value="WIDOWED">Widowed</SelectItem>
+                  <SelectItem value="Single">Single</SelectItem>
+                  <SelectItem value="Married">Married</SelectItem>
+                  <SelectItem value="Lived-In">Lived-In</SelectItem>
+                  <SelectItem value="Widowed">Widowed</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -137,10 +138,10 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="ISY">In-School Youth (ISY)</SelectItem>
-                  <SelectItem value="OSY">Out-of-School Youth (OSY)</SelectItem>
-                  <SelectItem value="WY">Working Youth (WY)</SelectItem>
-                  <SelectItem value="YSN">
+                  <SelectItem value="Isy">In-School Youth (ISY)</SelectItem>
+                  <SelectItem value="Osy">Out-of-School Youth (OSY)</SelectItem>
+                  <SelectItem value="Wy">Working Youth (WY)</SelectItem>
+                  <SelectItem value="Ysn">
                     Youth with Special Needs (YSN)
                   </SelectItem>
                 </SelectContent>
@@ -164,13 +165,13 @@ export const PersonalInfoSection = ({ control }: PersonalInfoSectionProps) => {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="CHILD YOUTH (15-17)">
+                  <SelectItem value="Child Youth (15-17)">
                     Child Youth (15-17)
                   </SelectItem>
-                  <SelectItem value="CORE YOUTH (18-24)">
+                  <SelectItem value="Core Youth (18-24)">
                     Core Youth (18-24)
                   </SelectItem>
-                  <SelectItem value="YOUNG ADULT (25-30)">
+                  <SelectItem value="Young Adult (25-30)">
                     Young Adult (25-30)
                   </SelectItem>
                 </SelectContent>
