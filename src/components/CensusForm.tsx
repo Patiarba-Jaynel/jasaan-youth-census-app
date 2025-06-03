@@ -90,6 +90,7 @@ export function CensusForm() {
       }
       
       // Validate age consistency only if youth_age_group is provided and not N/A
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (data.youth_age_group && !['N/A', '', undefined].includes(data.youth_age_group as any)) {
         const ageValidation = validateAgeConsistency(
           calculatedAge, 
@@ -189,7 +190,7 @@ export function CensusForm() {
             <Badge variant="outline">YSN - Youth with Special Needs</Badge>
           </div>
           <p className="text-sm mt-2 text-muted-foreground">
-            * Required fields: Name, Birthday, Sex, Barangay. Age will be calculated automatically from birthday. Other fields can be left as "N/A" if unknown.
+            * Required fields: Name, Birthday, Sex, Barangay. While Age will be calculated automatically from given birthday. Other fields can be left as "N/A" if unknown.
           </p>
         </div>
       </CardHeader>
