@@ -4,12 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
 import { ArrowLeft, Plus, Download, History } from "lucide-react";
 import { pbClient } from "@/lib/pb-client";
 import { ConsolidatedAnalytics } from "@/components/ConsolidatedAnalytics";
 import { ConsolidatedDataForm } from "@/components/ConsolidatedDataForm";
 import { ConsolidatedImportDialog } from "@/components/ConsolidatedImportDialog";
+import { ConsolidatedDataTable } from "@/components/ConsolidatedDataTable";
 
 interface ConsolidatedData {
   id: string;
@@ -26,6 +28,7 @@ const ConsolidatedDashboardPage = () => {
   const [consolidatedData, setConsolidatedData] = useState<ConsolidatedData[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("analytics");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -119,6 +122,15 @@ const ConsolidatedDashboardPage = () => {
     toast.success("Data exported successfully");
   };
 
+  const handleRecordUpdate = async () => {
+    try {
+      const records = await pbClient.consolidated.getAll();
+      setConsolidatedData(records);
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -199,7 +211,21 @@ const ConsolidatedDashboardPage = () => {
               onCancel={() => setShowForm(false)}
             />
           ) : (
-            <ConsolidatedAnalytics data={consolidatedData} />
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                <TabsTrigger value="data-management">Data Management</TabsTrigger>
+              </TabsList>
+              <TabsContent value="analytics" className="mt-6">
+                <ConsolidatedAnalytics data={consolidatedData} />
+              </TabsContent>
+              <TabsContent value="data-management" className="mt-6">
+                <ConsolidatedDataTable 
+                  data={consolidatedData} 
+                  onRecordUpdate={handleRecordUpdate}
+                />
+              </TabsContent>
+            </Tabs>
           )}
         </div>
       </main>
