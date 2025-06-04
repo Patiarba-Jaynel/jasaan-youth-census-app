@@ -5,6 +5,36 @@ export interface ValidationResult {
   warnings: string[];
 }
 
+// Helper function to normalize values for comparison
+const normalizeValue = (value: string): string => {
+  if (!value || value === "N/A") return "N/A";
+  return value.trim();
+};
+
+// Helper function to normalize sex values
+const normalizeSex = (value: string): string => {
+  if (!value || value === "N/A") return "N/A";
+  const normalized = value.toLowerCase().trim();
+  if (normalized === "male" || normalized === "m") return "Male";
+  if (normalized === "female" || normalized === "f") return "Female";
+  return value;
+};
+
+// Helper function to normalize civil status values
+const normalizeCivilStatus = (value: string): string => {
+  if (!value || value === "N/A") return "N/A";
+  const normalized = value.toLowerCase().trim();
+  const statusMap: { [key: string]: string } = {
+    "single": "Single",
+    "married": "Married",
+    "lived-in": "Lived-In",
+    "widowed": "Widowed",
+    "divorced": "Divorced",
+    "separated": "Separated"
+  };
+  return statusMap[normalized] || value;
+};
+
 export function validateAgeConsistency(age: number, birthday: string, youthAgeGroup: string): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -24,9 +54,9 @@ export function validateAgeConsistency(age: number, birthday: string, youthAgeGr
   // Check age vs youth age group (only if not N/A)
   if (youthAgeGroup && youthAgeGroup !== "N/A") {
     const ageGroupRanges: { [key: string]: [number, number] } = {
-      "CHILD YOUTH (15-17)": [15, 17],
-      "CORE YOUTH (18-24)": [18, 24], 
-      "YOUNG ADULT (25-30)": [25, 30]
+      "Child Youth (15-17)": [15, 17],
+      "Core Youth (18-24)": [18, 24], 
+      "Young Adult (25-30)": [25, 30]
     };
     
     const range = ageGroupRanges[youthAgeGroup];
@@ -47,8 +77,28 @@ export function validateDropdownValue(value: string, allowedValues: readonly str
   const warnings: string[] = [];
   
   // Allow N/A for all dropdown fields
-  if (value && value !== "N/A" && !allowedValues.includes(value as any)) {
-    errors.push(`Invalid ${fieldName}: "${value}" (not in allowed options)`);
+  if (!value || value === "N/A") {
+    return { isValid: true, errors, warnings };
+  }
+
+  // Normalize the value based on field type
+  let normalizedValue = value;
+  if (fieldName === 'sex') {
+    normalizedValue = normalizeSex(value);
+  } else if (fieldName === 'civil_status') {
+    normalizedValue = normalizeCivilStatus(value);
+  }
+
+  // Check if the normalized value is in allowed values
+  if (!allowedValues.includes(normalizedValue as any)) {
+    // Try case-insensitive match as fallback
+    const caseInsensitiveMatch = allowedValues.find(
+      allowed => allowed.toLowerCase() === normalizedValue.toLowerCase()
+    );
+    
+    if (!caseInsensitiveMatch) {
+      errors.push(`Invalid ${fieldName}: "${value}" (not in allowed options: ${allowedValues.join(', ')})`);
+    }
   }
   
   return {
@@ -77,19 +127,6 @@ export function validateRequiredFields(record: any): ValidationResult {
     { field: 'youth_age_group', label: 'age group' }
   ];
   
-  // Optional fields - can be N/A or blank without warnings
-  const optionalFields = [
-    { field: 'civil_status', label: 'civil status' },
-    { field: 'highest_education', label: 'education level' },
-    { field: 'work_status', label: 'work status' },
-    { field: 'registered_voter', label: 'voter registration status' },
-    { field: 'voted_last_election', label: 'voting history' },
-    { field: 'attended_kk_assembly', label: 'KK assembly attendance info' },
-    { field: 'home_address', label: 'home address' },
-    { field: 'email_address', label: 'email address' },
-    { field: 'contact_number', label: 'contact number' }
-  ];
-
   // Check critical fields - these must have actual values
   criticalFields.forEach(({ field, label }) => {
     const value = record[field];
@@ -106,9 +143,6 @@ export function validateRequiredFields(record: any): ValidationResult {
     }
   });
 
-  // Optional fields - no warnings for N/A values
-  // Only warn if completely missing from the record structure
-  
   return {
     isValid: errors.length === 0,
     errors,
