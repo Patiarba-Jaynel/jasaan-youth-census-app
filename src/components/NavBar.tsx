@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -39,13 +40,7 @@ export function NavBar() {
     { href: "/", label: "Home" },
     { href: "/about", label: "About" },
     ...(isLoggedIn
-      ? [
-          { href: "/dashboard/table", label: "Youth Table View", icon: Table },
-          { href: "/dashboard/youth/activity", label: "Youth Activity", icon: Activity },
-          { href: "/dashboard/consolidated", label: "Consolidated Dashboard", icon: BarChart3 },
-          { href: "/dashboard/consolidated/activity", label: "Consolidated Activity", icon: Activity },
-          { href: "/dashboard/settings", label: "Settings", icon: Settings },
-        ]
+      ? []
       : [{ href: "/census", label: "Census Form" }]),
   ];
 
@@ -102,7 +97,7 @@ export function NavBar() {
           <NavLinks />
           {isLoggedIn && (
             <Button 
-              onClick={handleLogout} 
+              onClick={() => navigate("/dashboard")} 
               variant="destructive"
               size="sm"
               className="bg-red-600 hover:bg-red-700"
