@@ -150,10 +150,6 @@ const YouthActivityPage = () => {
                   </Table>
                 </ScrollArea>
               )}
-            </TableBody>
-          </Table>
-        </ScrollArea>
-              )}
             </CardContent>
           </Card>
         </div>
