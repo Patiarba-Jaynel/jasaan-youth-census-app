@@ -49,14 +49,14 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
   const [editingRecord, setEditingRecord] = useState<ConsolidatedData | null>(null);
   const [deletingRecord, setDeletingRecord] = useState<ConsolidatedData | null>(null);
 
-  // Get unique values for filters
+  // Get unique values for filters - filter out empty strings
   const uniqueBarangays = useMemo(() => 
-    [...new Set(data.map(record => record.barangay))].sort(), 
+    [...new Set(data.map(record => record.barangay).filter(b => b && b.trim() !== ""))].sort(), 
     [data]
   );
   
   const uniqueYears = useMemo(() => 
-    [...new Set(data.map(record => record.year))].sort((a, b) => b - a), 
+    [...new Set(data.map(record => record.year).filter(y => y && !isNaN(y)))].sort((a, b) => b - a), 
     [data]
   );
 
@@ -134,7 +134,7 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
             <SelectValue placeholder="Filter by Barangay" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Barangays</SelectItem>
+            <SelectItem value="all-barangays">All Barangays</SelectItem>
             {uniqueBarangays.map(barangay => (
               <SelectItem key={barangay} value={barangay}>{barangay}</SelectItem>
             ))}
@@ -146,7 +146,7 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
             <SelectValue placeholder="Filter by Gender" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Genders</SelectItem>
+            <SelectItem value="all-genders">All Genders</SelectItem>
             <SelectItem value="Male">Male</SelectItem>
             <SelectItem value="Female">Female</SelectItem>
           </SelectContent>
@@ -157,7 +157,7 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
             <SelectValue placeholder="Year" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Years</SelectItem>
+            <SelectItem value="all-years">All Years</SelectItem>
             {uniqueYears.map(year => (
               <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
             ))}

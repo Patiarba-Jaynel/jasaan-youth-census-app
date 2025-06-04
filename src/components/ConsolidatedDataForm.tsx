@@ -60,8 +60,8 @@ export function ConsolidatedDataForm({
     count: initialData?.count || 0,
   });
 
-  // Sort barangays alphabetically
-  const sortedBarangays = [...enumOptions.barangay].sort();
+  // Sort barangays alphabetically and filter out empty strings
+  const sortedBarangays = [...enumOptions.barangay].filter(b => b && b.trim() !== "").sort();
   const YEARS = generateYears();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -151,7 +151,7 @@ export function ConsolidatedDataForm({
                 <SelectValue placeholder="Select age bracket" />
               </SelectTrigger>
               <SelectContent>
-                {AGE_BRACKETS.map((bracket) => (
+                {AGE_BRACKETS.filter(bracket => bracket && bracket.trim() !== "").map((bracket) => (
                   <SelectItem key={bracket} value={bracket}>
                     {bracket}
                   </SelectItem>
@@ -180,7 +180,7 @@ export function ConsolidatedDataForm({
                 <SelectValue placeholder="Select year" />
               </SelectTrigger>
               <SelectContent>
-                {YEARS.map((year) => (
+                {YEARS.filter(year => year && !isNaN(year)).map((year) => (
                   <SelectItem key={year} value={year.toString()}>
                     {year}
                   </SelectItem>
@@ -196,7 +196,7 @@ export function ConsolidatedDataForm({
                 <SelectValue placeholder="Select month" />
               </SelectTrigger>
               <SelectContent>
-                {MONTHS.map((month) => (
+                {MONTHS.filter(month => month && month.trim() !== "").map((month) => (
                   <SelectItem key={month} value={month}>
                     {month}
                   </SelectItem>

@@ -87,18 +87,18 @@ export function EditConsolidatedDialog({
   const barangays = [
     "Aplaya", "Bobuntugan", "Jasaan Proper", "Kinuguitan", "Luz Banzon",
     "Natubo", "Pontanar", "San Antonio", "Solana", "Upper Jasaan"
-  ];
+  ].filter(b => b && b.trim() !== "");
 
   const ageBrackets = [
     "0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39",
     "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74",
     "75-79", "80-84", "85+"
-  ];
+  ].filter(bracket => bracket && bracket.trim() !== "");
 
   const months = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
-  ];
+  ].filter(month => month && month.trim() !== "");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
