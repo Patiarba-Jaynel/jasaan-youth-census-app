@@ -14,6 +14,7 @@ import SettingsPage from './pages/SettingsPage';
 import NotFound from './pages/NotFound';
 import ConsolidatedDashboardPage from './pages/ConsolidatedDashboardPage';
 import ConsolidatedActivityPage from "@/pages/ConsolidatedActivityPage";
+import YouthActivityPage from './pages/YouthActivityPage';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/dashboard/table" element={<TableViewPage />} />
+          <Route path="/dashboard/youth/activity" element={<YouthActivityPage />} />
           <Route path="/dashboard/settings" element={<SettingsPage />} />
           <Route path="/dashboard/consolidated" element={<ConsolidatedDashboardPage />} />
           <Route path="/dashboard/consolidated/activity" element={<ConsolidatedActivityPage />} />

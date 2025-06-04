@@ -42,6 +42,8 @@ export function NavBar() {
     ...(isLoggedIn
       ? [
           { href: "/dashboard", label: "Youth Dashboard", icon: Table },
+          { href: "/dashboard/table", label: "Youth Table View", icon: Table },
+          { href: "/dashboard/youth/activity", label: "Youth Activity", icon: Activity },
           { href: "/dashboard/consolidated", label: "Consolidated Dashboard", icon: BarChart3 },
           { href: "/dashboard/consolidated/activity", label: "Consolidated Activity", icon: Activity },
           { href: "/dashboard/settings", label: "Settings", icon: Settings },

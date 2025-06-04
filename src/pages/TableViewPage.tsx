@@ -9,7 +9,7 @@ import { DataTable } from "@/components/DataTable";
 import { pbClient, YouthRecord } from "@/lib/pb-client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Import, History, Trash2 } from "lucide-react";
+import { Import, History, Trash2, Activity } from "lucide-react";
 import { ImportDialog } from "@/components/ImportDialog";
 import { BatchManagementDialog } from "@/components/BatchManagementDialog";
 
@@ -138,6 +138,15 @@ const TableViewPage = () => {
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">Census Records</h1>
             <div className="flex items-center gap-2">
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/dashboard/youth/activity")}
+                className="flex items-center gap-2"
+              >
+                <Activity size={16} />
+                Activity Logs
+              </Button>
               <Button 
                 variant="outline"
                 size="sm"
