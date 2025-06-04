@@ -32,18 +32,27 @@ export const activityLogger = {
         ...activity,
         user_id: authData.record.id,
         user_name: authData.record.name || authData.record.email,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        batch_id: activity.batch_id || undefined // Ensure batch_id is undefined if not provided
       };
 
       console.log('activityLogger.log: Creating log entry:', logEntry);
       
-      const result = await pbClient.collection('activity_logs').create(logEntry);
-      console.log('activityLogger.log: Activity logged successfully:', result.id);
+      // Try to create the log entry, but don't fail if the collection doesn't exist
+      try {
+        const result = await pbClient.collection('activity_logs').create(logEntry);
+        console.log('activityLogger.log: Activity logged successfully:', result.id);
+        return result;
+      } catch (collectionError) {
+        console.warn('activityLogger.log: Activity logs collection not available:', collectionError);
+        // Silently continue without logging if collection doesn't exist
+        return null;
+      }
       
-      return result;
     } catch (error) {
       console.error('activityLogger.log: Failed to log activity:', error);
-      throw error;
+      // Don't throw the error to prevent breaking the main operation
+      return null;
     }
   },
 
@@ -63,41 +72,53 @@ export const activityLogger = {
       console.log('activityLogger.logYouthCreate: Successfully logged youth creation');
     } catch (error) {
       console.error('activityLogger.logYouthCreate: Failed to log youth creation:', error);
-      throw error;
+      // Don't throw to prevent breaking the main operation
     }
   },
 
   async logYouthUpdate(youthId: string, youthName: string, changes: Record<string, any>) {
-    const changedFields = Object.keys(changes).join(', ');
-    await this.log({
-      action: 'UPDATE',
-      entity_type: 'youth',
-      entity_id: youthId,
-      entity_name: youthName,
-      details: `Updated fields: ${changedFields}`
-    });
+    try {
+      const changedFields = Object.keys(changes).join(', ');
+      await this.log({
+        action: 'UPDATE',
+        entity_type: 'youth',
+        entity_id: youthId,
+        entity_name: youthName,
+        details: `Updated fields: ${changedFields}`
+      });
+    } catch (error) {
+      console.error('activityLogger.logYouthUpdate: Failed to log youth update:', error);
+    }
   },
 
   async logYouthDelete(youthId: string, youthName: string, batchId?: string) {
-    await this.log({
-      action: 'DELETE',
-      entity_type: 'youth',
-      entity_id: youthId,
-      entity_name: youthName,
-      details: batchId ? `Youth record deleted via batch operation (batch: ${batchId})` : 'Youth record deleted manually',
-      batch_id: batchId
-    });
+    try {
+      await this.log({
+        action: 'DELETE',
+        entity_type: 'youth',
+        entity_id: youthId,
+        entity_name: youthName,
+        details: batchId ? `Youth record deleted via batch operation (batch: ${batchId})` : 'Youth record deleted manually',
+        batch_id: batchId
+      });
+    } catch (error) {
+      console.error('activityLogger.logYouthDelete: Failed to log youth deletion:', error);
+    }
   },
 
   async logBatchImport(batchId: string, recordCount: number) {
-    await this.log({
-      action: 'IMPORT',
-      entity_type: 'youth',
-      entity_id: batchId,
-      entity_name: `Batch ${batchId}`,
-      details: `Imported ${recordCount} youth records`,
-      batch_id: batchId
-    });
+    try {
+      await this.log({
+        action: 'IMPORT',
+        entity_type: 'youth',
+        entity_id: batchId,
+        entity_name: `Batch ${batchId}`,
+        details: `Imported ${recordCount} youth records`,
+        batch_id: batchId
+      });
+    } catch (error) {
+      console.error('activityLogger.logBatchImport: Failed to log batch import:', error);
+    }
   },
 
   // Consolidated data operations

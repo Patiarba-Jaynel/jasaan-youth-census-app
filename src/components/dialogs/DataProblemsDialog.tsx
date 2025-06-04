@@ -61,17 +61,44 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
     const recordsToDelete = duplicateRecords.slice(1);
     
     try {
+      let deletedCount = 0;
+      const errors: string[] = [];
+      
       for (const record of recordsToDelete) {
         if (!processingIds.has(record.id)) {
           setProcessingIds(prev => new Set(prev).add(record.id));
-          await pbClient.youth.delete(record.id);
+          try {
+            console.log('Attempting to delete record:', record.id);
+            await pbClient.youth.delete(record.id);
+            deletedCount++;
+            console.log('Successfully deleted record:', record.id);
+          } catch (deleteError: any) {
+            console.error('Error deleting record:', record.id, deleteError);
+            errors.push(`Failed to delete ${record.name}: ${deleteError?.message || 'Unknown error'}`);
+          } finally {
+            setProcessingIds(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(record.id);
+              return newSet;
+            });
+          }
         }
       }
-      toast.success(`Deleted ${recordsToDelete.length} duplicate records`);
-      window.location.reload();
+      
+      if (errors.length > 0) {
+        toast.error(`Deleted ${deletedCount} records, but ${errors.length} failed: ${errors.join(', ')}`);
+      } else {
+        toast.success(`Successfully deleted ${deletedCount} duplicate records`);
+      }
+      
+      // Refresh the page after a short delay to allow the toast to show
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
     } catch (error) {
       console.error("Error during bulk delete:", error);
-      toast.error("Failed to delete some duplicate records");
+      toast.error("Failed to delete duplicate records");
     }
   };
 
