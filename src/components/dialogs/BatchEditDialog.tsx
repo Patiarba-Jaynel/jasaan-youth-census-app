@@ -57,7 +57,7 @@ export function BatchEditDialog({
   ];
 
   const handleSave = () => {
-    if (!field || !oldValue || newValue === undefined) {
+    if (!field || oldValue === "" || newValue === undefined) {
       console.log("BatchEditDialog: Missing required fields", { field, oldValue, newValue });
       return;
     }
@@ -65,6 +65,7 @@ export function BatchEditDialog({
     console.log("BatchEditDialog: Executing find and replace", { field, oldValue, newValue });
     onSave(field, oldValue, newValue);
     onOpenChange(false);
+    resetForm();
   };
 
   const resetForm = () => {
@@ -80,24 +81,24 @@ export function BatchEditDialog({
 
   // Enhanced match counting with better normalization
   const getMatchCount = () => {
-    if (!field || !oldValue) return 0;
+    if (!field || oldValue === "") return 0;
 
     const normalizeValue = (value: any): string => {
-      if (value === null || value === undefined || value === "") return "N/A";
+      if (value === null || value === undefined) return "";
       return String(value).trim();
     };
 
-    const normalizedOldValue = normalizeValue(oldValue).toLowerCase();
+    const normalizedOldValue = normalizeValue(oldValue);
+    if (!normalizedOldValue) return 0;
 
     const matches = selectedRecords.filter(record => {
       if (!record.id) return false;
       
-      const recordValue = normalizeValue(record[field as keyof YouthRecord]).toLowerCase();
+      const recordValue = normalizeValue(record[field as keyof YouthRecord]);
       
-      // Enhanced matching: exact match, contains, or partial match
+      // Exact match or case-insensitive match
       return recordValue === normalizedOldValue || 
-             recordValue.includes(normalizedOldValue) ||
-             normalizedOldValue.includes(recordValue);
+             recordValue.toLowerCase() === normalizedOldValue.toLowerCase();
     });
 
     console.log("BatchEditDialog: Match calculation", {
@@ -124,7 +125,7 @@ export function BatchEditDialog({
       }
     }
     
-    if (e.key === 'Enter' && field && oldValue && newValue !== undefined && matchCount > 0) {
+    if (e.key === 'Enter' && field && oldValue !== "" && newValue !== undefined && matchCount > 0) {
       e.preventDefault();
       handleSave();
     }
@@ -173,7 +174,7 @@ export function BatchEditDialog({
               className="w-full"
               autoComplete="off"
             />
-            {field && oldValue && (
+            {field && oldValue !== "" && (
               <p className="text-xs mt-1 text-muted-foreground">
                 {matchCount} {matchCount === 1 ? 'match' : 'matches'} found
               </p>
@@ -198,7 +199,7 @@ export function BatchEditDialog({
         </div>
         <DialogFooter className="sm:justify-between">
           <div className="text-sm text-muted-foreground">
-            {field && oldValue && `${matchCount} ${matchCount === 1 ? 'record' : 'records'} will be updated`}
+            {field && oldValue !== "" && `${matchCount} ${matchCount === 1 ? 'record' : 'records'} will be updated`}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleClose}>
@@ -206,7 +207,7 @@ export function BatchEditDialog({
             </Button>
             <Button 
               onClick={handleSave} 
-              disabled={!field || !oldValue || newValue === undefined || matchCount === 0}
+              disabled={!field || oldValue === "" || newValue === undefined || matchCount === 0}
             >
               Replace All ({matchCount})
             </Button>

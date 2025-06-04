@@ -7,7 +7,7 @@ import { AnalyticsCard } from "@/components/AnalyticsCard";
 import { pbClient, YouthRecord } from "@/lib/pb-client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
-import { Eye, Plus, LogOut, Table, Settings, History } from "lucide-react";
+import { Eye, Plus, LogOut, Table, Settings, BarChart3 } from "lucide-react";
 
 interface AnalyticsData {
   name: string;
@@ -155,7 +155,7 @@ const DashboardPage = () => {
   };
 
   const handleAddYouth = () => {
-    navigate("/dashboard/census");
+    navigate("/census");
   };
 
   const handleViewTable = () => {
@@ -206,7 +206,7 @@ const DashboardPage = () => {
                 variant="outline"
                 className="flex items-center gap-2"
               >
-                <History size={16} />
+                <BarChart3 size={16} />
                 Consolidated Data
               </Button>
               <Button
@@ -218,7 +218,7 @@ const DashboardPage = () => {
                 View Table
               </Button>
               <Button
-                onClick={() => navigate("/dashboard/census")}
+                onClick={() => navigate("/census")}
                 variant="default"
                 className="flex items-center gap-2"
               >
