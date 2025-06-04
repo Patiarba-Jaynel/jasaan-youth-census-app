@@ -207,7 +207,7 @@ const DashboardPage = () => {
                 className="flex items-center gap-2"
               >
                 <History size={16} />
-                Activity & Batch Management
+                Consolidated Data
               </Button>
               <Button
                 onClick={() => navigate("/dashboard/table")}
