@@ -232,6 +232,15 @@ export const pbClient = {
         }
       }
       
+      // Log the batch import
+      try {
+        const authData = pbClient.auth.getAuthData();
+        const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
+        await activityLogger.logConsolidatedBatchImport(createdRecords.length, userName);
+      } catch (error) {
+        console.error('Failed to log consolidated batch import:', error);
+      }
+      
       return createdRecords;
     },
     

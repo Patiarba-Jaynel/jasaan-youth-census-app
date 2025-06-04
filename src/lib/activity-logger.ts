@@ -55,6 +55,10 @@ export const activityLogger = {
     return this.log(`DELETE: Removed consolidated data for ${barangay}`, userName);
   },
 
+  async logConsolidatedBatchImport(count: number, userName: string) {
+    return this.log(`IMPORT: Batch imported ${count} consolidated records`, userName);
+  },
+
   async getActivityLogs() {
     try {
       const records = await pbClient.collection('activity_logs').getFullList({
