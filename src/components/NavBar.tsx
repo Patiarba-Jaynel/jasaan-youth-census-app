@@ -43,7 +43,6 @@ export function NavBar() {
       ? [
           { href: "/dashboard", label: "Youth Dashboard", icon: Table },
           { href: "/dashboard/consolidated", label: "Consolidated Dashboard", icon: BarChart3 },
-          { href: "/dashboard/activity", label: "Youth Activity", icon: Activity },
           { href: "/dashboard/consolidated/activity", label: "Consolidated Activity", icon: Activity },
           { href: "/dashboard/settings", label: "Settings", icon: Settings },
         ]

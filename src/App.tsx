@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from "@/components/ui/sonner"
@@ -11,7 +12,6 @@ import DashboardPage from './pages/DashboardPage';
 import TableViewPage from './pages/TableViewPage';
 import SettingsPage from './pages/SettingsPage';
 import NotFound from './pages/NotFound';
-import ActivityPage from './pages/ActivityPage';
 import ConsolidatedDashboardPage from './pages/ConsolidatedDashboardPage';
 import ConsolidatedActivityPage from "@/pages/ConsolidatedActivityPage";
 
@@ -28,7 +28,6 @@ function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/dashboard/table" element={<TableViewPage />} />
           <Route path="/dashboard/settings" element={<SettingsPage />} />
-          <Route path="/dashboard/activity" element={<ActivityPage />} />
           <Route path="/dashboard/consolidated" element={<ConsolidatedDashboardPage />} />
           <Route path="/dashboard/consolidated/activity" element={<ConsolidatedActivityPage />} />
           <Route path="*" element={<NotFound />} />

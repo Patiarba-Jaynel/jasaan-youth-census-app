@@ -81,6 +81,13 @@ const ConsolidatedActivityPage = () => {
     if (!selectedBatchId) return;
 
     try {
+      // Get current user data for logging
+      const authData = pbClient.auth.getAuthData();
+      if (!authData?.record) {
+        toast.error("Authentication required");
+        return;
+      }
+
       // Delete all consolidated records in this batch
       const batchRecords = await pbClient.collection('consolidated_data').getFullList({
         filter: `batch_id = "${selectedBatchId}"`
@@ -90,12 +97,14 @@ const ConsolidatedActivityPage = () => {
         await pbClient.consolidated.delete(record.id);
       }
 
-      // Log the batch deletion
+      // Log the batch deletion with proper user information
       await activityLogger.log({
         action: 'DELETE',
         entity_type: 'consolidated',
         entity_id: selectedBatchId,
         entity_name: `Consolidated Batch ${selectedBatchId}`,
+        user_id: authData.record.id,
+        user_name: authData.record.name || authData.record.email,
         details: `Deleted batch with ${batchRecords.length} consolidated records`,
         batch_id: selectedBatchId
       });
