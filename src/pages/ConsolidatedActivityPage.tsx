@@ -5,7 +5,7 @@ import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
-import { LogOut, Settings, Table, Trash2, Download, RefreshCw } from "lucide-react";
+import { Settings, Table, Trash2, Download, RefreshCw } from "lucide-react";
 import { pbClient } from "@/lib/pb-client";
 import { activityLogger, ActivityLog } from "@/lib/activity-logger";
 import {
