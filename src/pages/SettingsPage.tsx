@@ -44,6 +44,7 @@ import {
   Activity,
 } from "lucide-react";
 import { pbClient } from "@/lib/pb-client";
+import { activityLogger, UserLog } from "@/lib/activity-logger";
 
 interface User {
   id: string;
@@ -70,7 +71,7 @@ const SettingsPage = () => {
 
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [userLogs, setUserLogs] = useState<UserLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -122,7 +123,7 @@ const SettingsPage = () => {
         // Only load users if current user is admin
         if (authData?.record?.is_admin) {
           await loadUsers();
-          await loadActivityLogs();
+          await loadUserLogs();
         }
       } catch (error) {
         console.error("Error loading data:", error);
@@ -153,13 +154,13 @@ const SettingsPage = () => {
     }
   };
 
-  const loadActivityLogs = async () => {
+  const loadUserLogs = async () => {
     try {
-      // Since activity logs don't exist, set empty array
-      setActivityLogs([]);
+      const response = await activityLogger.getUserLogs();
+      setUserLogs(response.items);
     } catch (error) {
-      console.error("Error loading activity logs:", error);
-      toast.error("Failed to load activity logs");
+      console.error("Error loading user logs:", error);
+      toast.error("Failed to load user logs");
     }
   };
 
@@ -196,6 +197,9 @@ const SettingsPage = () => {
       const createdUser = await pbClient.collection("users").create(userData);
       console.log("User created successfully:", createdUser);
 
+      // Log the user creation activity
+      await activityLogger.logUserCreate(userForm.name, currentUser?.name || 'Admin');
+
       toast.success("User created successfully");
       setIsUserDialogOpen(false);
       setUserForm({
@@ -207,7 +211,7 @@ const SettingsPage = () => {
         is_admin: false,
       });
       await loadUsers();
-      await loadActivityLogs();
+      await loadUserLogs();
     } catch (error: any) {
       console.error("Error creating user:", error);
       const errorMessage = error?.data?.message || error?.message || "Failed to create user";
@@ -246,6 +250,9 @@ const SettingsPage = () => {
         .update(editingUser.id, updateData);
       console.log("User updated successfully:", updatedUser);
 
+      // Log the user update activity
+      await activityLogger.logUserUpdate(userForm.name, currentUser?.name || 'Admin');
+
       toast.success("User updated successfully");
       setIsUserDialogOpen(false);
       setEditingUser(null);
@@ -258,7 +265,7 @@ const SettingsPage = () => {
         is_admin: false,
       });
       await loadUsers();
-      await loadActivityLogs();
+      await loadUserLogs();
     } catch (error: any) {
       console.error("Error updating user:", error);
       const errorMessage =
@@ -279,9 +286,14 @@ const SettingsPage = () => {
       const userToDelete = users.find(u => u.id === userId);
       await pbClient.collection("users").delete(userId);
 
+      // Log the user deletion activity
+      if (userToDelete) {
+        await activityLogger.logUserDelete(userToDelete.name, currentUser?.name || 'Admin');
+      }
+
       toast.success("User deleted successfully");
       await loadUsers();
-      await loadActivityLogs();
+      await loadUserLogs();
     } catch (error) {
       console.error("Error deleting user:", error);
       toast.error("Failed to delete user");
@@ -338,7 +350,7 @@ const SettingsPage = () => {
         });
       }
 
-      await loadActivityLogs();
+      await loadUserLogs();
     } catch (error: any) {
       console.error("Error updating profile:", error);
       const errorMessage =
@@ -396,6 +408,22 @@ const SettingsPage = () => {
       console.error("Error setting user as admin:", error);
       toast.error("Failed to set user as admin");
     }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleString();
+    } catch {
+      return dateString;
+    }
+  };
+
+  const getActionBadgeVariant = (action: string) => {
+    if (action.includes('LOGIN')) return 'default';
+    if (action.includes('CREATE')) return 'default';
+    if (action.includes('UPDATE')) return 'secondary';
+    if (action.includes('DELETE') || action.includes('LOGOUT')) return 'destructive';
+    return 'outline';
   };
 
   if (isLoading) {
@@ -577,7 +605,7 @@ const SettingsPage = () => {
                 </Card>
               )}
 
-              {/* Activity Logs - Only show for admins */}
+              {/* Recent Activity - Only show for admins */}
               {isAdmin && (
                 <Card>
                   <CardHeader>
@@ -588,11 +616,36 @@ const SettingsPage = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3 max-h-96 overflow-y-auto">
-                      <div className="text-center py-8">
-                        <p className="text-muted-foreground">
-                          Activity logging has been disabled as the activity_logs collection does not exist.
-                        </p>
-                      </div>
+                      {userLogs.length === 0 ? (
+                        <div className="text-center py-8">
+                          <p className="text-muted-foreground">
+                            No user activities recorded yet.
+                          </p>
+                        </div>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Action</TableHead>
+                              <TableHead>User</TableHead>
+                              <TableHead>Date</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {userLogs.slice(0, 10).map((log) => (
+                              <TableRow key={log.id}>
+                                <TableCell>
+                                  <Badge variant={getActionBadgeVariant(log.action)}>
+                                    {log.action}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>{log.blame}</TableCell>
+                                <TableCell>{formatDate(log.created)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
