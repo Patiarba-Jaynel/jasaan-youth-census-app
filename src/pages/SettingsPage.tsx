@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect } from "react";
@@ -182,15 +183,14 @@ const SettingsPage = () => {
         is_admin: userForm.is_admin,
       });
 
-      // Create user data with proper field names
+      // Create user data with proper field names - removed verified field
       const userData = {
         email: userForm.email,
         emailVisibility: true,
         name: userForm.name,
         password: userForm.password,
         passwordConfirm: userForm.confirmPassword,
-        is_admin: userForm.is_admin,
-        verified: true // Auto-verify new users created by admin
+        is_admin: userForm.is_admin
       };
 
       console.log("Sending user data to PocketBase:", userData);
