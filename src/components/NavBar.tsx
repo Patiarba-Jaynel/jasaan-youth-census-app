@@ -109,7 +109,7 @@ export function NavBar() {
               size="sm"
               className="bg-red-600 hover:bg-red-700"
             >
-              Dashboard
+              Logout
             </Button>
           )}
         </nav>
