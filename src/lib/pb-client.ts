@@ -89,7 +89,7 @@ export const pbClient = {
       try {
         const authData = pbClient.auth.getAuthData();
         const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
-        await activityLogger.logYouthCreate(record.id, data.name, userName);
+        await activityLogger.logYouthCreate(data.name, userName);
       } catch (error) {
         console.error('Failed to log youth creation:', error);
       }
@@ -113,9 +113,7 @@ export const pbClient = {
       try {
         const authData = pbClient.auth.getAuthData();
         const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
-        if (batchId) {
-          await activityLogger.logBatchImport(createdRecords.length, userName, batchId);
-        }
+        await activityLogger.logBatchImport(createdRecords.length, userName);
       } catch (error) {
         console.error('Failed to log batch import:', error);
       }
@@ -135,7 +133,7 @@ export const pbClient = {
       try {
         const authData = pbClient.auth.getAuthData();
         const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
-        await activityLogger.logYouthUpdate(id, record.name || 'Unknown', userName);
+        await activityLogger.logYouthUpdate(record.name || 'Unknown', userName);
       } catch (error) {
         console.error('Failed to log youth update:', error);
       }
@@ -150,7 +148,7 @@ export const pbClient = {
       try {
         const authData = pbClient.auth.getAuthData();
         const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
-        await activityLogger.logYouthDelete(id, record.name || 'Unknown', userName);
+        await activityLogger.logYouthDelete(record.name || 'Unknown', userName);
       } catch (error) {
         console.error('Failed to log youth deletion:', error);
       }
@@ -205,8 +203,7 @@ export const pbClient = {
         try {
           const authData = pbClient.auth.getAuthData();
           const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
-          const details = `${sanitizedData.barangay} - ${sanitizedData.age_bracket} - ${sanitizedData.gender} (${sanitizedData.year}/${sanitizedData.month})`;
-          await activityLogger.logConsolidatedCreate(record.id, userName, details);
+          await activityLogger.logConsolidatedCreate(sanitizedData.barangay, userName);
         } catch (error) {
           console.error('Failed to log consolidated creation:', error);
         }
@@ -346,8 +343,7 @@ export const pbClient = {
         try {
           const authData = pbClient.auth.getAuthData();
           const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
-          const details = `${updatedRecord.barangay} - ${updatedRecord.age_bracket} - ${updatedRecord.gender}`;
-          await activityLogger.logConsolidatedUpdate(id, userName, details);
+          await activityLogger.logConsolidatedUpdate(updatedRecord.barangay, userName);
         } catch (error) {
           console.error('Failed to log consolidated update:', error);
         }
@@ -391,8 +387,7 @@ export const pbClient = {
         try {
           const authData = pbClient.auth.getAuthData();
           const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
-          const details = `${recordToDelete.barangay} - ${recordToDelete.age_bracket} - ${recordToDelete.gender}`;
-          await activityLogger.logConsolidatedDelete(id, userName, details);
+          await activityLogger.logConsolidatedDelete(recordToDelete.barangay, userName);
         } catch (error) {
           console.error('Failed to log consolidated deletion:', error);
         }
