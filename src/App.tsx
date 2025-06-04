@@ -1,75 +1,42 @@
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Toaster } from "@/components/ui/sonner"
 
-import { useEffect } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { pbClient } from "@/lib/pb-client";
+import Index from './pages/Index';
+import AboutPage from './pages/AboutPage';
+import CensusPage from './pages/CensusPage';
+import SuccessPage from './pages/SuccessPage';
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import TableViewPage from './pages/TableViewPage';
+import SettingsPage from './pages/SettingsPage';
+import NotFound from './pages/NotFound';
+import ActivityPage from './pages/ActivityPage';
+import ConsolidatedDashboardPage from './pages/ConsolidatedDashboardPage';
+import ConsolidatedActivityPage from "@/pages/ConsolidatedActivityPage";
 
-import Index from "./pages/Index";
-import LoginPage from "./pages/LoginPage";
-import CensusPage from "./pages/CensusPage";
-import SuccessPage from "./pages/SuccessPage";
-import DashboardPage from "./pages/DashboardPage";
-import TableViewPage from "./pages/TableViewPage";
-import SettingsPage from "./pages/SettingsPage";
-import AboutPage from "./pages/AboutPage";
-import ConsolidatedDashboardPage from "./pages/ConsolidatedDashboardPage";
-import NotFound from "./pages/NotFound";
-import { useInactivityLogout } from "@/hooks/useInactivityLogout";
-
-const queryClient = new QueryClient();
-
-// Auth guard component
-const AuthRoute = ({ element }: { element: JSX.Element }) => {
-  const isAuthenticated = pbClient.auth.isLoggedIn();
-  return isAuthenticated ? element : <Navigate to="/login" replace />;
-};
-
-const LoginRoute = () => {
-  const isAuthenticated = pbClient.auth.isLoggedIn();
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />;
-};
-
-const AppRoutes = () => {
-  const navigate = useNavigate();
-
-  useInactivityLogout(() => {
-    if (pbClient.auth.isLoggedIn()) {
-      pbClient.auth.logout(); // logout user
-      alert("You have been logged out due to 30 minutes of inactivity.");
-      navigate("/login", { replace: true });
-    }
-  });
-
+function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/dashboard/census" element={<AuthRoute element={<CensusPage />} />} />
-      <Route path="/dashboard/table" element={<AuthRoute element={<TableViewPage />} />} />
-      <Route path="/dashboard/consolidated" element={<AuthRoute element={<ConsolidatedDashboardPage />} />} />
-      <Route path="/dashboard/settings" element={<AuthRoute element={<SettingsPage />} />} />
-      <Route path="/success" element={<SuccessPage />} />
-      <Route path="/login" element={<LoginRoute />} />
-      <Route path="/dashboard" element={<AuthRoute element={<DashboardPage />} />} />
-      <Route path="/about" element={<AboutPage />} />
-      <Route path="/census" element={<Navigate to="/login" replace />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Router>
+      <div className="min-h-screen bg-background">
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/census" element={<CensusPage />} />
+          <Route path="/success" element={<SuccessPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/dashboard/table" element={<TableViewPage />} />
+          <Route path="/dashboard/settings" element={<SettingsPage />} />
+          <Route path="/dashboard/activity" element={<ActivityPage />} />
+          <Route path="/dashboard/consolidated" element={<ConsolidatedDashboardPage />} />
+          <Route path="/dashboard/consolidated/activity" element={<ConsolidatedActivityPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster />
+      </div>
+    </Router>
   );
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+}
 
 export default App;

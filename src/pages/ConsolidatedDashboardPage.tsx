@@ -548,6 +548,14 @@ const ConsolidatedDashboardPage = () => {
             </div>
             <div className="flex flex-col md:flex-row gap-4 mt-4 md:mt-0">
               <Button
+                onClick={() => navigate("/dashboard/consolidated/activity")}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Settings size={16} />
+                Activity & Batches
+              </Button>
+              <Button
                 onClick={() => navigate("/dashboard/settings")}
                 variant="outline"
                 className="flex items-center gap-2"
