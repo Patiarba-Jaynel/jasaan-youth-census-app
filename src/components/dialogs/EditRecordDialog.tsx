@@ -40,14 +40,14 @@ interface EditRecordDialogProps {
   onSave: (data: any) => void;
 }
 
-// Updated schema to remove age field since it's calculated from birthday
+// Updated schema to allow "Other" and custom values
 const editFormSchema = z.object({
   // Critical fields - required for identification
   name: z.string().min(1, "Name is required for identification"),
   birthday: z.date({
     required_error: "Birthday is required",
   }),
-  sex: z.enum(["MALE", "FEMALE"]),
+  sex: z.string().min(1, "Sex is required"),
   barangay: z.string().min(1, "Barangay is required for location identification"),
   
   // Semi-important fields - can be N/A but should be filled when possible
@@ -55,7 +55,7 @@ const editFormSchema = z.object({
   youth_classification: z.string().optional().default("N/A"),
   youth_age_group: z.string().optional().default("N/A"),
   
-  // Optional fields - can be N/A or blank
+  // Optional fields - can be N/A or blank, including "Other"
   highest_education: z.string().optional().default("N/A"),
   work_status: z.string().optional().default("N/A"),
   registered_voter: z.string().optional().default("N/A"),
@@ -83,7 +83,7 @@ export function EditRecordDialog({
     defaultValues: {
       name: "",
       birthday: new Date(),
-      sex: "MALE",
+      sex: "Male",
       civil_status: "N/A",
       barangay: "",
       youth_classification: "N/A",
@@ -105,10 +105,11 @@ export function EditRecordDialog({
 
   useEffect(() => {
     if (selectedRecord) {
+      console.log("EditRecordDialog: Loading selected record:", selectedRecord);
       form.reset({
         name: selectedRecord.name || "",
         birthday: selectedRecord.birthday ? new Date(selectedRecord.birthday) : new Date(),
-        sex: (selectedRecord.sex as any) || "MALE",
+        sex: selectedRecord.sex || "Male",
         civil_status: selectedRecord.civil_status || "N/A",
         barangay: selectedRecord.barangay || "",
         youth_classification: selectedRecord.youth_classification || "N/A",
@@ -130,30 +131,31 @@ export function EditRecordDialog({
   }, [selectedRecord, form]);
 
   const handleSubmit = (data: EditFormValues) => {
-    console.log("Form data being submitted:", data);
+    console.log("EditRecordDialog: Form data being submitted:", data);
     
-    // Check for critical missing fields and suggest deletion if necessary
-    const criticalFields = ['name', 'barangay'];
-    const missingCritical = criticalFields.filter(field => {
-      const value = data[field as keyof EditFormValues];
-      return !value || value === 'N/A' || (typeof value === 'string' && value.trim() === '');
-    });
+    // Ensure proper data formatting
+    const formattedData = {
+      ...data,
+      // Ensure birthday is properly formatted
+      birthday: data.birthday,
+      // Ensure numbers are properly handled
+      kk_assemblies_attended: Number(data.kk_assemblies_attended) || 0,
+    };
     
-    if (missingCritical.length > 0) {
-      if (confirm(`Missing critical identification fields: ${missingCritical.join(', ')}. This record may not be useful without this information. Do you want to continue saving or consider deleting this record instead?`)) {
-        onSave(data);
-      }
-    } else {
-      onSave(data);
-    }
+    console.log("EditRecordDialog: Formatted data for submission:", formattedData);
+    onSave(formattedData);
   };
 
-  // Get options from schema
+  // Get options from schema - include "Other" option where applicable
   const barangayOptions = [
     "Aplaya", "Bobontugan", "Corrales", "Jampason", "Kimaya",
     "Lower Jasaan (Pob.)", "Luz Banzon", "San Antonio", 
     "San Nicolas", "Solana", "Upper Jasaan (Pob.)"
   ];
+
+  // Add "Other" to education and work status options
+  const educationOptions = [...enumOptions.highest_education, "Other"];
+  const workStatusOptions = [...enumOptions.work_status, "Other"];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -195,7 +197,7 @@ export function EditRecordDialog({
                             type="date"
                             value={field.value ? field.value.toISOString().slice(0, 10) : ''}
                             onChange={(e) => {
-                              const dateValue = e.target.value ? new Date(e.target.value) : null;
+                              const dateValue = e.target.value ? new Date(e.target.value) : new Date();
                               field.onChange(dateValue);
                             }}
                             max={new Date().toISOString().slice(0, 10)}
@@ -219,7 +221,7 @@ export function EditRecordDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {enumOptions.sex.map((option) => (
+                            {enumOptions.sex.filter(option => option && option.trim() !== "").map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -244,7 +246,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {enumOptions.civil_status.map((option) => (
+                            {enumOptions.civil_status.filter(option => option && option.trim() !== "").map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -359,7 +361,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {enumOptions.youth_classification.map((option) => (
+                            {enumOptions.youth_classification.filter(option => option && option.trim() !== "").map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -384,7 +386,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {enumOptions.youth_age_group.map((option) => (
+                            {enumOptions.youth_age_group.filter(option => option && option.trim() !== "").map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -416,7 +418,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {enumOptions.highest_education.map((option) => (
+                            {educationOptions.filter(option => option && option.trim() !== "").map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -441,7 +443,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {enumOptions.work_status.map((option) => (
+                            {workStatusOptions.filter(option => option && option.trim() !== "").map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -466,7 +468,7 @@ export function EditRecordDialog({
                       <FormItem>
                         <FormLabel>Email Address</FormLabel>
                         <FormControl>
-                          <Input {...field} type="email" placeholder="email@example.com or N/A" />
+                          <Input {...field} placeholder="email@example.com or N/A" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -506,7 +508,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {enumOptions.registered_voter.map((option) => (
+                            {enumOptions.registered_voter.filter(option => option && option.trim() !== "").map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -531,7 +533,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {enumOptions.voted_last_election.map((option) => (
+                            {enumOptions.voted_last_election.filter(option => option && option.trim() !== "").map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -564,7 +566,7 @@ export function EditRecordDialog({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="N/A">N/A</SelectItem>
-                            {enumOptions.attended_kk_assembly.map((option) => (
+                            {enumOptions.attended_kk_assembly.filter(option => option && option.trim() !== "").map((option) => (
                               <SelectItem key={option} value={option}>
                                 {option}
                               </SelectItem>
@@ -590,6 +592,7 @@ export function EditRecordDialog({
                               type="number"
                               min="0"
                               disabled={isDisabled}
+                              value={field.value || 0}
                               onChange={(e) => {
                                 const value = Number(e.target.value);
                                 if (!isDisabled) field.onChange(value);

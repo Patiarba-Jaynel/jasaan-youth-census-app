@@ -44,6 +44,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   const [isBatchEditDialogOpen, setIsBatchEditDialogOpen] = useState(false);
   const [isDataProblemsDialogOpen, setIsDataProblemsDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<YouthRecord | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleEdit = (record: YouthRecord) => {
     console.log("DataTable: Opening edit dialog for record:", record.id);
@@ -64,6 +65,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       return;
     }
 
+    setIsProcessing(true);
     console.log("DataTable: Attempting to save edit for record:", selectedRecord.id, data);
 
     try {
@@ -84,6 +86,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       }
 
       // Calculate age from birthday if birthday is provided
+      let age = selectedRecord.age;
       if (data.birthday) {
         const today = new Date();
         const birthDate = new Date(data.birthday);
@@ -91,9 +94,9 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
         const monthDiff = today.getMonth() - birthDate.getMonth();
         
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-          data.age = String(calculatedAge - 1);
+          age = String(calculatedAge - 1);
         } else {
-          data.age = String(calculatedAge);
+          age = String(calculatedAge);
         }
       }
 
@@ -101,8 +104,8 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       const updateData = {
         ...data,
         // Ensure numeric fields are properly converted
-        kk_assemblies_attended: data.kk_assemblies_attended ? Number(data.kk_assemblies_attended) : 0,
-        age: data.age ? String(data.age) : selectedRecord.age
+        kk_assemblies_attended: data.kk_assemblies_attended !== undefined ? Number(data.kk_assemblies_attended) : 0,
+        age: age
       };
 
       console.log("DataTable: Sending update data:", updateData);
@@ -118,6 +121,8 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       console.error("DataTable: Error updating record:", error);
       const errorMessage = error?.message || error?.data?.message || "Failed to update record";
       toast.error(errorMessage);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -128,6 +133,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       return;
     }
 
+    setIsProcessing(true);
     console.log("DataTable: Attempting to delete record:", selectedRecord.id);
 
     try {
@@ -143,10 +149,14 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       setIsDeleteDialogOpen(false);
       setSelectedRecord(null);
       onDataChange();
+      return true;
     } catch (error: any) {
       console.error("DataTable: Error deleting record:", error);
       const errorMessage = error?.message || error?.data?.message || "Failed to delete record";
       toast.error(errorMessage);
+      throw error;
+    } finally {
+      setIsProcessing(false);
     }
   };
 

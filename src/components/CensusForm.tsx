@@ -28,6 +28,7 @@ import { CivicSection } from "./census/CivicSection";
 
 export function CensusForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const navigate = useNavigate();
   
   const form = useForm<FormValues>({
@@ -68,6 +69,8 @@ export function CensusForm() {
 
   async function onSubmit(data: FormValues) {
     console.log("CensusForm.onSubmit: Form submission started with data:", data);
+    setSubmitError(null);
+    
     try {
       setIsSubmitting(true);
       
@@ -86,6 +89,7 @@ export function CensusForm() {
         toast.error("Missing Critical Information", {
           description: `Please fill in: ${missingCritical.join(', ')}. These fields are required for identification.`
         });
+        setIsSubmitting(false);
         return;
       }
       
@@ -102,6 +106,7 @@ export function CensusForm() {
           toast.error("Age Validation Error", {
             description: ageValidation.errors.join(". ") + " Please correct this before submitting."
           });
+          setIsSubmitting(false);
           return;
         }
 
@@ -122,7 +127,10 @@ export function CensusForm() {
       
       if (missingOptional.length > 3) {
         const proceed = confirm(`Several optional fields are blank. The record will be saved with "N/A" for missing information. Continue?`);
-        if (!proceed) return;
+        if (!proceed) {
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       // Create properly typed youth record with calculated age
@@ -155,18 +163,35 @@ export function CensusForm() {
       const standardizedData = standardizeYouthRecord(youthRecord);
       console.log("CensusForm.onSubmit: Standardized data:", standardizedData);
       
-      const result = await pbClient.youth.create(standardizedData);
-      console.log("CensusForm.onSubmit: Youth record created successfully:", result);
-      
-      toast.success("Census form submitted successfully!", {
-        description: "Thank you for participating in the Jasaan Youth Census.",
-      });
-      
-      navigate("/success");
-    } catch (error) {
+      // Attempt to create the record with error handling
+      try {
+        const result = await pbClient.youth.create(standardizedData);
+        console.log("CensusForm.onSubmit: Youth record created successfully:", result);
+        
+        toast.success("Census form submitted successfully!", {
+          description: "Thank you for participating in the Jasaan Youth Census.",
+        });
+        
+        navigate("/success");
+      } catch (createError: any) {
+        console.error("CensusForm.onSubmit: Error creating record:", createError);
+        
+        // Display specific error message
+        const errorMessage = createError?.data?.message || 
+                            createError?.message || 
+                            "Failed to save record. Please check your network connection and try again.";
+        
+        setSubmitError(errorMessage);
+        toast.error("Submission Error", {
+          description: errorMessage
+        });
+      }
+    } catch (error: any) {
       console.error("CensusForm.onSubmit: Error submitting form:", error);
+      const errorMessage = error?.data?.message || error?.message || "Form submission failed. Please try again.";
+      setSubmitError(errorMessage);
       toast.error("Failed to submit form", {
-        description: "Please try again or contact support if the problem persists.",
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -197,6 +222,15 @@ export function CensusForm() {
             * Required fields: Name, Birthday, Sex, Barangay. While Age will be calculated automatically from given birthday. Other fields can be left as "N/A" if unknown.
           </p>
         </div>
+        
+        {/* Show error message if submission failed */}
+        {submitError && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            <p className="font-medium">Form submission failed:</p>
+            <p className="text-sm mt-1">{submitError}</p>
+            <p className="text-sm mt-2">Please try again or contact support if the problem persists.</p>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -210,7 +244,11 @@ export function CensusForm() {
               <CivicSection control={form.control} />
             </div>
             
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Submitting..." : "Submit Census Form"}
             </Button>
           </form>
