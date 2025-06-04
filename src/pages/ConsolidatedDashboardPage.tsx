@@ -571,19 +571,6 @@ const ConsolidatedDashboardPage = () => {
                 <Table size={16} />
                 Main Dashboard
               </Button>
-              <Button
-                onClick={() => {
-                  pbClient.auth.logout();
-                  document.dispatchEvent(new CustomEvent("auth-change"));
-                  toast.success("Logged out successfully");
-                  navigate("/");
-                }}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <LogOut size={16} />
-                Logout
-              </Button>
             </div>
           </div>
 
