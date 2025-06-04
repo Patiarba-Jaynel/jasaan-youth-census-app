@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { TablePagination } from "@/components/table/TablePagination";
 import { EditConsolidatedDialog } from "@/components/dialogs/EditConsolidatedDialog";
 import { DeleteConsolidatedDialog } from "@/components/dialogs/DeleteConsolidatedDialog";
@@ -165,11 +166,13 @@ export function ConsolidatedDataTable({ data = [], onRecordUpdate }: Consolidate
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by Barangay" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all-barangays">All Barangays</SelectItem>
-            {uniqueBarangays.map(barangay => (
-              <SelectItem key={barangay} value={barangay}>{barangay}</SelectItem>
-            ))}
+          <SelectContent className="bg-white">
+            <ScrollArea className="h-[200px]">
+              <SelectItem value="all-barangays">All Barangays</SelectItem>
+              {uniqueBarangays.map(barangay => (
+                <SelectItem key={barangay} value={barangay}>{barangay}</SelectItem>
+              ))}
+            </ScrollArea>
           </SelectContent>
         </Select>
 
@@ -177,7 +180,7 @@ export function ConsolidatedDataTable({ data = [], onRecordUpdate }: Consolidate
           <SelectTrigger className="w-[150px]">
             <SelectValue placeholder="Filter by Gender" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             <SelectItem value="all-genders">All Genders</SelectItem>
             <SelectItem value="Male">Male</SelectItem>
             <SelectItem value="Female">Female</SelectItem>
@@ -188,11 +191,13 @@ export function ConsolidatedDataTable({ data = [], onRecordUpdate }: Consolidate
           <SelectTrigger className="w-[120px]">
             <SelectValue placeholder="Year" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all-years">All Years</SelectItem>
-            {uniqueYears.map(year => (
-              <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-            ))}
+          <SelectContent className="bg-white">
+            <ScrollArea className="h-[200px]">
+              <SelectItem value="all-years">All Years</SelectItem>
+              {uniqueYears.map(year => (
+                <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+              ))}
+            </ScrollArea>
           </SelectContent>
         </Select>
 
@@ -200,11 +205,13 @@ export function ConsolidatedDataTable({ data = [], onRecordUpdate }: Consolidate
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Month" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all-months">All Months</SelectItem>
-            {uniqueMonths.map(month => (
-              <SelectItem key={month} value={month}>{month}</SelectItem>
-            ))}
+          <SelectContent className="bg-white">
+            <ScrollArea className="h-[200px]">
+              <SelectItem value="all-months">All Months</SelectItem>
+              {uniqueMonths.map(month => (
+                <SelectItem key={month} value={month}>{month}</SelectItem>
+              ))}
+            </ScrollArea>
           </SelectContent>
         </Select>
 
