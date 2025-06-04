@@ -74,11 +74,11 @@ export const enumOptions = {
   voted_last_election: ["Yes", "No"] as const
 };
 
-// Form schema and types for Census form
+// Form schema and types for Census form - with automatic defaults for location
 export const formSchema = z.object({
-  region: z.string().min(1, "Region is required"),
-  province: z.string().min(1, "Province is required"),
-  city_municipality: z.string().min(1, "City/Municipality is required"),
+  region: z.string().default("X"),
+  province: z.string().default("Misamis Oriental"),
+  city_municipality: z.string().default("Jasaan"),
   barangay: z.enum(enumOptions.barangay).optional(),
   name: z.string().min(1, "Name is required"),
   birthday: z.date().nullable(),

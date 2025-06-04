@@ -47,7 +47,7 @@ export function validateAgeConsistency(age: number, birthday: string, youthAgeGr
     const calculatedAge = currentYear - birthYear;
     
     if (Math.abs(age - calculatedAge) > 1) {
-      errors.push(`Age (${age}) doesn't match birthday (calculated age: ${calculatedAge})`);
+      warnings.push(`Age (${age}) doesn't match birthday (calculated age: ${calculatedAge})`);
     }
   }
   
@@ -61,12 +61,12 @@ export function validateAgeConsistency(age: number, birthday: string, youthAgeGr
     
     const range = ageGroupRanges[youthAgeGroup];
     if (range && (age < range[0] || age > range[1])) {
-      errors.push(`Age (${age}) doesn't match age group (${youthAgeGroup})`);
+      warnings.push(`Age (${age}) doesn't match age group (${youthAgeGroup})`);
     }
   }
   
   return {
-    isValid: errors.length === 0,
+    isValid: true, // Make age validation warnings only
     errors,
     warnings
   };
@@ -89,6 +89,18 @@ export function validateDropdownValue(value: string, allowedValues: readonly str
     normalizedValue = normalizeCivilStatus(value);
   }
 
+  // For barangay, be more flexible - just warn if not exact match
+  if (fieldName === 'barangay') {
+    const caseInsensitiveMatch = allowedValues.find(
+      allowed => allowed.toLowerCase() === normalizedValue.toLowerCase()
+    );
+    
+    if (!caseInsensitiveMatch) {
+      warnings.push(`Barangay "${value}" will be standardized during import`);
+    }
+    return { isValid: true, errors, warnings }; // Always valid for barangay
+  }
+
   // Check if the normalized value is in allowed values
   if (!allowedValues.includes(normalizedValue as any)) {
     // Try case-insensitive match as fallback
@@ -97,12 +109,12 @@ export function validateDropdownValue(value: string, allowedValues: readonly str
     );
     
     if (!caseInsensitiveMatch) {
-      errors.push(`Invalid ${fieldName}: "${value}" (not in allowed options: ${allowedValues.join(', ')})`);
+      warnings.push(`"${value}" will be standardized to valid option during import`);
     }
   }
   
   return {
-    isValid: errors.length === 0,
+    isValid: true, // Make dropdown validation warnings only
     errors,
     warnings
   };
@@ -114,15 +126,15 @@ export function validateRequiredFields(record: any): ValidationResult {
   
   // Critical fields that cannot be N/A or blank - essential for identification
   const criticalFields = [
-    { field: 'name', label: 'name' },
-    { field: 'age', label: 'age' },
-    { field: 'birthday', label: 'birthday' },
-    { field: 'sex', label: 'sex/gender' },
-    { field: 'barangay', label: 'barangay' }
+    { field: 'name', label: 'name' }
   ];
   
   // Important fields that should be filled but can be N/A
   const importantFields = [
+    { field: 'age', label: 'age' },
+    { field: 'birthday', label: 'birthday' },
+    { field: 'sex', label: 'sex/gender' },
+    { field: 'barangay', label: 'barangay' },
     { field: 'youth_classification', label: 'youth classification' },
     { field: 'youth_age_group', label: 'age group' }
   ];

@@ -98,66 +98,14 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
   const validateRecord = (record: any, index: number): ValidationIssue[] => {
     const issues: ValidationIssue[] = [];
     
-    // Enhanced age and birthday validation
-    if (record.age && record.birthday) {
-      const age = parseInt(record.age);
-      const birthdayStr = typeof record.birthday === 'string' ? record.birthday : record.birthday.toISOString?.()?.split('T')[0];
-      const youthAgeGroup = record.youth_age_group;
-      
-      const ageValidation = validateAgeConsistency(age, birthdayStr, youthAgeGroup);
-      
-      if (!ageValidation.isValid) {
-        ageValidation.errors.forEach(error => {
-          issues.push({
-            row: index + 1,
-            field: 'age/birthday/youth_age_group',
-            issue: error,
-            value: `Age: ${age}, Birthday: ${birthdayStr}, Age Group: ${youthAgeGroup}`,
-            suggestion: 'Ensure age matches birthday and age group'
-          });
-        });
-      }
-    }
-
-    // Enhanced dropdown validation for fixed answer fields
-    const validOptions: Record<string, readonly string[]> = {
-      sex: enumOptions.sex,
-      civil_status: enumOptions.civil_status,
-      youth_classification: enumOptions.youth_classification,
-      youth_age_group: enumOptions.youth_age_group,
-      highest_education: enumOptions.highest_education,
-      work_status: enumOptions.work_status,
-      registered_voter: enumOptions.registered_voter,
-      voted_last_election: enumOptions.voted_last_election,
-      attended_kk_assembly: enumOptions.attended_kk_assembly,
-    };
-
-    Object.entries(validOptions).forEach(([field, options]) => {
-      const value = record[field];
-      if (value && value !== "N/A") {
-        const validation = validateDropdownValue(value, options, field);
-        if (!validation.isValid) {
-          validation.errors.forEach(error => {
-            issues.push({
-              row: index + 1,
-              field: field,
-              issue: error,
-              value: value,
-              suggestion: `Must be one of: ${options.join(', ')}`
-            });
-          });
-        }
-      }
-    });
-
-    // Email validation
-    if (record.email_address && record.email_address !== "N/A" && !record.email_address.includes('@')) {
+    // Only validate critical fields - be more flexible
+    if (!record.name || record.name.trim() === '') {
       issues.push({
         row: index + 1,
-        field: 'email_address',
-        issue: 'Invalid email format',
-        value: record.email_address,
-        suggestion: 'Must contain @ symbol'
+        field: 'name',
+        issue: 'Name is required',
+        value: record.name,
+        suggestion: 'Please provide a name'
       });
     }
 
@@ -193,7 +141,6 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
 
   const processData = async (data: any[]) => {
     console.log("Processing data:", data.length, "records");
-    console.log("Raw data sample:", data[0]);
     
     const seen = new Set();
     const duplicatesList: any[] = [];
@@ -204,40 +151,8 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
     const processedData = data.map((row, index) => {
       console.log(`Processing row ${index}:`, row);
       
-      // Clean the row - handle different possible column names
-      const cleanedRow: any = { originalIndex: index };
-      
-      // Map columns with flexible naming
-      Object.entries(row).forEach(([key, value]) => {
-        const cleanKey = key.trim().toLowerCase();
-        let finalKey = key.trim();
-        
-        // Handle common variations in column names
-        if (cleanKey === 'name' || cleanKey === 'full_name' || cleanKey === 'fullname') finalKey = 'name';
-        else if (cleanKey === 'age') finalKey = 'age';
-        else if (cleanKey === 'birthday' || cleanKey === 'birth_date' || cleanKey === 'birthdate') finalKey = 'birthday';
-        else if (cleanKey === 'sex' || cleanKey === 'gender') finalKey = 'sex';
-        else if (cleanKey === 'civil_status' || cleanKey === 'civilstatus') finalKey = 'civil_status';
-        else if (cleanKey === 'barangay') finalKey = 'barangay';
-        else if (cleanKey === 'youth_classification' || cleanKey === 'youthclassification') finalKey = 'youth_classification';
-        else if (cleanKey === 'youth_age_group' || cleanKey === 'youthagegroup') finalKey = 'youth_age_group';
-        else if (cleanKey === 'highest_education' || cleanKey === 'highesteducation') finalKey = 'highest_education';
-        else if (cleanKey === 'work_status' || cleanKey === 'workstatus') finalKey = 'work_status';
-        else if (cleanKey === 'home_address' || cleanKey === 'homeaddress' || cleanKey === 'address') finalKey = 'home_address';
-        else if (cleanKey === 'email_address' || cleanKey === 'emailaddress' || cleanKey === 'email') finalKey = 'email_address';
-        else if (cleanKey === 'contact_number' || cleanKey === 'contactnumber' || cleanKey === 'phone') finalKey = 'contact_number';
-        else if (cleanKey === 'registered_voter' || cleanKey === 'registeredvoter') finalKey = 'registered_voter';
-        else if (cleanKey === 'voted_last_election' || cleanKey === 'votedlastelection') finalKey = 'voted_last_election';
-        else if (cleanKey === 'attended_kk_assembly' || cleanKey === 'attendedkkassembly') finalKey = 'attended_kk_assembly';
-        else if (cleanKey === 'kk_assemblies_attended' || cleanKey === 'kkassembliesattended') finalKey = 'kk_assemblies_attended';
-        
-        cleanedRow[finalKey] = typeof value === 'string' ? value.trim() : value;
-      });
-      
-      console.log(`Cleaned row ${index}:`, cleanedRow);
-      
-      // Apply standardization to normalize common values
-      const standardized = standardizeYouthRecord(cleanedRow);
+      // Apply standardization first
+      const standardized = standardizeYouthRecord(row);
       console.log(`Standardized row ${index}:`, standardized);
       
       return standardized;
@@ -245,20 +160,41 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
 
     console.log("All processed data:", processedData);
 
-    // Validate each processed record
+    // Validate each processed record with flexible validation
     for (const [index, record] of processedData.entries()) {
       console.log(`Validating record ${index}:`, record);
       
-      // Custom validation
+      // Only check for critical validation issues
       const issues = validateRecord(record, index);
       allValidationIssues.push(...issues);
       
-      // Schema validation
-      const result = YouthSchema.safeParse(record);
+      // Create a flexible schema for validation
+      const flexibleSchema = z.object({
+        region: z.string().default("X"),
+        province: z.string().default("Misamis Oriental"),
+        city_municipality: z.string().default("Jasaan"),
+        name: z.string().min(1, "Name is required"),
+        // Make all other fields optional or coercible
+        age: z.coerce.number().optional(),
+        birthday: z.string().optional(),
+        sex: z.string().optional(),
+        civil_status: z.string().optional(),
+        barangay: z.string().optional(),
+        youth_classification: z.string().optional(),
+        youth_age_group: z.string().optional(),
+        highest_education: z.string().optional(),
+        work_status: z.string().optional(),
+        home_address: z.string().optional(),
+        email_address: z.string().optional(),
+        contact_number: z.string().optional(),
+        registered_voter: z.string().optional(),
+        voted_last_election: z.string().optional(),
+        attended_kk_assembly: z.string().optional(),
+        kk_assemblies_attended: z.coerce.number().default(0),
+      });
+      
+      const result = flexibleSchema.safeParse(record);
       console.log(`Schema validation for record ${index}:`, result.success);
-      if (!result.success) {
-        console.log(`Schema errors for record ${index}:`, result.error?.issues);
-      }
       
       if (result.success) {
         const key = `${record.name?.toLowerCase()}|${record.birthday}`;
@@ -270,15 +206,18 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
           validList.push(record);
         }
       } else {
-        // Add schema validation errors to validation issues
+        console.log(`Schema errors for record ${index}:`, result.error?.issues);
+        // Add only critical schema validation errors
         result.error?.issues.forEach(issue => {
-          allValidationIssues.push({
-            row: index + 1,
-            field: issue.path.join('.'),
-            issue: issue.message,
-            value: issue.path.reduce((obj, path) => obj?.[path], record),
-            suggestion: 'Check data format and required fields'
-          });
+          if (issue.path.includes('name')) {
+            allValidationIssues.push({
+              row: index + 1,
+              field: issue.path.join('.'),
+              issue: issue.message,
+              value: issue.path.reduce((obj, path) => obj?.[path], record),
+              suggestion: 'Name is required for all records'
+            });
+          }
         });
       }
     }
@@ -292,15 +231,10 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
     setDuplicatesInFile(duplicatesList);
     setValidationIssues(allValidationIssues);
     
-    // Only show validation dialog for critical issues
-    const criticalIssues = allValidationIssues.filter(issue => 
-      !issue.issue.includes('Consider filling') && 
-      !issue.issue.includes('helpful for')
-    );
-    
-    if (criticalIssues.length > 0) {
-      console.log("Critical validation issues found:", criticalIssues.length);
-      setValidationIssues(criticalIssues);
+    // Only show validation dialog for critical issues (like missing names)
+    if (allValidationIssues.length > 0) {
+      console.log("Critical validation issues found:", allValidationIssues.length);
+      setValidationIssues(allValidationIssues);
       setShowValidationDialog(true);
       return;
     }

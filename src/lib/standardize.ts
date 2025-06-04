@@ -8,16 +8,16 @@ export function toTitleCase(str: string): string {
     .join(" ");
 }
 
-export function formatBirthday(input: string): string {
-  const date = new Date(input);
-  if (isNaN(date.getTime())) return input;
+export function formatBirthday(input: string | Date): string {
+  const date = typeof input === 'string' ? new Date(input) : input;
+  if (isNaN(date.getTime())) return input.toString();
   
-  // Format as YYYY-MM-DD 00:00:00 (always set time to midnight)
+  // Format as YYYY-MM-DD
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   
-  return `${year}-${month}-${day} 00:00:00`;
+  return `${year}-${month}-${day}`;
 }
 
 // Normalize sex values to proper format
@@ -46,6 +46,33 @@ export function normalizeCivilStatus(value: string): string {
   };
   
   return statusMap[normalized] || toTitleCase(value);
+}
+
+// Normalize barangay names to match enum
+export function normalizeBarangay(value: string): string {
+  if (!value) return "N/A";
+  const normalized = value.toLowerCase().trim();
+  
+  const barangayMap: { [key: string]: string } = {
+    "aplaya": "APLAYA",
+    "bobontugan": "BOBONTUGAN", 
+    "corrales": "CORRALES",
+    "i.s. cruz": "I.S. CRUZ",
+    "is cruz": "I.S. CRUZ",
+    "danao": "DANAO",
+    "jampason": "JAMPASON",
+    "kimaya": "KIMAYA",
+    "lower jasaan": "LOWER JASAAN",
+    "luz banzon": "LUZ BANZON",
+    "natubo": "NATUBO",
+    "san antonio": "SAN ANTONIO",
+    "san isidro": "SAN ISIDRO",
+    "san nicolas": "SAN NICOLAS",
+    "solana": "SOLANA",
+    "upper jasaan": "UPPER JASAAN"
+  };
+  
+  return barangayMap[normalized] || value.toUpperCase();
 }
 
 // Normalize youth age group values
@@ -96,32 +123,42 @@ export function normalizeEducation(value: string): string {
 export function standardizeYouthRecord(record: any): any {
   const copy = { ...record };
 
+  // Set automatic location defaults
+  copy.region = "X";
+  copy.province = "Misamis Oriental";
+  copy.city_municipality = "Jasaan";
+
   // Name fields
   if (copy.name) copy.name = toTitleCase(copy.name);
 
-  // Personal information - Enhanced normalization for sex and civil_status
+  // Personal information - Enhanced normalization
   if (copy.sex) copy.sex = normalizeSex(copy.sex);
   if (copy.civil_status) copy.civil_status = normalizeCivilStatus(copy.civil_status);
+  if (copy.barangay) copy.barangay = normalizeBarangay(copy.barangay);
 
   // Youth-specific normalizations
   if (copy.youth_age_group) copy.youth_age_group = normalizeYouthAgeGroup(copy.youth_age_group);
   if (copy.highest_education) copy.highest_education = normalizeEducation(copy.highest_education);
 
   // Location fields
-  if (copy.barangay) copy.barangay = toTitleCase(copy.barangay);
   if (copy.home_address) copy.home_address = toTitleCase(copy.home_address);
 
   // Education and work
   if (copy.work_status) copy.work_status = toTitleCase(copy.work_status);
 
-  // Birthday formatting with time
+  // Birthday formatting
   if (copy.birthday) {
     copy.birthday = formatBirthday(copy.birthday);
   }
 
-  // Replace empty strings with N/A for string fields only
+  // Ensure kk_assemblies_attended is a number
+  if (copy.kk_assemblies_attended) {
+    copy.kk_assemblies_attended = Number(copy.kk_assemblies_attended) || 0;
+  }
+
+  // Replace empty strings with N/A for string fields only (except numbers)
   Object.keys(copy).forEach(key => {
-    if (typeof copy[key] === "string" && (copy[key] === "" || copy[key] === null || copy[key] === undefined)) {
+    if (key !== 'kk_assemblies_attended' && typeof copy[key] === "string" && (copy[key] === "" || copy[key] === null || copy[key] === undefined)) {
       copy[key] = "N/A";
     }
   });
