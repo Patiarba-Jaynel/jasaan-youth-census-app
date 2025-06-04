@@ -54,6 +54,7 @@ const TableViewPage = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleImport = async (records: any[]) => {
     try {
       setIsLoading(true);
@@ -145,7 +146,7 @@ const TableViewPage = () => {
                 className="flex items-center gap-2"
               >
                 <History size={16} />
-                Batch Management
+                Activity & Batch Management
               </Button>
               <Button 
                 variant="outline"

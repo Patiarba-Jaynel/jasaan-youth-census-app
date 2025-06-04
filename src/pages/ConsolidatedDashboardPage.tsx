@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NavBar } from "@/components/NavBar";
@@ -553,7 +554,7 @@ const ConsolidatedDashboardPage = () => {
                 className="flex items-center gap-2"
               >
                 <Settings size={16} />
-                Activity & Batches
+                Activity & Batch Management
               </Button>
               <Button
                 onClick={() => navigate("/dashboard/settings")}
