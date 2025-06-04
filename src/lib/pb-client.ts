@@ -129,44 +129,70 @@ export const pbClient = {
     }
   },
   
-  // Consolidated data methods with improved error handling
+  // Consolidated data methods with enhanced error handling and validation
   consolidated: {
     create: async (data: Omit<ConsolidatedData, 'id' | 'created' | 'updated'>) => {
       try {
         console.log('Creating consolidated record with data:', data);
         
-        // Ensure all required fields are present and properly formatted
-        const cleanData = {
-          barangay: String(data.barangay).trim(),
-          age_bracket: String(data.age_bracket).trim(),
-          gender: String(data.gender).trim(),
-          year: Number(data.year),
-          month: String(data.month).trim(),
-          count: Number(data.count)
+        // Validate and sanitize input data
+        const sanitizedData = {
+          barangay: String(data.barangay || '').trim(),
+          age_bracket: String(data.age_bracket || '').trim(),
+          gender: String(data.gender || '').trim(),
+          year: parseInt(String(data.year)) || new Date().getFullYear(),
+          month: String(data.month || '').trim(),
+          count: parseInt(String(data.count)) || 0
         };
         
+        console.log('Sanitized data:', sanitizedData);
+        
         // Validate required fields
-        if (!cleanData.barangay || !cleanData.age_bracket || !cleanData.gender || 
-            !cleanData.year || !cleanData.month || cleanData.count < 0) {
-          throw new Error('Missing or invalid required fields for consolidated data');
+        if (!sanitizedData.barangay) {
+          throw new Error('Barangay is required');
+        }
+        if (!sanitizedData.age_bracket) {
+          throw new Error('Age bracket is required');
+        }
+        if (!sanitizedData.gender) {
+          throw new Error('Gender is required');
+        }
+        if (!sanitizedData.month) {
+          throw new Error('Month is required');
+        }
+        if (sanitizedData.count < 0) {
+          throw new Error('Count must be a non-negative number');
+        }
+        if (sanitizedData.year < 2020 || sanitizedData.year > 2030) {
+          throw new Error('Year must be between 2020 and 2030');
         }
         
-        console.log('Clean data for creation:', cleanData);
-        const record = await pb.collection('consolidated_data').create(cleanData);
-        console.log('Created consolidated record:', record);
+        // Create the record
+        const record = await pb.collection('consolidated_data').create(sanitizedData);
+        console.log('Successfully created consolidated record:', record);
         
-        await activityLogger.logConsolidatedCreate(
-          record.id, 
-          cleanData.barangay, 
-          `${cleanData.age_bracket} - ${cleanData.gender} (${cleanData.count} records)`
-        );
+        // Log the activity
+        try {
+          await activityLogger.logConsolidatedCreate(
+            record.id, 
+            sanitizedData.barangay, 
+            `${sanitizedData.age_bracket} - ${sanitizedData.gender} (${sanitizedData.count} records)`
+          );
+        } catch (logError) {
+          console.warn('Failed to log activity:', logError);
+        }
         
         return record;
       } catch (error) {
         console.error('Error creating consolidated record:', error);
+        // Re-throw with more specific error message
+        if (error.message && error.message.includes('collection')) {
+          throw new Error('Database connection error. Please try again.');
+        }
         throw error;
       }
     },
+    
     createMany: async (records: Omit<ConsolidatedData, 'id' | 'created' | 'updated'>[], batchId?: string) => {
       const createdRecords = [];
       for (const record of records) {
@@ -187,64 +213,166 @@ export const pbClient = {
       
       return createdRecords;
     },
+    
     getAll: async () => {
       try {
-        return await pb.collection('consolidated_data').getFullList<ConsolidatedData>();
+        console.log('Fetching all consolidated data...');
+        const records = await pb.collection('consolidated_data').getFullList<ConsolidatedData>({
+          sort: 'barangay,age_bracket,gender'
+        });
+        console.log('Successfully fetched consolidated data:', records.length, 'records');
+        return records;
       } catch (error) {
         console.error('Error fetching consolidated data:', error);
-        throw error;
+        throw new Error('Failed to fetch consolidated data. Please refresh and try again.');
       }
     },
+    
     getOne: async (id: string) => {
       try {
-        return await pb.collection('consolidated_data').getOne<ConsolidatedData>(id);
-      } catch (error) {
-        console.error('Error fetching consolidated record:', error);
-        throw error;
-      }
-    },
-    update: async (id: string, data: Partial<ConsolidatedData>) => {
-      try {
-        console.log('Updating consolidated record with ID:', id, 'Data:', data);
-        
-        // Clean and validate the update data
-        const cleanData: any = {};
-        if (data.barangay !== undefined) cleanData.barangay = String(data.barangay).trim();
-        if (data.age_bracket !== undefined) cleanData.age_bracket = String(data.age_bracket).trim();
-        if (data.gender !== undefined) cleanData.gender = String(data.gender).trim();
-        if (data.year !== undefined) cleanData.year = Number(data.year);
-        if (data.month !== undefined) cleanData.month = String(data.month).trim();
-        if (data.count !== undefined) cleanData.count = Number(data.count);
-        
-        console.log('Clean data for update:', cleanData);
-        
-        // Get current record for logging
-        const currentRecord = await pb.collection('consolidated_data').getOne(id);
-        console.log('Current record before update:', currentRecord);
-        
-        const record = await pb.collection('consolidated_data').update(id, cleanData);
-        console.log('Updated consolidated record:', record);
-        
-        await activityLogger.logConsolidatedUpdate(id, currentRecord.barangay, cleanData);
+        console.log('Fetching consolidated record:', id);
+        if (!id || typeof id !== 'string') {
+          throw new Error('Invalid record ID');
+        }
+        const record = await pb.collection('consolidated_data').getOne<ConsolidatedData>(id);
+        console.log('Successfully fetched consolidated record:', record);
         return record;
       } catch (error) {
+        console.error('Error fetching consolidated record:', error);
+        if (error.status === 404) {
+          throw new Error('Record not found. It may have been deleted.');
+        }
+        throw new Error('Failed to fetch record details.');
+      }
+    },
+    
+    update: async (id: string, data: Partial<ConsolidatedData>) => {
+      try {
+        console.log('Updating consolidated record:', id, 'with data:', data);
+        
+        // Validate ID
+        if (!id || typeof id !== 'string') {
+          throw new Error('Invalid record ID');
+        }
+        
+        // Check if record exists first
+        let currentRecord;
+        try {
+          currentRecord = await pb.collection('consolidated_data').getOne(id);
+          console.log('Found existing record:', currentRecord);
+        } catch (error) {
+          if (error.status === 404) {
+            throw new Error('Record not found. It may have been deleted.');
+          }
+          throw error;
+        }
+        
+        // Sanitize and validate update data
+        const sanitizedData: any = {};
+        
+        if (data.barangay !== undefined) {
+          sanitizedData.barangay = String(data.barangay).trim();
+          if (!sanitizedData.barangay) {
+            throw new Error('Barangay cannot be empty');
+          }
+        }
+        
+        if (data.age_bracket !== undefined) {
+          sanitizedData.age_bracket = String(data.age_bracket).trim();
+          if (!sanitizedData.age_bracket) {
+            throw new Error('Age bracket cannot be empty');
+          }
+        }
+        
+        if (data.gender !== undefined) {
+          sanitizedData.gender = String(data.gender).trim();
+          if (!sanitizedData.gender) {
+            throw new Error('Gender cannot be empty');
+          }
+        }
+        
+        if (data.year !== undefined) {
+          sanitizedData.year = parseInt(String(data.year));
+          if (isNaN(sanitizedData.year) || sanitizedData.year < 2020 || sanitizedData.year > 2030) {
+            throw new Error('Year must be between 2020 and 2030');
+          }
+        }
+        
+        if (data.month !== undefined) {
+          sanitizedData.month = String(data.month).trim();
+          if (!sanitizedData.month) {
+            throw new Error('Month cannot be empty');
+          }
+        }
+        
+        if (data.count !== undefined) {
+          sanitizedData.count = parseInt(String(data.count));
+          if (isNaN(sanitizedData.count) || sanitizedData.count < 0) {
+            throw new Error('Count must be a non-negative number');
+          }
+        }
+        
+        console.log('Sanitized update data:', sanitizedData);
+        
+        // Perform the update
+        const updatedRecord = await pb.collection('consolidated_data').update(id, sanitizedData);
+        console.log('Successfully updated consolidated record:', updatedRecord);
+        
+        // Log the activity
+        try {
+          await activityLogger.logConsolidatedUpdate(id, currentRecord.barangay, sanitizedData);
+        } catch (logError) {
+          console.warn('Failed to log update activity:', logError);
+        }
+        
+        return updatedRecord;
+      } catch (error) {
         console.error('Error updating consolidated record:', error);
+        if (error.message && error.message.includes('collection')) {
+          throw new Error('Database connection error. Please try again.');
+        }
         throw error;
       }
     },
+    
     delete: async (id: string) => {
       try {
-        console.log('Deleting consolidated record with ID:', id);
-        const record = await pb.collection('consolidated_data').getOne(id);
-        console.log('Record to delete:', record);
+        console.log('Deleting consolidated record:', id);
         
+        // Validate ID
+        if (!id || typeof id !== 'string') {
+          throw new Error('Invalid record ID');
+        }
+        
+        // Get the record first to ensure it exists and for logging
+        let recordToDelete;
+        try {
+          recordToDelete = await pb.collection('consolidated_data').getOne(id);
+          console.log('Found record to delete:', recordToDelete);
+        } catch (error) {
+          if (error.status === 404) {
+            throw new Error('Record not found. It may have already been deleted.');
+          }
+          throw error;
+        }
+        
+        // Perform the deletion
         await pb.collection('consolidated_data').delete(id);
         console.log('Successfully deleted consolidated record');
         
-        await activityLogger.logConsolidatedDelete(id, record.barangay);
-        return record;
+        // Log the activity
+        try {
+          await activityLogger.logConsolidatedDelete(id, recordToDelete.barangay);
+        } catch (logError) {
+          console.warn('Failed to log delete activity:', logError);
+        }
+        
+        return recordToDelete;
       } catch (error) {
         console.error('Error deleting consolidated record:', error);
+        if (error.message && error.message.includes('collection')) {
+          throw new Error('Database connection error. Please try again.');
+        }
         throw error;
       }
     }

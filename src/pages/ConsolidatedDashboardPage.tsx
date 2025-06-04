@@ -156,6 +156,7 @@ const ConsolidatedDashboardPage = () => {
       await pbClient.consolidated.create(data);
       toast.success("Record added successfully");
       setIsAddDialogOpen(false);
+      
       // Refresh data
       const records = await pbClient.consolidated.getAll();
       const sortedRecords = records.sort((a, b) => a.barangay.localeCompare(b.barangay));
@@ -163,24 +164,30 @@ const ConsolidatedDashboardPage = () => {
       setFilteredData(sortedRecords);
     } catch (error) {
       console.error("Error adding record:", error);
-      toast.error(`Failed to add record: ${error.message || 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to add record: ${errorMessage}`);
     }
   };
 
   const handleEditRecord = (record: ConsolidatedData) => {
+    console.log('Editing record:', record);
     setSelectedRecord(record);
     setIsEditDialogOpen(true);
   };
 
   const handleUpdateRecord = async (data: Omit<ConsolidatedData, 'id' | 'created' | 'updated'>) => {
-    if (!selectedRecord) return;
+    if (!selectedRecord) {
+      console.error('No record selected for update');
+      return;
+    }
 
     try {
-      console.log('Updating consolidated record:', selectedRecord.id, data);
+      console.log('Updating consolidated record:', selectedRecord.id, 'with data:', data);
       await pbClient.consolidated.update(selectedRecord.id, data);
       toast.success("Record updated successfully");
       setIsEditDialogOpen(false);
       setSelectedRecord(null);
+      
       // Refresh data
       const records = await pbClient.consolidated.getAll();
       const sortedRecords = records.sort((a, b) => a.barangay.localeCompare(b.barangay));
@@ -188,17 +195,22 @@ const ConsolidatedDashboardPage = () => {
       setFilteredData(sortedRecords);
     } catch (error) {
       console.error("Error updating record:", error);
-      toast.error(`Failed to update record: ${error.message || 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to update record: ${errorMessage}`);
     }
   };
 
   const handleDeleteRecord = async (record: ConsolidatedData) => {
+    console.log('Preparing to delete record:', record);
     setRecordToDelete(record);
     setDeleteDialogOpen(true);
   };
 
   const confirmDelete = async () => {
-    if (!recordToDelete) return;
+    if (!recordToDelete) {
+      console.error('No record selected for deletion');
+      return;
+    }
 
     try {
       console.log('Deleting consolidated record:', recordToDelete.id);
@@ -206,6 +218,7 @@ const ConsolidatedDashboardPage = () => {
       toast.success("Record deleted successfully");
       setDeleteDialogOpen(false);
       setRecordToDelete(null);
+      
       // Refresh data
       const records = await pbClient.consolidated.getAll();
       const sortedRecords = records.sort((a, b) => a.barangay.localeCompare(b.barangay));
@@ -213,7 +226,8 @@ const ConsolidatedDashboardPage = () => {
       setFilteredData(sortedRecords);
     } catch (error) {
       console.error("Error deleting record:", error);
-      toast.error(`Failed to delete record: ${error.message || 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to delete record: ${errorMessage}`);
     }
   };
 

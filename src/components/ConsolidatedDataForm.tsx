@@ -67,24 +67,41 @@ export function ConsolidatedDataForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Form submission started with data:', formData);
+    
     // Validate required fields
-    if (!formData.barangay || !formData.age_bracket || !formData.gender || !formData.year || !formData.month || formData.count < 0) {
-      console.error('Form validation failed:', formData);
+    if (!formData.barangay || !formData.age_bracket || !formData.gender || !formData.year || !formData.month) {
+      console.error('Form validation failed - missing required fields:', {
+        barangay: !formData.barangay,
+        age_bracket: !formData.age_bracket,
+        gender: !formData.gender,
+        year: !formData.year,
+        month: !formData.month
+      });
       return;
     }
     
-    // Ensure count is a valid number
+    if (formData.count < 0) {
+      console.error('Form validation failed - count cannot be negative:', formData.count);
+      return;
+    }
+    
+    // Prepare clean data for submission
     const submitData = {
-      ...formData,
-      count: Number(formData.count) || 0,
-      year: Number(formData.year)
+      barangay: String(formData.barangay).trim(),
+      age_bracket: String(formData.age_bracket).trim(),
+      gender: String(formData.gender).trim(),
+      year: Number(formData.year),
+      month: String(formData.month).trim(),
+      count: Number(formData.count) || 0
     };
     
-    console.log('Submitting form data:', submitData);
+    console.log('Submitting clean form data:', submitData);
     onSubmit(submitData);
   };
 
   const handleChange = (field: keyof typeof formData, value: string | number) => {
+    console.log(`Field ${field} changed to:`, value);
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -93,8 +110,10 @@ export function ConsolidatedDataForm({
 
   const handleCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow empty string or valid numbers
-    if (value === '' || (!isNaN(Number(value)) && Number(value) >= 0)) {
+    console.log('Count input changed to:', value);
+    
+    // Allow empty string or valid non-negative numbers
+    if (value === '' || (value === '0') || (!isNaN(Number(value)) && Number(value) >= 0)) {
       setFormData(prev => ({
         ...prev,
         count: value === '' ? 0 : Number(value)
@@ -194,7 +213,8 @@ export function ConsolidatedDataForm({
               value={formData.count === 0 ? '' : formData.count}
               onChange={handleCountChange}
               min="0"
-              placeholder="Enter count"
+              step="1"
+              placeholder="Enter count (0 or more)"
               required
             />
           </div>
