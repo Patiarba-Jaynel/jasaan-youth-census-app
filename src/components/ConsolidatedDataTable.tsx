@@ -39,7 +39,7 @@ interface ConsolidatedDataTableProps {
   onRecordUpdate: () => void;
 }
 
-export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedDataTableProps) {
+export function ConsolidatedDataTable({ data = [], onRecordUpdate }: ConsolidatedDataTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBarangay, setFilterBarangay] = useState("");
   const [filterGender, setFilterGender] = useState("");
@@ -50,39 +50,50 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
   const [editingRecord, setEditingRecord] = useState<ConsolidatedData | null>(null);
   const [deletingRecord, setDeletingRecord] = useState<ConsolidatedData | null>(null);
 
-  // Get unique values for filters - filter out empty strings
-  const uniqueBarangays = useMemo(() => 
-    [...new Set(data.map(record => record.barangay).filter(b => b && b.trim() !== ""))].sort(), 
-    [data]
-  );
+  // Ensure data is always an array to prevent crashes
+  const safeData = Array.isArray(data) ? data : [];
+
+  // Get unique values for filters - filter out empty strings and ensure values exist
+  const uniqueBarangays = useMemo(() => {
+    const barangays = safeData
+      .map(record => record?.barangay)
+      .filter(b => b && typeof b === 'string' && b.trim() !== "");
+    return [...new Set(barangays)].sort();
+  }, [safeData]);
   
-  const uniqueYears = useMemo(() => 
-    [...new Set(data.map(record => record.year).filter(y => y && !isNaN(y)))].sort((a, b) => b - a), 
-    [data]
-  );
+  const uniqueYears = useMemo(() => {
+    const years = safeData
+      .map(record => record?.year)
+      .filter(y => y && !isNaN(Number(y)));
+    return [...new Set(years)].sort((a, b) => Number(b) - Number(a));
+  }, [safeData]);
 
-  const uniqueMonths = useMemo(() => 
-    [...new Set(data.map(record => record.month).filter(m => m && m.trim() !== ""))].sort(), 
-    [data]
-  );
+  const uniqueMonths = useMemo(() => {
+    const months = safeData
+      .map(record => record?.month)
+      .filter(m => m && typeof m === 'string' && m.trim() !== "");
+    return [...new Set(months)];
+  }, [safeData]);
 
-  // Filter and search data
+  // Filter and search data with safety checks
   const filteredData = useMemo(() => {
-    return data.filter(record => {
+    return safeData.filter(record => {
+      if (!record) return false;
+      
       const matchesSearch = 
-        record.barangay.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.age_bracket.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.gender.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.month.toLowerCase().includes(searchTerm.toLowerCase());
+        (record.barangay || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (record.age_bracket || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (record.gender || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (record.month || '').toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesBarangay = !filterBarangay || record.barangay === filterBarangay;
       const matchesGender = !filterGender || record.gender === filterGender;
-      const matchesYear = !filterYear || record.year.toString() === filterYear;
+      const matchesYear = !filterYear || String(record.year) === filterYear;
       const matchesMonth = !filterMonth || record.month === filterMonth;
       
       return matchesSearch && matchesBarangay && matchesGender && matchesYear && matchesMonth;
     });
-  }, [data, searchTerm, filterBarangay, filterGender, filterYear, filterMonth]);
+  }, [safeData, searchTerm, filterBarangay, filterGender, filterYear, filterMonth]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -104,11 +115,15 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
   };
 
   const handleEdit = (record: ConsolidatedData) => {
-    setEditingRecord(record);
+    if (record && record.id) {
+      setEditingRecord(record);
+    }
   };
 
   const handleDelete = (record: ConsolidatedData) => {
-    setDeletingRecord(record);
+    if (record && record.id) {
+      setDeletingRecord(record);
+    }
   };
 
   const handleEditSave = () => {
@@ -122,6 +137,15 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
     onRecordUpdate();
     toast.success("Record deleted successfully");
   };
+
+  // Show loading state if data is not ready
+  if (!safeData) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">Loading data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -142,7 +166,7 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
             <SelectValue placeholder="Filter by Barangay" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Barangays</SelectItem>
+            <SelectItem value="all-barangays">All Barangays</SelectItem>
             {uniqueBarangays.map(barangay => (
               <SelectItem key={barangay} value={barangay}>{barangay}</SelectItem>
             ))}
@@ -154,7 +178,7 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
             <SelectValue placeholder="Filter by Gender" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Genders</SelectItem>
+            <SelectItem value="all-genders">All Genders</SelectItem>
             <SelectItem value="Male">Male</SelectItem>
             <SelectItem value="Female">Female</SelectItem>
           </SelectContent>
@@ -165,9 +189,9 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
             <SelectValue placeholder="Year" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Years</SelectItem>
+            <SelectItem value="all-years">All Years</SelectItem>
             {uniqueYears.map(year => (
-              <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+              <SelectItem key={year} value={String(year)}>{year}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -177,7 +201,7 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
             <SelectValue placeholder="Month" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Months</SelectItem>
+            <SelectItem value="all-months">All Months</SelectItem>
             {uniqueMonths.map(month => (
               <SelectItem key={month} value={month}>{month}</SelectItem>
             ))}
@@ -207,18 +231,18 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
             {currentItems.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8">
-                  No records found
+                  {safeData.length === 0 ? "No data available" : "No records found"}
                 </TableCell>
               </TableRow>
             ) : (
               currentItems.map((record) => (
                 <TableRow key={record.id}>
-                  <TableCell className="font-medium">{record.barangay}</TableCell>
-                  <TableCell>{record.age_bracket}</TableCell>
-                  <TableCell>{record.gender}</TableCell>
-                  <TableCell>{record.year}</TableCell>
-                  <TableCell>{record.month}</TableCell>
-                  <TableCell className="font-semibold">{record.count}</TableCell>
+                  <TableCell className="font-medium">{record.barangay || 'N/A'}</TableCell>
+                  <TableCell>{record.age_bracket || 'N/A'}</TableCell>
+                  <TableCell>{record.gender || 'N/A'}</TableCell>
+                  <TableCell>{record.year || 'N/A'}</TableCell>
+                  <TableCell>{record.month || 'N/A'}</TableCell>
+                  <TableCell className="font-semibold">{record.count || 0}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
@@ -245,15 +269,17 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
       </div>
 
       {/* Pagination */}
-      <TablePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalRecords={data.length}
-        filteredRecords={filteredData.length}
-        indexOfFirstItem={indexOfFirstItem}
-        indexOfLastItem={indexOfLastItem}
-        onPageChange={handlePageChange}
-      />
+      {safeData.length > 0 && (
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalRecords={safeData.length}
+          filteredRecords={filteredData.length}
+          indexOfFirstItem={indexOfFirstItem}
+          indexOfLastItem={indexOfLastItem}
+          onPageChange={handlePageChange}
+        />
+      )}
 
       {/* Edit Dialog */}
       {editingRecord && (
