@@ -59,7 +59,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
     const template = [
       {
         name: "Juan Dela Cruz",
-        age: "25",
+        age: 25,
         birthday: "1999-01-15",
         sex: "Male",
         civil_status: "Single",
@@ -74,7 +74,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
         registered_voter: "Yes",
         voted_last_election: "Yes",
         attended_kk_assembly: "Yes",
-        kk_assemblies_attended: "3"
+        kk_assemblies_attended: 3
       }
     ];
 
@@ -193,37 +193,72 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
 
   const processData = async (data: any[]) => {
     console.log("Processing data:", data.length, "records");
+    console.log("Raw data sample:", data[0]);
     
     const seen = new Set();
     const duplicatesList: any[] = [];
     const validList: any[] = [];
     const allValidationIssues: ValidationIssue[] = [];
 
-    // First, clean and standardize the data
-    const cleanedData = data.map((row, index) => {
+    // Process each record
+    const processedData = data.map((row, index) => {
+      console.log(`Processing row ${index}:`, row);
+      
+      // Clean the row - handle different possible column names
       const cleanedRow: any = { originalIndex: index };
+      
+      // Map columns with flexible naming
       Object.entries(row).forEach(([key, value]) => {
-        cleanedRow[key.trim()] = typeof value === 'string' ? value.trim() : value;
+        const cleanKey = key.trim().toLowerCase();
+        let finalKey = key.trim();
+        
+        // Handle common variations in column names
+        if (cleanKey === 'name' || cleanKey === 'full_name' || cleanKey === 'fullname') finalKey = 'name';
+        else if (cleanKey === 'age') finalKey = 'age';
+        else if (cleanKey === 'birthday' || cleanKey === 'birth_date' || cleanKey === 'birthdate') finalKey = 'birthday';
+        else if (cleanKey === 'sex' || cleanKey === 'gender') finalKey = 'sex';
+        else if (cleanKey === 'civil_status' || cleanKey === 'civilstatus') finalKey = 'civil_status';
+        else if (cleanKey === 'barangay') finalKey = 'barangay';
+        else if (cleanKey === 'youth_classification' || cleanKey === 'youthclassification') finalKey = 'youth_classification';
+        else if (cleanKey === 'youth_age_group' || cleanKey === 'youthagegroup') finalKey = 'youth_age_group';
+        else if (cleanKey === 'highest_education' || cleanKey === 'highesteducation') finalKey = 'highest_education';
+        else if (cleanKey === 'work_status' || cleanKey === 'workstatus') finalKey = 'work_status';
+        else if (cleanKey === 'home_address' || cleanKey === 'homeaddress' || cleanKey === 'address') finalKey = 'home_address';
+        else if (cleanKey === 'email_address' || cleanKey === 'emailaddress' || cleanKey === 'email') finalKey = 'email_address';
+        else if (cleanKey === 'contact_number' || cleanKey === 'contactnumber' || cleanKey === 'phone') finalKey = 'contact_number';
+        else if (cleanKey === 'registered_voter' || cleanKey === 'registeredvoter') finalKey = 'registered_voter';
+        else if (cleanKey === 'voted_last_election' || cleanKey === 'votedlastelection') finalKey = 'voted_last_election';
+        else if (cleanKey === 'attended_kk_assembly' || cleanKey === 'attendedkkassembly') finalKey = 'attended_kk_assembly';
+        else if (cleanKey === 'kk_assemblies_attended' || cleanKey === 'kkassembliesattended') finalKey = 'kk_assemblies_attended';
+        
+        cleanedRow[finalKey] = typeof value === 'string' ? value.trim() : value;
       });
       
-      // Apply standardization FIRST to normalize common values
+      console.log(`Cleaned row ${index}:`, cleanedRow);
+      
+      // Apply standardization to normalize common values
       const standardized = standardizeYouthRecord(cleanedRow);
-      console.log("Standardized record:", standardized);
+      console.log(`Standardized row ${index}:`, standardized);
       
       return standardized;
     });
 
-    console.log("Cleaned and standardized data:", cleanedData);
+    console.log("All processed data:", processedData);
 
-    // Then validate and check for duplicates
-    for (const [index, record] of cleanedData.entries()) {
-      // Validate the standardized record
+    // Validate each processed record
+    for (const [index, record] of processedData.entries()) {
+      console.log(`Validating record ${index}:`, record);
+      
+      // Custom validation
       const issues = validateRecord(record, index);
       allValidationIssues.push(...issues);
       
-      // Try to parse with schema
+      // Schema validation
       const result = YouthSchema.safeParse(record);
-      console.log("Schema validation for record", index, ":", result.success, result.error?.issues);
+      console.log(`Schema validation for record ${index}:`, result.success);
+      if (!result.success) {
+        console.log(`Schema errors for record ${index}:`, result.error?.issues);
+      }
       
       if (result.success) {
         const key = `${record.name?.toLowerCase()}|${record.birthday}`;
@@ -235,7 +270,6 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
           validList.push(record);
         }
       } else {
-        console.log("Schema validation failed for record", index, ":", result.error?.issues);
         // Add schema validation errors to validation issues
         result.error?.issues.forEach(issue => {
           allValidationIssues.push({
@@ -249,15 +283,16 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
       }
     }
 
+    console.log("Final results:");
     console.log("Valid records:", validList.length);
     console.log("Duplicates in file:", duplicatesList.length);
     console.log("Validation issues:", allValidationIssues.length);
 
-    setParsedData(cleanedData);
+    setParsedData(processedData);
     setDuplicatesInFile(duplicatesList);
     setValidationIssues(allValidationIssues);
     
-    // Show validation dialog if there are critical issues (not just warnings)
+    // Only show validation dialog for critical issues
     const criticalIssues = allValidationIssues.filter(issue => 
       !issue.issue.includes('Consider filling') && 
       !issue.issue.includes('helpful for')
