@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
@@ -46,58 +47,107 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
   const [selectedRecord, setSelectedRecord] = useState<YouthRecord | null>(null);
 
   const handleEdit = (record: YouthRecord) => {
+    console.log("DataTable: Opening edit dialog for record:", record.id);
     setSelectedRecord(record);
     setIsEditDialogOpen(true);
   };
 
   const handleDelete = (record: YouthRecord) => {
+    console.log("DataTable: Opening delete dialog for record:", record.id);
     setSelectedRecord(record);
     setIsDeleteDialogOpen(true);
   };
 
   const handleSaveEdit = async (data: Partial<YouthRecord>) => {
-    if (!selectedRecord) return;
+    if (!selectedRecord) {
+      console.error("DataTable: No selected record for edit");
+      toast.error("No record selected for editing");
+      return;
+    }
+
+    console.log("DataTable: Attempting to save edit for record:", selectedRecord.id, data);
 
     try {
-      // Allow N/A for non-critical fields, but normalize empty strings
-      const normalizedData = Object.fromEntries(
-        Object.entries(data).map(([key, value]) => {
-          // Critical fields cannot be N/A or empty
-          const criticalFields = ['name', 'age', 'birthday', 'sex', 'barangay'];
-          if (criticalFields.includes(key) && (!value || value === 'N/A' || (typeof value === 'string' && value.trim() === ''))) {
-            throw new Error(`${key} is required and cannot be empty`);
-          }
-          
-          return [
-            key,
-            typeof value === 'string' && value.trim() === '' ? 'N/A' : value
-          ];
-        })
-      );
+      // Validate that we have a valid record ID
+      if (!selectedRecord.id || selectedRecord.id.trim() === '') {
+        throw new Error("Invalid record ID");
+      }
 
-      await pbClient.youth.update(selectedRecord.id, normalizedData);
+      // Ensure critical fields are not empty
+      const criticalFields = ['name', 'barangay'];
+      const missingCritical = criticalFields.filter(field => {
+        const value = data[field as keyof YouthRecord];
+        return !value || value === 'N/A' || (typeof value === 'string' && value.trim() === '');
+      });
+
+      if (missingCritical.length > 0) {
+        throw new Error(`Critical fields cannot be empty: ${missingCritical.join(', ')}`);
+      }
+
+      // Calculate age from birthday if birthday is provided
+      if (data.birthday) {
+        const today = new Date();
+        const birthDate = new Date(data.birthday);
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          data.age = age - 1;
+        } else {
+          data.age = age;
+        }
+      }
+
+      // Prepare the update data
+      const updateData = {
+        ...data,
+        // Ensure numeric fields are properly converted
+        kk_assemblies_attended: data.kk_assemblies_attended ? Number(data.kk_assemblies_attended) : 0,
+        age: data.age ? Number(data.age) : selectedRecord.age
+      };
+
+      console.log("DataTable: Sending update data:", updateData);
+
+      await pbClient.youth.update(selectedRecord.id, updateData);
+      
+      console.log("DataTable: Record updated successfully");
       toast.success("Record updated successfully");
       setIsEditDialogOpen(false);
       setSelectedRecord(null);
       onDataChange();
     } catch (error: any) {
-      console.error("Error updating record:", error);
-      toast.error(error.message || "Failed to update record");
+      console.error("DataTable: Error updating record:", error);
+      const errorMessage = error?.message || error?.data?.message || "Failed to update record";
+      toast.error(errorMessage);
     }
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedRecord) return;
+    if (!selectedRecord) {
+      console.error("DataTable: No selected record for delete");
+      toast.error("No record selected for deletion");
+      return;
+    }
+
+    console.log("DataTable: Attempting to delete record:", selectedRecord.id);
 
     try {
+      // Validate that we have a valid record ID
+      if (!selectedRecord.id || selectedRecord.id.trim() === '') {
+        throw new Error("Invalid record ID");
+      }
+
       await pbClient.youth.delete(selectedRecord.id);
+      
+      console.log("DataTable: Record deleted successfully");
       toast.success("Record deleted successfully");
       setIsDeleteDialogOpen(false);
       setSelectedRecord(null);
       onDataChange();
-    } catch (error) {
-      console.error("Error deleting record:", error);
-      toast.error("Failed to delete record");
+    } catch (error: any) {
+      console.error("DataTable: Error deleting record:", error);
+      const errorMessage = error?.message || error?.data?.message || "Failed to delete record";
+      toast.error(errorMessage);
     }
   };
 
@@ -108,10 +158,10 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
 
   const handleBatchEdit = async (field: string, oldValue: string, newValue: string) => {
     try {
-      console.log("Batch edit starting:", { field, oldValue, newValue });
+      console.log("DataTable: Batch edit starting:", { field, oldValue, newValue });
       
       const recordsToSearch = tableState.filteredData;
-      console.log("Records to search:", recordsToSearch.length);
+      console.log("DataTable: Records to search:", recordsToSearch.length);
       
       // Improved normalization function
       const normalizeForMatch = (value: any): string => {
@@ -120,7 +170,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       };
 
       const normalizedOldValue = normalizeForMatch(oldValue);
-      console.log("Normalized old value:", normalizedOldValue);
+      console.log("DataTable: Normalized old value:", normalizedOldValue);
       
       const recordsToUpdate = recordsToSearch.filter((record) => {
         const recordValue = normalizeForMatch(record[field as keyof YouthRecord]);
@@ -131,17 +181,17 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
         
         const matches = exactMatch || partialMatch;
         
-        console.log(`Record ${record.id}: ${field}="${record[field as keyof YouthRecord]}" -> normalized: "${recordValue}" vs "${normalizedOldValue}" - matches: ${matches}`);
+        console.log(`DataTable: Record ${record.id}: ${field}="${record[field as keyof YouthRecord]}" -> normalized: "${recordValue}" vs "${normalizedOldValue}" - matches: ${matches}`);
         return record.id && matches;
       });
       
-      console.log("Records to update:", recordsToUpdate.length);
+      console.log("DataTable: Records to update:", recordsToUpdate.length);
       
       if (recordsToUpdate.length === 0) {
-        console.log("No matching records found. Sample values for field:", field);
+        console.log("DataTable: No matching records found. Sample values for field:", field);
         recordsToSearch.slice(0, 5).forEach(record => {
           const value = record[field as keyof YouthRecord];
-          console.log(`Record ${record.id}: ${field}="${value}" (normalized: "${normalizeForMatch(value)}")`);
+          console.log(`DataTable: Record ${record.id}: ${field}="${value}" (normalized: "${normalizeForMatch(value)}")`);
         });
         toast.info("No matching records found to update");
         return;
@@ -152,25 +202,31 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       
       for (const record of recordsToUpdate) {
         try {
+          if (!record.id || record.id.trim() === '') {
+            console.error("DataTable: Invalid record ID for batch update:", record);
+            continue;
+          }
+
           const normalizedValue = newValue.trim() === '' ? 'N/A' : newValue;
           await pbClient.youth.update(record.id, { [field]: normalizedValue });
           updatedCount++;
-        } catch (error) {
-          console.error(`Error updating record ${record.id}:`, error);
-          errors.push(`Failed to update ${record.name}: ${error}`);
+          console.log(`DataTable: Successfully updated record ${record.id}`);
+        } catch (error: any) {
+          console.error(`DataTable: Error updating record ${record.id}:`, error);
+          errors.push(`Failed to update ${record.name}: ${error?.message || error}`);
         }
       }
       
       if (errors.length > 0) {
         toast.error(`Updated ${updatedCount} records, but ${errors.length} failed`);
-        console.error("Batch update errors:", errors);
+        console.error("DataTable: Batch update errors:", errors);
       } else {
         toast.success(`Successfully updated ${updatedCount} records`);
       }
       
       onDataChange();
-    } catch (error) {
-      console.error("Error during batch update:", error);
+    } catch (error: any) {
+      console.error("DataTable: Error during batch update:", error);
       toast.error("Failed to complete batch update");
     }
   };

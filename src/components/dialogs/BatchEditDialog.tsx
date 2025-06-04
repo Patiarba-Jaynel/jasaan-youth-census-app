@@ -52,10 +52,17 @@ export function BatchEditDialog({
     { value: "kk_assemblies_attended", label: "KK Assemblies Attended" },
     { value: "civil_status", label: "Civil Status" },
     { value: "home_address", label: "Home Address" },
+    { value: "email_address", label: "Email Address" },
+    { value: "contact_number", label: "Contact Number" },
   ];
 
   const handleSave = () => {
-    if (!field || !oldValue || !newValue) return;
+    if (!field || !oldValue || newValue === undefined) {
+      console.log("BatchEditDialog: Missing required fields", { field, oldValue, newValue });
+      return;
+    }
+    
+    console.log("BatchEditDialog: Executing find and replace", { field, oldValue, newValue });
     onSave(field, oldValue, newValue);
     onOpenChange(false);
   };
@@ -82,23 +89,54 @@ export function BatchEditDialog({
 
     const normalizedOldValue = normalizeValue(oldValue).toLowerCase();
 
-    return selectedRecords.filter(record => {
+    const matches = selectedRecords.filter(record => {
+      if (!record.id) return false;
+      
       const recordValue = normalizeValue(record[field as keyof YouthRecord]).toLowerCase();
+      
+      // Enhanced matching: exact match, contains, or partial match
       return recordValue === normalizedOldValue || 
              recordValue.includes(normalizedOldValue) ||
              normalizedOldValue.includes(recordValue);
-    }).length;
+    });
+
+    console.log("BatchEditDialog: Match calculation", {
+      field,
+      oldValue,
+      normalizedOldValue,
+      totalRecords: selectedRecords.length,
+      matches: matches.length
+    });
+
+    return matches.length;
   };
 
   const matchCount = getMatchCount();
 
+  // Handle keyboard shortcuts
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.ctrlKey && e.key === 'f') {
+      e.preventDefault();
+      // Focus on the find input
+      const findInput = document.getElementById('oldValue');
+      if (findInput) {
+        findInput.focus();
+      }
+    }
+    
+    if (e.key === 'Enter' && field && oldValue && newValue !== undefined && matchCount > 0) {
+      e.preventDefault();
+      handleSave();
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onKeyDown={handleKeyDown}>
         <DialogHeader>
-          <DialogTitle>Find and Replace</DialogTitle>
+          <DialogTitle>Find and Replace (Ctrl+F)</DialogTitle>
           <DialogDescription>
-            Update values across multiple records at once.
+            Update values across multiple records at once. Press Ctrl+F to focus on the find field.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -125,7 +163,7 @@ export function BatchEditDialog({
           <div>
             <label htmlFor="oldValue" className="text-sm font-medium flex items-center gap-2">
               <Search size={16} />
-              Find
+              Find (Ctrl+F)
             </label>
             <Input
               id="oldValue"
@@ -133,6 +171,7 @@ export function BatchEditDialog({
               onChange={(e) => setOldValue(e.target.value)}
               placeholder="Enter value to find"
               className="w-full"
+              autoComplete="off"
             />
             {field && oldValue && (
               <p className="text-xs mt-1 text-muted-foreground">
@@ -151,8 +190,9 @@ export function BatchEditDialog({
               id="newValue"
               value={newValue}
               onChange={(e) => setNewValue(e.target.value)}
-              placeholder="Enter new value"
+              placeholder="Enter new value (can be empty)"
               className="w-full"
+              autoComplete="off"
             />
           </div>
         </div>
@@ -166,9 +206,9 @@ export function BatchEditDialog({
             </Button>
             <Button 
               onClick={handleSave} 
-              disabled={!field || !oldValue || !newValue || matchCount === 0}
+              disabled={!field || !oldValue || newValue === undefined || matchCount === 0}
             >
-              Replace All
+              Replace All ({matchCount})
             </Button>
           </div>
         </DialogFooter>
