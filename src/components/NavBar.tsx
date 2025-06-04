@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, LogOut, BarChart3, Table, Settings, Activity } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
 
@@ -47,7 +47,6 @@ export function NavBar() {
   const NavLinks = ({ mobile = false }) => (
     <>
       {navItems.map((item) => {
-        const Icon = item.icon;
         const isActive = location.pathname === item.href;
         
         return (
@@ -69,7 +68,6 @@ export function NavBar() {
             }`}
             onClick={() => mobile && setIsOpen(false)}
           >
-            {Icon && <Icon size={16} />}
             {item.label}
           </Link>
         );
