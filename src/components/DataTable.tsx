@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
@@ -88,13 +87,13 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
       if (data.birthday) {
         const today = new Date();
         const birthDate = new Date(data.birthday);
-        const age = today.getFullYear() - birthDate.getFullYear();
+        const calculatedAge = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
         
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-          data.age = age - 1;
+          data.age = String(calculatedAge - 1);
         } else {
-          data.age = age;
+          data.age = String(calculatedAge);
         }
       }
 
@@ -103,7 +102,7 @@ export function DataTable({ data, onDataChange }: DataTableProps) {
         ...data,
         // Ensure numeric fields are properly converted
         kk_assemblies_attended: data.kk_assemblies_attended ? Number(data.kk_assemblies_attended) : 0,
-        age: data.age ? Number(data.age) : selectedRecord.age
+        age: data.age ? String(data.age) : selectedRecord.age
       };
 
       console.log("DataTable: Sending update data:", updateData);
