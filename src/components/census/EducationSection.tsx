@@ -10,15 +10,18 @@ interface EducationSectionProps {
 
 export const EducationSection = ({ control }: EducationSectionProps) => {
   const educationLevels = [
-    "Elementary",
-    "High School",
+    "Elementary Undergraduate",
+    "Elementary Graduate", 
+    "High School Undergraduate",
+    "High School Graduate",
+    "Vocational Undergraduate",
+    "Vocational Graduate",
     "College Undergraduate",
     "College Graduate",
-    "Masters Degree",
-    "College Level",
-    "Doctorate Degree",
-    "Vocational",
-    "Other",
+    "Masteral Undergraduate",
+    "Masteral Graduate",
+    "Doctoral Undergraduate",
+    "Doctoral Graduate"
   ];
 
   return (
