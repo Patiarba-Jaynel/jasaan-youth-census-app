@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,6 @@ export function NavBar() {
     { href: "/about", label: "About" },
     ...(isLoggedIn
       ? [
-          { href: "/dashboard", label: "Youth Dashboard", icon: Table },
           { href: "/dashboard/table", label: "Youth Table View", icon: Table },
           { href: "/dashboard/youth/activity", label: "Youth Activity", icon: Activity },
           { href: "/dashboard/consolidated", label: "Consolidated Dashboard", icon: BarChart3 },
@@ -109,7 +107,7 @@ export function NavBar() {
               size="sm"
               className="bg-red-600 hover:bg-red-700"
             >
-              Logout
+              Dashboard
             </Button>
           )}
         </nav>
