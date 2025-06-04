@@ -6,20 +6,19 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, History, AlertTriangle } from "lucide-react";
+import { Trash2, History } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { activityLogger } from "@/lib/activity-logger";
+import { pbClient } from "@/lib/pb-client";
 
 interface ActivityLog {
   id: string;
   action: string;
-  entity_type: string;
-  entity_id: string;
-  entity_name: string;
-  user_id: string;
-  user_name: string;
-  details: string;
-  batch_id: string;
-  timestamp: string;
+  blame: string;
+  entity_type?: string;
+  entity_id?: string;
+  details?: string;
+  batch_id?: string;
   created: string;
   updated: string;
 }
@@ -39,9 +38,16 @@ export function BatchManagementDialog({ open, onClose, onDataChange }: BatchMana
   const fetchLogs = async () => {
     try {
       setIsLoading(true);
-      // Since activity logs don't exist, return empty arrays
-      setActivityLogs([]);
-      setBatchLogs([]);
+      const logsResult = await activityLogger.getActivityLogs();
+      const logs = logsResult.items as ActivityLog[];
+      
+      setActivityLogs(logs);
+      
+      // Filter batch-related logs
+      const batchRelatedLogs = logs.filter(log => 
+        log.action === 'IMPORT' || log.batch_id
+      );
+      setBatchLogs(batchRelatedLogs);
     } catch (error) {
       console.error("Error fetching logs:", error);
       toast.error("Failed to load activity logs");
@@ -57,8 +63,19 @@ export function BatchManagementDialog({ open, onClose, onDataChange }: BatchMana
 
     try {
       setIsLoading(true);
-      // Since activity logs don't exist, we can't actually delete batches
-      toast.error("Batch deletion is not available - activity logging is disabled");
+      
+      // Get all records with this batch_id
+      const youthRecords = await pbClient.youth.getAll();
+      const recordsToDelete = youthRecords.filter(record => record.batch_id === batchId);
+      
+      // Delete each record
+      for (const record of recordsToDelete) {
+        await pbClient.youth.delete(record.id);
+      }
+      
+      toast.success(`Successfully deleted batch with ${recordsToDelete.length} records`);
+      onDataChange();
+      fetchLogs(); // Refresh logs
     } catch (error) {
       console.error("Error deleting batch:", error);
       toast.error("Failed to delete batch");
@@ -130,27 +147,94 @@ export function BatchManagementDialog({ open, onClose, onDataChange }: BatchMana
 
         <ScrollArea className="max-h-[60vh]">
           {activeTab === 'activity' && (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-center">
-                <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Activity Logs Not Available</h3>
-                <p className="text-muted-foreground">
-                  Activity logging has been disabled as the activity_logs collection does not exist.
-                </p>
-              </div>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Action</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Entity</TableHead>
+                  <TableHead>Details</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {activityLogs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8">
+                      No activity logs found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  activityLogs.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell>
+                        <Badge className={getActionBadgeColor(log.action)}>
+                          {log.action}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">{log.blame}</TableCell>
+                      <TableCell>{log.entity_type || 'N/A'}</TableCell>
+                      <TableCell className="max-w-xs truncate">{log.details || 'N/A'}</TableCell>
+                      <TableCell>{formatDate(log.created)}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           )}
 
           {activeTab === 'batches' && (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-center">
-                <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Batch Management Not Available</h3>
-                <p className="text-muted-foreground">
-                  Batch management has been disabled as the activity_logs collection does not exist.
-                </p>
-              </div>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Batch ID</TableHead>
+                  <TableHead>Imported By</TableHead>
+                  <TableHead>Import Date</TableHead>
+                  <TableHead>Details</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {uniqueBatches.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      No batch imports found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  uniqueBatches.map((batchId) => {
+                    const { importLog, isDeleted } = getBatchInfo(batchId);
+                    
+                    return (
+                      <TableRow key={batchId}>
+                        <TableCell className="font-mono text-xs">{batchId}</TableCell>
+                        <TableCell>{importLog?.blame || 'Unknown'}</TableCell>
+                        <TableCell>{importLog ? formatDate(importLog.created) : 'N/A'}</TableCell>
+                        <TableCell>{importLog?.details || 'N/A'}</TableCell>
+                        <TableCell>
+                          <Badge variant={isDeleted ? "destructive" : "default"}>
+                            {isDeleted ? "Deleted" : "Active"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {!isDeleted && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteBatch(batchId)}
+                              disabled={isLoading}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
           )}
         </ScrollArea>
 

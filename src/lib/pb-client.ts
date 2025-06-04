@@ -1,5 +1,5 @@
-
 import PocketBase from 'pocketbase';
+import { activityLogger } from './activity-logger';
 
 // Create a PocketBase client instance
 const pb = new PocketBase('https://pocket.jwisnetwork.com');
@@ -84,6 +84,16 @@ export const pbClient = {
       console.log('Creating youth record with data:', data);
       const record = await pb.collection('youth').create(data);
       console.log('Created youth record:', record);
+      
+      // Log the activity
+      try {
+        const authData = pbClient.auth.getAuthData();
+        const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
+        await activityLogger.logYouthCreate(record.id, data.name, userName);
+      } catch (error) {
+        console.error('Failed to log youth creation:', error);
+      }
+      
       return record;
     },
     createMany: async (records: Omit<YouthRecord, 'id' | 'created' | 'updated'>[], batchId?: string) => {
@@ -99,6 +109,17 @@ export const pbClient = {
         }
       }
       
+      // Log the batch import
+      try {
+        const authData = pbClient.auth.getAuthData();
+        const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
+        if (batchId) {
+          await activityLogger.logBatchImport(createdRecords.length, userName, batchId);
+        }
+      } catch (error) {
+        console.error('Failed to log batch import:', error);
+      }
+      
       return createdRecords;
     },
     getAll: async () => {
@@ -109,11 +130,31 @@ export const pbClient = {
     },
     update: async (id: string, data: Partial<YouthRecord>) => {
       const record = await pb.collection('youth').update(id, data);
+      
+      // Log the activity
+      try {
+        const authData = pbClient.auth.getAuthData();
+        const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
+        await activityLogger.logYouthUpdate(id, record.name || 'Unknown', userName);
+      } catch (error) {
+        console.error('Failed to log youth update:', error);
+      }
+      
       return record;
     },
     delete: async (id: string) => {
       const record = await pb.collection('youth').getOne(id);
       await pb.collection('youth').delete(id);
+      
+      // Log the activity
+      try {
+        const authData = pbClient.auth.getAuthData();
+        const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
+        await activityLogger.logYouthDelete(id, record.name || 'Unknown', userName);
+      } catch (error) {
+        console.error('Failed to log youth deletion:', error);
+      }
+      
       return record;
     }
   },
@@ -159,6 +200,16 @@ export const pbClient = {
         // Create the record
         const record = await pb.collection('consolidated_data').create(sanitizedData);
         console.log('Successfully created consolidated record:', record);
+        
+        // Log the activity
+        try {
+          const authData = pbClient.auth.getAuthData();
+          const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
+          const details = `${sanitizedData.barangay} - ${sanitizedData.age_bracket} - ${sanitizedData.gender} (${sanitizedData.year}/${sanitizedData.month})`;
+          await activityLogger.logConsolidatedCreate(record.id, userName, details);
+        } catch (error) {
+          console.error('Failed to log consolidated creation:', error);
+        }
         
         return record;
       } catch (error) {
@@ -291,6 +342,16 @@ export const pbClient = {
         const updatedRecord = await pb.collection('consolidated_data').update(id, sanitizedData);
         console.log('Successfully updated consolidated record:', updatedRecord);
         
+        // Log the activity
+        try {
+          const authData = pbClient.auth.getAuthData();
+          const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
+          const details = `${updatedRecord.barangay} - ${updatedRecord.age_bracket} - ${updatedRecord.gender}`;
+          await activityLogger.logConsolidatedUpdate(id, userName, details);
+        } catch (error) {
+          console.error('Failed to log consolidated update:', error);
+        }
+        
         return updatedRecord;
       } catch (error) {
         console.error('Error updating consolidated record:', error);
@@ -325,6 +386,16 @@ export const pbClient = {
         // Perform the deletion
         await pb.collection('consolidated_data').delete(id);
         console.log('Successfully deleted consolidated record');
+        
+        // Log the activity
+        try {
+          const authData = pbClient.auth.getAuthData();
+          const userName = authData?.record?.name || authData?.record?.email || 'Unknown User';
+          const details = `${recordToDelete.barangay} - ${recordToDelete.age_bracket} - ${recordToDelete.gender}`;
+          await activityLogger.logConsolidatedDelete(id, userName, details);
+        } catch (error) {
+          console.error('Failed to log consolidated deletion:', error);
+        }
         
         return recordToDelete;
       } catch (error) {
