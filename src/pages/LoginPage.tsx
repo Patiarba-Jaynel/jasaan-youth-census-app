@@ -7,7 +7,7 @@ import { pbClient } from "@/lib/pb-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const LoginPage = () => {
@@ -69,89 +69,82 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 py-16">
-        <div className="flex flex-col lg:flex-row items-center justify-center min-h-[70vh] gap-12">
-          {/* Left side - Logo and Branding */}
-          <div className="flex-1 max-w-md text-center lg:text-left">
-            <div className="mb-8">
-              <img
-                src="/jasaan-logo.png"
-                alt="Jasaan Logo"
-                className="h-32 w-32 mx-auto lg:mx-0 mb-6 object-contain"
-              />
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                Municipality of Jasaan
-              </h1>
-              <p className="text-xl text-gray-600 mb-4">Misamis Oriental</p>
-              <div className="space-y-2 text-gray-600">
-                <p className="text-lg">Data Management System</p>
-                <p className="text-sm">Secure access to consolidated data and analytics</p>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <Card className="w-full max-w-4xl mx-4 shadow-xl bg-white">
+        <CardContent className="p-0">
+          <div className="flex flex-col lg:flex-row min-h-[600px]">
+            {/* Left side - Logo and Seal */}
+            <div className="flex-1 flex items-center justify-center p-12 bg-white">
+              <div className="text-center">
+                <img
+                  src="/jasaan-logo.png"
+                  alt="Municipality of Jasaan Official Seal"
+                  className="h-80 w-80 mx-auto mb-8 object-contain"
+                />
               </div>
             </div>
-          </div>
 
-          {/* Right side - Login Form */}
-          <div className="flex-1 max-w-md w-full">
-            <Card className="shadow-lg">
-              <CardHeader className="text-center pb-6">
-                <CardTitle className="text-2xl font-bold text-gray-900">
-                  Admin Portal
-                </CardTitle>
-                <CardDescription className="text-gray-600">
-                  Enter your credentials to access the dashboard
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-gray-700">Email Address</Label>
+            {/* Right side - Login Form */}
+            <div className="flex-1 flex items-center justify-center p-12 bg-gray-50">
+              <div className="w-full max-w-md">
+                <div className="text-center mb-8">
+                  <h1 className="text-4xl font-bold text-red-600 mb-2">Welcome!</h1>
+                  <p className="text-gray-600 text-lg">Monitor Jasaan Population</p>
+                </div>
+
+                <form onSubmit={handleLogin} className="space-y-6">
+                  <div>
                     <Input
-                      id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email"
-                      className="h-11"
+                      placeholder="Email address"
+                      className="h-12 bg-gray-100 border-0 text-gray-800 placeholder-gray-600"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-gray-700">Password</Label>
+                  
+                  <div>
                     <Input
-                      id="password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      className="h-11"
+                      placeholder="Password"
+                      className="h-12 bg-gray-100 border-0 text-gray-800 placeholder-gray-600"
                       required
                     />
                   </div>
+
+                  <div className="text-right">
+                    <Button
+                      type="button"
+                      variant="link"
+                      onClick={() => setIsForgotPasswordOpen(true)}
+                      className="text-red-500 hover:text-red-600 p-0 h-auto text-sm"
+                    >
+                      Forgot Password?
+                    </Button>
+                  </div>
+
                   <Button 
                     type="submit" 
-                    className="w-full h-11 bg-blue-600 hover:bg-blue-700" 
+                    className="w-full h-12 bg-red-600 hover:bg-red-700 text-white font-semibold text-lg" 
                     disabled={isLoading}
                   >
-                    {isLoading ? "Signing in..." : "Sign In"}
+                    {isLoading ? "Signing in..." : "Login"}
                   </Button>
                 </form>
-                
-                <div className="text-center">
-                  <Button
-                    type="button"
-                    variant="link"
-                    onClick={() => setIsForgotPasswordOpen(true)}
-                    className="text-blue-600 hover:text-blue-700 text-sm"
-                  >
-                    Forgot your password?
-                  </Button>
+
+                <div className="text-center mt-8">
+                  <p className="text-gray-500 text-sm">
+                    © 2025 POPCOM Jasaan. All rights reserved.
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Forgot Password Dialog */}
       <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
