@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NavBar } from "@/components/NavBar";
@@ -31,6 +30,16 @@ const ConsolidatedDashboardPage = () => {
   const [activeTab, setActiveTab] = useState("analytics");
   const navigate = useNavigate();
 
+  const fetchData = async () => {
+    try {
+      const records = await pbClient.consolidated.getAll();
+      setConsolidatedData(records);
+    } catch (error) {
+      console.error("Error fetching consolidated data:", error);
+      toast.error("Failed to load consolidated data");
+    }
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       const isLoggedIn = pbClient.auth.isLoggedIn();
@@ -44,11 +53,7 @@ const ConsolidatedDashboardPage = () => {
       }
 
       try {
-        const records = await pbClient.consolidated.getAll();
-        setConsolidatedData(records);
-      } catch (error) {
-        console.error("Error fetching consolidated data:", error);
-        toast.error("Failed to load consolidated data");
+        await fetchData();
       } finally {
         setIsLoading(false);
       }
@@ -57,14 +62,16 @@ const ConsolidatedDashboardPage = () => {
     checkAuth();
   }, [navigate]);
 
-  const handleFormSubmit = async () => {
-    setShowForm(false);
-    // Refresh data
+  const handleFormSubmit = async (data: Omit<ConsolidatedData, 'id'>) => {
     try {
-      const records = await pbClient.consolidated.getAll();
-      setConsolidatedData(records);
+      console.log("Creating new consolidated record:", data);
+      await pbClient.consolidated.create(data);
+      toast.success("Record added successfully");
+      setShowForm(false);
+      await fetchData();
     } catch (error) {
-      console.error("Error refreshing data:", error);
+      console.error("Error creating record:", error);
+      toast.error("Failed to add record");
     }
   };
 
@@ -82,8 +89,7 @@ const ConsolidatedDashboardPage = () => {
       toast.success(`Successfully imported ${records.length} consolidated records (Batch: ${batchId})`);
       
       // Refresh data
-      const updatedRecords = await pbClient.consolidated.getAll();
-      setConsolidatedData(updatedRecords);
+      await fetchData();
     } catch (error) {
       console.error("Error importing records:", error);
       toast.error("Failed to import records");
@@ -123,12 +129,7 @@ const ConsolidatedDashboardPage = () => {
   };
 
   const handleRecordUpdate = async () => {
-    try {
-      const records = await pbClient.consolidated.getAll();
-      setConsolidatedData(records);
-    } catch (error) {
-      console.error("Error refreshing data:", error);
-    }
+    await fetchData();
   };
 
   if (isLoading) {

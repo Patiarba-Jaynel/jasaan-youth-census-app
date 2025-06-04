@@ -77,11 +77,10 @@ export function EditConsolidatedDialog({
       
       // Validate required fields
       const requiredFields = ['barangay', 'age_bracket', 'gender', 'month'];
-      const missingFields = requiredFields.filter(field => 
-        !formData[field as keyof typeof formData] || 
-        (typeof formData[field as keyof typeof formData] === 'string' && 
-         formData[field as keyof typeof formData].trim() === '')
-      );
+      const missingFields = requiredFields.filter(field => {
+        const value = formData[field as keyof typeof formData];
+        return !value || (typeof value === 'string' && value.trim() === '');
+      });
       
       if (missingFields.length > 0) {
         setError(`Required fields missing: ${missingFields.join(', ')}`);

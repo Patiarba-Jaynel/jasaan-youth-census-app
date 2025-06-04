@@ -44,6 +44,7 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
   const [filterBarangay, setFilterBarangay] = useState("");
   const [filterGender, setFilterGender] = useState("");
   const [filterYear, setFilterYear] = useState("");
+  const [filterMonth, setFilterMonth] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [editingRecord, setEditingRecord] = useState<ConsolidatedData | null>(null);
@@ -60,6 +61,11 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
     [data]
   );
 
+  const uniqueMonths = useMemo(() => 
+    [...new Set(data.map(record => record.month).filter(m => m && m.trim() !== ""))].sort(), 
+    [data]
+  );
+
   // Filter and search data
   const filteredData = useMemo(() => {
     return data.filter(record => {
@@ -72,10 +78,11 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
       const matchesBarangay = !filterBarangay || record.barangay === filterBarangay;
       const matchesGender = !filterGender || record.gender === filterGender;
       const matchesYear = !filterYear || record.year.toString() === filterYear;
+      const matchesMonth = !filterMonth || record.month === filterMonth;
       
-      return matchesSearch && matchesBarangay && matchesGender && matchesYear;
+      return matchesSearch && matchesBarangay && matchesGender && matchesYear && matchesMonth;
     });
-  }, [data, searchTerm, filterBarangay, filterGender, filterYear]);
+  }, [data, searchTerm, filterBarangay, filterGender, filterYear, filterMonth]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -92,6 +99,7 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
     setFilterBarangay("");
     setFilterGender("");
     setFilterYear("");
+    setFilterMonth("");
     setCurrentPage(1);
   };
 
@@ -134,7 +142,7 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
             <SelectValue placeholder="Filter by Barangay" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all-barangays">All Barangays</SelectItem>
+            <SelectItem value="">All Barangays</SelectItem>
             {uniqueBarangays.map(barangay => (
               <SelectItem key={barangay} value={barangay}>{barangay}</SelectItem>
             ))}
@@ -146,7 +154,7 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
             <SelectValue placeholder="Filter by Gender" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all-genders">All Genders</SelectItem>
+            <SelectItem value="">All Genders</SelectItem>
             <SelectItem value="Male">Male</SelectItem>
             <SelectItem value="Female">Female</SelectItem>
           </SelectContent>
@@ -157,9 +165,21 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
             <SelectValue placeholder="Year" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all-years">All Years</SelectItem>
+            <SelectItem value="">All Years</SelectItem>
             {uniqueYears.map(year => (
               <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterMonth} onValueChange={setFilterMonth}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Month" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Months</SelectItem>
+            {uniqueMonths.map(month => (
+              <SelectItem key={month} value={month}>{month}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -195,11 +215,7 @@ export function ConsolidatedDataTable({ data, onRecordUpdate }: ConsolidatedData
                 <TableRow key={record.id}>
                   <TableCell className="font-medium">{record.barangay}</TableCell>
                   <TableCell>{record.age_bracket}</TableCell>
-                  <TableCell>
-                    <Badge variant={record.gender === "Male" ? "default" : "secondary"}>
-                      {record.gender}
-                    </Badge>
-                  </TableCell>
+                  <TableCell>{record.gender}</TableCell>
                   <TableCell>{record.year}</TableCell>
                   <TableCell>{record.month}</TableCell>
                   <TableCell className="font-semibold">{record.count}</TableCell>
