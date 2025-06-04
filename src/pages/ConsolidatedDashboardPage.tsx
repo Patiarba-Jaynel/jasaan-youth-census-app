@@ -152,6 +152,7 @@ const ConsolidatedDashboardPage = () => {
 
   const handleAddRecord = async (data: Omit<ConsolidatedData, 'id' | 'created' | 'updated'>) => {
     try {
+      console.log('Adding new consolidated record:', data);
       await pbClient.consolidated.create(data);
       toast.success("Record added successfully");
       setIsAddDialogOpen(false);
@@ -162,7 +163,7 @@ const ConsolidatedDashboardPage = () => {
       setFilteredData(sortedRecords);
     } catch (error) {
       console.error("Error adding record:", error);
-      toast.error("Failed to add record");
+      toast.error(`Failed to add record: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -175,6 +176,7 @@ const ConsolidatedDashboardPage = () => {
     if (!selectedRecord) return;
 
     try {
+      console.log('Updating consolidated record:', selectedRecord.id, data);
       await pbClient.consolidated.update(selectedRecord.id, data);
       toast.success("Record updated successfully");
       setIsEditDialogOpen(false);
@@ -186,7 +188,7 @@ const ConsolidatedDashboardPage = () => {
       setFilteredData(sortedRecords);
     } catch (error) {
       console.error("Error updating record:", error);
-      toast.error("Failed to update record");
+      toast.error(`Failed to update record: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -199,6 +201,7 @@ const ConsolidatedDashboardPage = () => {
     if (!recordToDelete) return;
 
     try {
+      console.log('Deleting consolidated record:', recordToDelete.id);
       await pbClient.consolidated.delete(recordToDelete.id);
       toast.success("Record deleted successfully");
       setDeleteDialogOpen(false);
@@ -210,7 +213,7 @@ const ConsolidatedDashboardPage = () => {
       setFilteredData(sortedRecords);
     } catch (error) {
       console.error("Error deleting record:", error);
-      toast.error("Failed to delete record");
+      toast.error(`Failed to delete record: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -494,7 +497,7 @@ const ConsolidatedDashboardPage = () => {
       toast.success(`Successfully imported ${totalRecordsAdded} records from ${importedData.length} barangays`);
     } catch (error) {
       console.error("Error importing data:", error);
-      toast.error(`Failed to import data: ${error.message}`);
+      toast.error(`Failed to import data: ${error.message || 'Unknown error'}`);
     }
   };
 

@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -126,52 +125,45 @@ export function ConsolidatedAnalytics({ data }: ConsolidatedAnalyticsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Filter Controls */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Analytics Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="year-filter">Filter by Year</Label>
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger id="year-filter">
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableYears.map((year) => (
-                    <SelectItem key={year} value={year}>
-                      {year === "All" ? "All Years" : year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="month-filter">Filter by Month</Label>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger id="month-filter">
-                  <SelectValue placeholder="Select month" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableMonths.map((month) => (
-                    <SelectItem key={month} value={month}>
-                      {month === "All" ? "All Months" : month}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="mt-4 text-sm text-muted-foreground">
-            {selectedYear === "All" && selectedMonth === "All" 
-              ? `Showing data for all periods (${filteredData.length} records)`
-              : `Showing data for ${selectedMonth === "All" ? "all months" : selectedMonth} ${selectedYear === "All" ? "all years" : selectedYear} (${filteredData.length} records)`
-            }
-          </div>
-        </CardContent>
-      </Card>
+      {/* Compact Filter Controls */}
+      <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+        <div className="flex items-center gap-2">
+          <Label htmlFor="year-filter" className="text-sm font-medium whitespace-nowrap">Year:</Label>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger id="year-filter" className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {availableYears.map((year) => (
+                <SelectItem key={year} value={year}>
+                  {year === "All" ? "All Years" : year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="month-filter" className="text-sm font-medium whitespace-nowrap">Month:</Label>
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger id="month-filter" className="w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {availableMonths.map((month) => (
+                <SelectItem key={month} value={month}>
+                  {month === "All" ? "All Months" : month}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="text-sm text-muted-foreground ml-auto">
+          {selectedYear === "All" && selectedMonth === "All" 
+            ? `All periods (${filteredData.length} records)`
+            : `${selectedMonth === "All" ? "All months" : selectedMonth} ${selectedYear === "All" ? "all years" : selectedYear} (${filteredData.length} records)`
+          }
+        </div>
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

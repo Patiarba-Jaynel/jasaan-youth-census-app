@@ -73,8 +73,15 @@ export function ConsolidatedDataForm({
       return;
     }
     
-    console.log('Submitting form data:', formData);
-    onSubmit(formData);
+    // Ensure count is a valid number
+    const submitData = {
+      ...formData,
+      count: Number(formData.count) || 0,
+      year: Number(formData.year)
+    };
+    
+    console.log('Submitting form data:', submitData);
+    onSubmit(submitData);
   };
 
   const handleChange = (field: keyof typeof formData, value: string | number) => {
@@ -82,6 +89,17 @@ export function ConsolidatedDataForm({
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow empty string or valid numbers
+    if (value === '' || (!isNaN(Number(value)) && Number(value) >= 0)) {
+      setFormData(prev => ({
+        ...prev,
+        count: value === '' ? 0 : Number(value)
+      }));
+    }
   };
 
   return (
@@ -173,9 +191,10 @@ export function ConsolidatedDataForm({
             <Input
               id="count"
               type="number"
-              value={formData.count}
-              onChange={(e) => handleChange('count', parseInt(e.target.value) || 0)}
+              value={formData.count === 0 ? '' : formData.count}
+              onChange={handleCountChange}
               min="0"
+              placeholder="Enter count"
               required
             />
           </div>

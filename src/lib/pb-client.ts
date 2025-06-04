@@ -1,3 +1,4 @@
+
 import PocketBase from 'pocketbase';
 import { activityLogger } from './activity-logger';
 
@@ -134,18 +135,36 @@ export const pbClient = {
       try {
         console.log('Creating consolidated record with data:', data);
         
+        // Ensure all required fields are present and properly formatted
+        const cleanData = {
+          barangay: String(data.barangay).trim(),
+          age_bracket: String(data.age_bracket).trim(),
+          gender: String(data.gender).trim(),
+          year: Number(data.year),
+          month: String(data.month).trim(),
+          count: Number(data.count)
+        };
+        
         // Validate required fields
-        if (!data.barangay || !data.age_bracket || !data.gender || !data.year || !data.month || data.count === undefined) {
-          throw new Error('Missing required fields for consolidated data');
+        if (!cleanData.barangay || !cleanData.age_bracket || !cleanData.gender || 
+            !cleanData.year || !cleanData.month || cleanData.count < 0) {
+          throw new Error('Missing or invalid required fields for consolidated data');
         }
         
-        const record = await pb.collection('consolidated_data').create(data);
+        console.log('Clean data for creation:', cleanData);
+        const record = await pb.collection('consolidated_data').create(cleanData);
         console.log('Created consolidated record:', record);
-        await activityLogger.logConsolidatedCreate(record.id, data.barangay, `${data.age_bracket} - ${data.gender} (${data.count} records)`);
+        
+        await activityLogger.logConsolidatedCreate(
+          record.id, 
+          cleanData.barangay, 
+          `${cleanData.age_bracket} - ${cleanData.gender} (${cleanData.count} records)`
+        );
+        
         return record;
       } catch (error) {
         console.error('Error creating consolidated record:', error);
-        throw new Error(`Failed to create consolidated record: ${error.message}`);
+        throw error;
       }
     },
     createMany: async (records: Omit<ConsolidatedData, 'id' | 'created' | 'updated'>[], batchId?: string) => {
@@ -173,7 +192,7 @@ export const pbClient = {
         return await pb.collection('consolidated_data').getFullList<ConsolidatedData>();
       } catch (error) {
         console.error('Error fetching consolidated data:', error);
-        throw new Error(`Failed to fetch consolidated data: ${error.message}`);
+        throw error;
       }
     },
     getOne: async (id: string) => {
@@ -181,36 +200,52 @@ export const pbClient = {
         return await pb.collection('consolidated_data').getOne<ConsolidatedData>(id);
       } catch (error) {
         console.error('Error fetching consolidated record:', error);
-        throw new Error(`Failed to fetch consolidated record: ${error.message}`);
+        throw error;
       }
     },
     update: async (id: string, data: Partial<ConsolidatedData>) => {
       try {
         console.log('Updating consolidated record with ID:', id, 'Data:', data);
         
+        // Clean and validate the update data
+        const cleanData: any = {};
+        if (data.barangay !== undefined) cleanData.barangay = String(data.barangay).trim();
+        if (data.age_bracket !== undefined) cleanData.age_bracket = String(data.age_bracket).trim();
+        if (data.gender !== undefined) cleanData.gender = String(data.gender).trim();
+        if (data.year !== undefined) cleanData.year = Number(data.year);
+        if (data.month !== undefined) cleanData.month = String(data.month).trim();
+        if (data.count !== undefined) cleanData.count = Number(data.count);
+        
+        console.log('Clean data for update:', cleanData);
+        
         // Get current record for logging
         const currentRecord = await pb.collection('consolidated_data').getOne(id);
         console.log('Current record before update:', currentRecord);
         
-        const record = await pb.collection('consolidated_data').update(id, data);
+        const record = await pb.collection('consolidated_data').update(id, cleanData);
         console.log('Updated consolidated record:', record);
         
-        await activityLogger.logConsolidatedUpdate(id, currentRecord.barangay, data);
+        await activityLogger.logConsolidatedUpdate(id, currentRecord.barangay, cleanData);
         return record;
       } catch (error) {
         console.error('Error updating consolidated record:', error);
-        throw new Error(`Failed to update consolidated record: ${error.message}`);
+        throw error;
       }
     },
     delete: async (id: string) => {
       try {
+        console.log('Deleting consolidated record with ID:', id);
         const record = await pb.collection('consolidated_data').getOne(id);
+        console.log('Record to delete:', record);
+        
         await pb.collection('consolidated_data').delete(id);
+        console.log('Successfully deleted consolidated record');
+        
         await activityLogger.logConsolidatedDelete(id, record.barangay);
         return record;
       } catch (error) {
         console.error('Error deleting consolidated record:', error);
-        throw new Error(`Failed to delete consolidated record: ${error.message}`);
+        throw error;
       }
     }
   },
