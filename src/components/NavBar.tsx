@@ -85,71 +85,73 @@ export function NavBar() {
   );
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="mr-4 hidden md:flex">
-          <Link to="/" className="mr-6 flex items-center space-x-2">
-            <span className="hidden font-bold sm:inline-block">
-              Youth Census Jasaan
-            </span>
+    <header className="sticky top-0 z-50 w-full bg-white border-b shadow-sm">
+      <div className="container mx-auto px-4 flex h-16 items-center justify-between">
+        {/* Logo and Brand */}
+        <div className="flex items-center space-x-3">
+          <img 
+            src="/popcom-logo.jpg" 
+            alt="POPCOM Logo" 
+            className="h-10 w-10 rounded-full object-cover"
+          />
+          <Link to="/" className="text-xl font-bold text-gray-900">
+            POPCOM JASAAN
           </Link>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-            <NavLinks />
-          </nav>
         </div>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-8">
+          <NavLinks />
+          {isLoggedIn && (
+            <Button 
+              onClick={handleLogout} 
+              variant="destructive"
+              size="sm"
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Dashboard
+            </Button>
+          )}
+        </nav>
+
+        {/* Mobile Menu */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
             <Button
               variant="ghost"
-              className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
+              className="md:hidden"
             >
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle Menu</span>
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="pr-0">
-            <Link
-              to="/"
-              className="flex items-center"
-              onClick={() => setIsOpen(false)}
-            >
-              <span className="font-bold">Youth Census Jasaan</span>
-            </Link>
-            <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
-              <div className="flex flex-col space-y-2">
-                <NavLinks mobile />
-                {isLoggedIn && (
-                  <>
-                    <div className="my-2 border-t" />
-                    <Button
-                      variant="ghost"
-                      onClick={handleLogout}
-                      className="justify-start gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
-                    >
-                      <LogOut size={16} />
-                      Logout
-                    </Button>
-                  </>
-                )}
-              </div>
+            <div className="flex items-center space-x-3 mb-6">
+              <img 
+                src="/popcom-logo.jpg" 
+                alt="POPCOM Logo" 
+                className="h-8 w-8 rounded-full object-cover"
+              />
+              <span className="text-lg font-bold">POPCOM JASAAN</span>
+            </div>
+            <div className="flex flex-col space-y-2">
+              <NavLinks mobile />
+              {isLoggedIn && (
+                <>
+                  <div className="my-2 border-t" />
+                  <Button
+                    variant="ghost"
+                    onClick={handleLogout}
+                    className="justify-start gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </Button>
+                </>
+              )}
             </div>
           </SheetContent>
         </Sheet>
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <div className="w-full flex-1 md:w-auto md:flex-none">
-            <Link to="/" className="flex items-center space-x-2 md:hidden">
-              <span className="font-bold">Youth Census</span>
-            </Link>
-          </div>
-          <nav className="flex items-center">
-            {isLoggedIn && (
-              <Button variant="ghost" onClick={handleLogout} className="hidden md:flex items-center gap-2">
-                <LogOut size={16} />
-                Logout
-              </Button>
-            )}
-          </nav>
-        </div>
       </div>
     </header>
   );
