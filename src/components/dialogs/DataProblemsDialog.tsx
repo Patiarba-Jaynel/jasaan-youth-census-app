@@ -1,6 +1,6 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, AlertCircle, Edit, UserX } from "lucide-react";
 import { YouthRecord, pbClient } from "@/lib/pb-client";
@@ -69,7 +69,7 @@ export function DataProblemsDialog({ open, onOpenChange, issues, onEditRecord, r
           setProcessingIds(prev => new Set(prev).add(record.id));
           try {
             console.log('Attempting to delete record:', record.id);
-            await pbClient.youth.delete(record.id);
+            await pbClient.collection('youth').delete(record.id);
             deletedCount++;
             console.log('Successfully deleted record:', record.id);
           } catch (deleteError: any) {
