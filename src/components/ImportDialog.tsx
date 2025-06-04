@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { z } from 'zod';
 import { formSchema as YouthSchema, enumOptions } from '@/lib/schema';
-import { standardizeRecordFields } from '@/lib/standardize';
+import { standardizeYouthRecord } from '@/lib/standardize';
 import { validateAgeConsistency, validateDropdownValue } from '@/lib/validation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -61,8 +61,8 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
         name: "Juan Dela Cruz",
         age: "25",
         birthday: "1999-01-15",
-        sex: "MALE",
-        civil_status: "SINGLE",
+        sex: "Male",
+        civil_status: "Single",
         barangay: "Aplaya",
         youth_classification: "OSY",
         youth_age_group: "25-30",
@@ -203,9 +203,11 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
       Object.entries(row).forEach(([key, value]) => {
         cleanedRow[key.trim()] = typeof value === 'string' ? value.trim() : value;
       });
-      const standardized = standardizeRecordFields(cleanedRow);
       
-      // Validate each record
+      // Apply standardization FIRST to normalize common values
+      const standardized = standardizeYouthRecord(cleanedRow);
+      
+      // Then validate the standardized record
       const issues = validateRecord(standardized, index);
       allValidationIssues.push(...issues);
       
@@ -214,7 +216,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
 
     setValidationIssues(allValidationIssues);
 
-    // Check for duplicates within the imported file
+    // Check for duplicates within the imported file and validate schema
     for (const record of cleanedData) {
       const result = YouthSchema.safeParse(record);
       if (result.success) {
@@ -232,8 +234,14 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
     setParsedData(cleanedData);
     setDuplicatesInFile(duplicatesList);
     
-    // Show validation dialog if there are issues
-    if (allValidationIssues.length > 0) {
+    // Show validation dialog if there are critical issues (not just warnings)
+    const criticalIssues = allValidationIssues.filter(issue => 
+      !issue.issue.includes('Consider filling') && 
+      !issue.issue.includes('helpful for')
+    );
+    
+    if (criticalIssues.length > 0) {
+      setValidationIssues(criticalIssues);
       setShowValidationDialog(true);
       return;
     }
