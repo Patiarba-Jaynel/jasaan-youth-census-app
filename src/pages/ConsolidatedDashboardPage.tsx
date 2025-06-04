@@ -65,6 +65,7 @@ const ConsolidatedDashboardPage = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleImport = async (records: any[]) => {
     try {
       setIsLoading(true);
