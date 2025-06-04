@@ -192,6 +192,8 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
   };
 
   const processData = async (data: any[]) => {
+    console.log("Processing data:", data.length, "records");
+    
     const seen = new Set();
     const duplicatesList: any[] = [];
     const validList: any[] = [];
@@ -206,19 +208,23 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
       
       // Apply standardization FIRST to normalize common values
       const standardized = standardizeYouthRecord(cleanedRow);
-      
-      // Then validate the standardized record
-      const issues = validateRecord(standardized, index);
-      allValidationIssues.push(...issues);
+      console.log("Standardized record:", standardized);
       
       return standardized;
     });
 
-    setValidationIssues(allValidationIssues);
+    console.log("Cleaned and standardized data:", cleanedData);
 
-    // Check for duplicates within the imported file and validate schema
-    for (const record of cleanedData) {
+    // Then validate and check for duplicates
+    for (const [index, record] of cleanedData.entries()) {
+      // Validate the standardized record
+      const issues = validateRecord(record, index);
+      allValidationIssues.push(...issues);
+      
+      // Try to parse with schema
       const result = YouthSchema.safeParse(record);
+      console.log("Schema validation for record", index, ":", result.success, result.error?.issues);
+      
       if (result.success) {
         const key = `${record.name?.toLowerCase()}|${record.birthday}`;
         
@@ -228,11 +234,28 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
           seen.add(key);
           validList.push(record);
         }
+      } else {
+        console.log("Schema validation failed for record", index, ":", result.error?.issues);
+        // Add schema validation errors to validation issues
+        result.error?.issues.forEach(issue => {
+          allValidationIssues.push({
+            row: index + 1,
+            field: issue.path.join('.'),
+            issue: issue.message,
+            value: issue.path.reduce((obj, path) => obj?.[path], record),
+            suggestion: 'Check data format and required fields'
+          });
+        });
       }
     }
 
+    console.log("Valid records:", validList.length);
+    console.log("Duplicates in file:", duplicatesList.length);
+    console.log("Validation issues:", allValidationIssues.length);
+
     setParsedData(cleanedData);
     setDuplicatesInFile(duplicatesList);
+    setValidationIssues(allValidationIssues);
     
     // Show validation dialog if there are critical issues (not just warnings)
     const criticalIssues = allValidationIssues.filter(issue => 
@@ -241,6 +264,7 @@ export const ImportDialog: React.FC<ImportDialogProps> = ({ open, onClose, onImp
     );
     
     if (criticalIssues.length > 0) {
+      console.log("Critical validation issues found:", criticalIssues.length);
       setValidationIssues(criticalIssues);
       setShowValidationDialog(true);
       return;
