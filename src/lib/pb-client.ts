@@ -128,14 +128,25 @@ export const pbClient = {
     }
   },
   
-  // Consolidated data methods with activity logging
+  // Consolidated data methods with improved error handling
   consolidated: {
     create: async (data: Omit<ConsolidatedData, 'id' | 'created' | 'updated'>) => {
-      console.log('Creating consolidated record with data:', data);
-      const record = await pb.collection('consolidated_data').create(data);
-      console.log('Created consolidated record:', record);
-      await activityLogger.logConsolidatedCreate(record.id, data.barangay, `${data.age_bracket} - ${data.gender} (${data.count} records)`);
-      return record;
+      try {
+        console.log('Creating consolidated record with data:', data);
+        
+        // Validate required fields
+        if (!data.barangay || !data.age_bracket || !data.gender || !data.year || !data.month || data.count === undefined) {
+          throw new Error('Missing required fields for consolidated data');
+        }
+        
+        const record = await pb.collection('consolidated_data').create(data);
+        console.log('Created consolidated record:', record);
+        await activityLogger.logConsolidatedCreate(record.id, data.barangay, `${data.age_bracket} - ${data.gender} (${data.count} records)`);
+        return record;
+      } catch (error) {
+        console.error('Error creating consolidated record:', error);
+        throw new Error(`Failed to create consolidated record: ${error.message}`);
+      }
     },
     createMany: async (records: Omit<ConsolidatedData, 'id' | 'created' | 'updated'>[], batchId?: string) => {
       const createdRecords = [];
@@ -158,22 +169,49 @@ export const pbClient = {
       return createdRecords;
     },
     getAll: async () => {
-      return await pb.collection('consolidated_data').getFullList<ConsolidatedData>();
+      try {
+        return await pb.collection('consolidated_data').getFullList<ConsolidatedData>();
+      } catch (error) {
+        console.error('Error fetching consolidated data:', error);
+        throw new Error(`Failed to fetch consolidated data: ${error.message}`);
+      }
     },
     getOne: async (id: string) => {
-      return await pb.collection('consolidated_data').getOne<ConsolidatedData>(id);
+      try {
+        return await pb.collection('consolidated_data').getOne<ConsolidatedData>(id);
+      } catch (error) {
+        console.error('Error fetching consolidated record:', error);
+        throw new Error(`Failed to fetch consolidated record: ${error.message}`);
+      }
     },
     update: async (id: string, data: Partial<ConsolidatedData>) => {
-      const record = await pb.collection('consolidated_data').update(id, data);
-      const currentRecord = await pb.collection('consolidated_data').getOne(id);
-      await activityLogger.logConsolidatedUpdate(id, currentRecord.barangay, data);
-      return record;
+      try {
+        console.log('Updating consolidated record with ID:', id, 'Data:', data);
+        
+        // Get current record for logging
+        const currentRecord = await pb.collection('consolidated_data').getOne(id);
+        console.log('Current record before update:', currentRecord);
+        
+        const record = await pb.collection('consolidated_data').update(id, data);
+        console.log('Updated consolidated record:', record);
+        
+        await activityLogger.logConsolidatedUpdate(id, currentRecord.barangay, data);
+        return record;
+      } catch (error) {
+        console.error('Error updating consolidated record:', error);
+        throw new Error(`Failed to update consolidated record: ${error.message}`);
+      }
     },
     delete: async (id: string) => {
-      const record = await pb.collection('consolidated_data').getOne(id);
-      await pb.collection('consolidated_data').delete(id);
-      await activityLogger.logConsolidatedDelete(id, record.barangay);
-      return record;
+      try {
+        const record = await pb.collection('consolidated_data').getOne(id);
+        await pb.collection('consolidated_data').delete(id);
+        await activityLogger.logConsolidatedDelete(id, record.barangay);
+        return record;
+      } catch (error) {
+        console.error('Error deleting consolidated record:', error);
+        throw new Error(`Failed to delete consolidated record: ${error.message}`);
+      }
     }
   },
   

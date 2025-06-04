@@ -66,6 +66,14 @@ export function ConsolidatedDataForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.barangay || !formData.age_bracket || !formData.gender || !formData.year || !formData.month || formData.count < 0) {
+      console.error('Form validation failed:', formData);
+      return;
+    }
+    
+    console.log('Submitting form data:', formData);
     onSubmit(formData);
   };
 
@@ -84,7 +92,7 @@ export function ConsolidatedDataForm({
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="barangay">Barangay</Label>
+            <Label htmlFor="barangay">Barangay *</Label>
             <Select value={formData.barangay} onValueChange={(value) => handleChange('barangay', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select barangay" />
@@ -100,7 +108,7 @@ export function ConsolidatedDataForm({
           </div>
 
           <div>
-            <Label htmlFor="age_bracket">Age Bracket</Label>
+            <Label htmlFor="age_bracket">Age Bracket *</Label>
             <Select value={formData.age_bracket} onValueChange={(value) => handleChange('age_bracket', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select age bracket" />
@@ -116,7 +124,7 @@ export function ConsolidatedDataForm({
           </div>
 
           <div>
-            <Label htmlFor="gender">Gender</Label>
+            <Label htmlFor="gender">Gender *</Label>
             <Select value={formData.gender} onValueChange={(value) => handleChange('gender', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select gender" />
@@ -129,7 +137,7 @@ export function ConsolidatedDataForm({
           </div>
 
           <div>
-            <Label htmlFor="year">Year</Label>
+            <Label htmlFor="year">Year *</Label>
             <Select value={formData.year.toString()} onValueChange={(value) => handleChange('year', parseInt(value))}>
               <SelectTrigger>
                 <SelectValue placeholder="Select year" />
@@ -145,7 +153,7 @@ export function ConsolidatedDataForm({
           </div>
 
           <div>
-            <Label htmlFor="month">Month</Label>
+            <Label htmlFor="month">Month *</Label>
             <Select value={formData.month} onValueChange={(value) => handleChange('month', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select month" />
@@ -161,18 +169,23 @@ export function ConsolidatedDataForm({
           </div>
 
           <div>
-            <Label htmlFor="count">Count</Label>
+            <Label htmlFor="count">Count *</Label>
             <Input
               id="count"
               type="number"
               value={formData.count}
-              onChange={(e) => handleChange('count', parseInt(e.target.value))}
+              onChange={(e) => handleChange('count', parseInt(e.target.value) || 0)}
               min="0"
+              required
             />
           </div>
 
           <div className="flex gap-2">
-            <Button type="submit" className="flex-1">
+            <Button 
+              type="submit" 
+              className="flex-1"
+              disabled={!formData.barangay || !formData.age_bracket || !formData.gender || !formData.year || !formData.month}
+            >
               {isEditing ? 'Update' : 'Add'} Record
             </Button>
             <Button type="button" variant="outline" onClick={onCancel} className="flex-1">

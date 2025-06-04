@@ -1,5 +1,8 @@
 
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 interface ConsolidatedData {
@@ -18,68 +21,158 @@ interface ConsolidatedAnalyticsProps {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
-export function ConsolidatedAnalytics({ data }: ConsolidatedAnalyticsProps) {
-  // Aggregate data by barangay
-  const barangayData = data.reduce((acc: { [key: string]: number }, record) => {
-    if (!acc[record.barangay]) {
-      acc[record.barangay] = 0;
-    }
-    acc[record.barangay] += record.count;
-    return acc;
-  }, {});
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
 
-  const barangayChartData = Object.entries(barangayData).map(([name, value]) => ({
-    name,
-    value
-  }));
+export function ConsolidatedAnalytics({ data }: ConsolidatedAnalyticsProps) {
+  const [selectedYear, setSelectedYear] = useState<string>("All");
+  const [selectedMonth, setSelectedMonth] = useState<string>("All");
+
+  // Get unique years and months from data
+  const availableYears = useMemo(() => {
+    const years = Array.from(new Set(data.map(record => record.year.toString()))).sort();
+    return ["All", ...years];
+  }, [data]);
+
+  const availableMonths = useMemo(() => {
+    return ["All", ...MONTHS];
+  }, []);
+
+  // Filter data based on selected year and month
+  const filteredData = useMemo(() => {
+    let filtered = data;
+
+    if (selectedYear !== "All") {
+      filtered = filtered.filter(record => record.year.toString() === selectedYear);
+    }
+
+    if (selectedMonth !== "All") {
+      filtered = filtered.filter(record => record.month === selectedMonth);
+    }
+
+    return filtered;
+  }, [data, selectedYear, selectedMonth]);
+
+  // Aggregate data by barangay
+  const barangayData = useMemo(() => {
+    const aggregated = filteredData.reduce((acc: { [key: string]: number }, record) => {
+      if (!acc[record.barangay]) {
+        acc[record.barangay] = 0;
+      }
+      acc[record.barangay] += record.count;
+      return acc;
+    }, {});
+
+    return Object.entries(aggregated).map(([name, value]) => ({
+      name,
+      value
+    }));
+  }, [filteredData]);
 
   // Aggregate data by age bracket
-  const ageBracketData = data.reduce((acc: { [key: string]: number }, record) => {
-    if (!acc[record.age_bracket]) {
-      acc[record.age_bracket] = 0;
-    }
-    acc[record.age_bracket] += record.count;
-    return acc;
-  }, {});
+  const ageBracketData = useMemo(() => {
+    const aggregated = filteredData.reduce((acc: { [key: string]: number }, record) => {
+      if (!acc[record.age_bracket]) {
+        acc[record.age_bracket] = 0;
+      }
+      acc[record.age_bracket] += record.count;
+      return acc;
+    }, {});
 
-  const ageBracketChartData = Object.entries(ageBracketData).map(([name, value]) => ({
-    name,
-    value
-  }));
+    return Object.entries(aggregated).map(([name, value]) => ({
+      name,
+      value
+    }));
+  }, [filteredData]);
 
   // Aggregate data by gender
-  const genderData = data.reduce((acc: { [key: string]: number }, record) => {
-    if (!acc[record.gender]) {
-      acc[record.gender] = 0;
-    }
-    acc[record.gender] += record.count;
-    return acc;
-  }, {});
+  const genderData = useMemo(() => {
+    const aggregated = filteredData.reduce((acc: { [key: string]: number }, record) => {
+      if (!acc[record.gender]) {
+        acc[record.gender] = 0;
+      }
+      acc[record.gender] += record.count;
+      return acc;
+    }, {});
 
-  const genderChartData = Object.entries(genderData).map(([name, value]) => ({
-    name,
-    value
-  }));
+    return Object.entries(aggregated).map(([name, value]) => ({
+      name,
+      value
+    }));
+  }, [filteredData]);
 
   // Monthly trend data
-  const monthlyData = data.reduce((acc: { [key: string]: number }, record) => {
-    const monthYear = `${record.month} ${record.year}`;
-    if (!acc[monthYear]) {
-      acc[monthYear] = 0;
-    }
-    acc[monthYear] += record.count;
-    return acc;
-  }, {});
+  const monthlyData = useMemo(() => {
+    const aggregated = filteredData.reduce((acc: { [key: string]: number }, record) => {
+      const monthYear = selectedYear === "All" ? `${record.month} ${record.year}` : record.month;
+      if (!acc[monthYear]) {
+        acc[monthYear] = 0;
+      }
+      acc[monthYear] += record.count;
+      return acc;
+    }, {});
 
-  const monthlyChartData = Object.entries(monthlyData).map(([name, value]) => ({
-    name,
-    value
-  }));
+    return Object.entries(aggregated).map(([name, value]) => ({
+      name,
+      value
+    }));
+  }, [filteredData, selectedYear]);
 
-  const totalPopulation = data.reduce((sum, record) => sum + record.count, 0);
+  const totalPopulation = useMemo(() => {
+    return filteredData.reduce((sum, record) => sum + record.count, 0);
+  }, [filteredData]);
 
   return (
     <div className="space-y-6">
+      {/* Filter Controls */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Analytics Filters</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="year-filter">Filter by Year</Label>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger id="year-filter">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableYears.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year === "All" ? "All Years" : year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="month-filter">Filter by Month</Label>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger id="month-filter">
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableMonths.map((month) => (
+                    <SelectItem key={month} value={month}>
+                      {month === "All" ? "All Months" : month}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="mt-4 text-sm text-muted-foreground">
+            {selectedYear === "All" && selectedMonth === "All" 
+              ? `Showing data for all periods (${filteredData.length} records)`
+              : `Showing data for ${selectedMonth === "All" ? "all months" : selectedMonth} ${selectedYear === "All" ? "all years" : selectedYear} (${filteredData.length} records)`
+            }
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -95,7 +188,7 @@ export function ConsolidatedAnalytics({ data }: ConsolidatedAnalyticsProps) {
             <CardTitle className="text-sm font-medium">Barangays</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Object.keys(barangayData).length}</div>
+            <div className="text-2xl font-bold">{barangayData.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -103,7 +196,7 @@ export function ConsolidatedAnalytics({ data }: ConsolidatedAnalyticsProps) {
             <CardTitle className="text-sm font-medium">Age Groups</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Object.keys(ageBracketData).length}</div>
+            <div className="text-2xl font-bold">{ageBracketData.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -111,7 +204,7 @@ export function ConsolidatedAnalytics({ data }: ConsolidatedAnalyticsProps) {
             <CardTitle className="text-sm font-medium">Records</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.length}</div>
+            <div className="text-2xl font-bold">{filteredData.length}</div>
           </CardContent>
         </Card>
       </div>
@@ -125,7 +218,7 @@ export function ConsolidatedAnalytics({ data }: ConsolidatedAnalyticsProps) {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barangayChartData}>
+                <BarChart data={barangayData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
                   <YAxis />
@@ -146,7 +239,7 @@ export function ConsolidatedAnalytics({ data }: ConsolidatedAnalyticsProps) {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={genderChartData}
+                    data={genderData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -155,7 +248,7 @@ export function ConsolidatedAnalytics({ data }: ConsolidatedAnalyticsProps) {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {genderChartData.map((entry, index) => (
+                    {genderData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -173,7 +266,7 @@ export function ConsolidatedAnalytics({ data }: ConsolidatedAnalyticsProps) {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ageBracketChartData}>
+                <BarChart data={ageBracketData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
@@ -192,7 +285,7 @@ export function ConsolidatedAnalytics({ data }: ConsolidatedAnalyticsProps) {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyChartData}>
+                <BarChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />

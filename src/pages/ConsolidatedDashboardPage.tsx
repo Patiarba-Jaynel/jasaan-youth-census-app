@@ -66,6 +66,8 @@ const ConsolidatedDashboardPage = () => {
     year: new Date().getFullYear().toString(),
     month: "All"
   });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState<ConsolidatedData | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -189,19 +191,26 @@ const ConsolidatedDashboardPage = () => {
   };
 
   const handleDeleteRecord = async (record: ConsolidatedData) => {
-    if (confirm(`Are you sure you want to delete this record for ${record.barangay}?`)) {
-      try {
-        await pbClient.consolidated.delete(record.id);
-        toast.success("Record deleted successfully");
-        // Refresh data
-        const records = await pbClient.consolidated.getAll();
-        const sortedRecords = records.sort((a, b) => a.barangay.localeCompare(b.barangay));
-        setConsolidatedData(sortedRecords);
-        setFilteredData(sortedRecords);
-      } catch (error) {
-        console.error("Error deleting record:", error);
-        toast.error("Failed to delete record");
-      }
+    setRecordToDelete(record);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!recordToDelete) return;
+
+    try {
+      await pbClient.consolidated.delete(recordToDelete.id);
+      toast.success("Record deleted successfully");
+      setDeleteDialogOpen(false);
+      setRecordToDelete(null);
+      // Refresh data
+      const records = await pbClient.consolidated.getAll();
+      const sortedRecords = records.sort((a, b) => a.barangay.localeCompare(b.barangay));
+      setConsolidatedData(sortedRecords);
+      setFilteredData(sortedRecords);
+    } catch (error) {
+      console.error("Error deleting record:", error);
+      toast.error("Failed to delete record");
     }
   };
 
@@ -853,6 +862,42 @@ const ConsolidatedDashboardPage = () => {
                   isEditing
                 />
               )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Confirmation Dialog */}
+          <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader className="space-y-3">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                  <Trash2 className="h-6 w-6 text-red-600" />
+                </div>
+                <DialogTitle className="text-center">Delete Record</DialogTitle>
+                <div className="text-center text-sm text-muted-foreground">
+                  Are you sure you want to delete this record?
+                  {recordToDelete && (
+                    <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
+                      <strong>{recordToDelete.barangay}</strong> - {recordToDelete.age_bracket} - {recordToDelete.gender}<br/>
+                      {recordToDelete.month} {recordToDelete.year} - Count: {recordToDelete.count}
+                    </div>
+                  )}
+                  This action cannot be undone.
+                </div>
+              </DialogHeader>
+              <div className="flex justify-center gap-4 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDeleteDialogOpen(false);
+                    setRecordToDelete(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={confirmDelete}>
+                  Delete
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
 
