@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, LogOut } from "lucide-react";
+import { Menu } from "lucide-react";
 import { pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
 
@@ -27,14 +27,6 @@ export function NavBar() {
     document.addEventListener("auth-change", handleAuthChange);
     return () => document.removeEventListener("auth-change", handleAuthChange);
   }, []);
-
-  const handleLogout = () => {
-    pbClient.auth.logout();
-    document.dispatchEvent(new CustomEvent("auth-change"));
-    toast.success("Logged out successfully");
-    navigate("/");
-    setIsOpen(false);
-  };
 
   const navItems = [
     { href: "/", label: "Home" },
@@ -127,19 +119,6 @@ export function NavBar() {
             </div>
             <div className="flex flex-col space-y-2">
               <NavLinks mobile />
-              {isLoggedIn && (
-                <>
-                  <div className="my-2 border-t" />
-                  <Button
-                    variant="ghost"
-                    onClick={handleLogout}
-                    className="justify-start gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
-                  >
-                    <LogOut size={16} />
-                    Logout
-                  </Button>
-                </>
-              )}
             </div>
           </SheetContent>
         </Sheet>
