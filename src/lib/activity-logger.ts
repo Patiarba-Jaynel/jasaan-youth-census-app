@@ -1,3 +1,4 @@
+
 import { pbClient } from './pb-client';
 
 export interface ActivityLog {
@@ -15,17 +16,43 @@ export interface ActivityLog {
   updated: string;
 }
 
+// Flag to track if activity logging is available
+let activityLoggingEnabled = false;
+
+// Check if activity logs collection exists on first use
+let collectionCheckPerformed = false;
+
+const checkActivityLogsCollection = async () => {
+  if (collectionCheckPerformed) return activityLoggingEnabled;
+  
+  try {
+    // Try to access the collection to see if it exists
+    await pbClient.collection('activity_logs').getList(1, 1);
+    activityLoggingEnabled = true;
+    console.log('Activity logging enabled - collection exists');
+  } catch (error) {
+    activityLoggingEnabled = false;
+    console.log('Activity logging disabled - collection does not exist');
+  }
+  
+  collectionCheckPerformed = true;
+  return activityLoggingEnabled;
+};
+
 export const activityLogger = {
   async log(activity: Omit<ActivityLog, 'id' | 'timestamp' | 'created' | 'updated'>) {
     try {
-      console.log('activityLogger.log: Starting to log activity:', activity);
-      
+      // Check if collection exists
+      const isEnabled = await checkActivityLogsCollection();
+      if (!isEnabled) {
+        console.log('Activity logging skipped - collection not available');
+        return null;
+      }
+
       const authData = pbClient.auth.getAuthData();
-      console.log('activityLogger.log: Auth data:', authData);
-      
       if (!authData?.record) {
-        console.warn('activityLogger.log: No authenticated user for activity logging');
-        return;
+        console.warn('No authenticated user for activity logging');
+        return null;
       }
 
       const logEntry: Omit<ActivityLog, 'id' | 'created' | 'updated'> = {
@@ -33,92 +60,72 @@ export const activityLogger = {
         user_id: authData.record.id,
         user_name: authData.record.name || authData.record.email,
         timestamp: new Date().toISOString(),
-        batch_id: activity.batch_id || undefined // Ensure batch_id is undefined if not provided
+        batch_id: activity.batch_id || undefined
       };
 
-      console.log('activityLogger.log: Creating log entry:', logEntry);
-      
-      // Try to create the log entry, but don't fail if the collection doesn't exist
-      try {
-        const result = await pbClient.collection('activity_logs').create(logEntry);
-        console.log('activityLogger.log: Activity logged successfully:', result.id);
-        return result;
-      } catch (collectionError) {
-        console.warn('activityLogger.log: Activity logs collection not available:', collectionError);
-        // Silently continue without logging if collection doesn't exist
-        return null;
-      }
+      const result = await pbClient.collection('activity_logs').create(logEntry);
+      console.log('Activity logged successfully:', result.id);
+      return result;
       
     } catch (error) {
-      console.error('activityLogger.log: Failed to log activity:', error);
-      // Don't throw the error to prevent breaking the main operation
+      console.error('Failed to log activity:', error);
+      // Disable logging if we encounter errors
+      activityLoggingEnabled = false;
       return null;
     }
   },
 
-  // Youth operations
+  // Youth operations - simplified to just log without failing
   async logYouthCreate(youthId: string, youthName: string, batchId?: string) {
-    console.log('activityLogger.logYouthCreate: Starting for youth:', youthId, youthName);
+    console.log('Youth create action:', youthId, youthName, batchId ? `(batch: ${batchId})` : '(manual)');
     
-    try {
-      await this.log({
-        action: 'CREATE',
-        entity_type: 'youth',
-        entity_id: youthId,
-        entity_name: youthName,
-        details: batchId ? `Youth record created via batch import (batch: ${batchId})` : 'Youth record created manually',
-        batch_id: batchId
-      });
-      console.log('activityLogger.logYouthCreate: Successfully logged youth creation');
-    } catch (error) {
-      console.error('activityLogger.logYouthCreate: Failed to log youth creation:', error);
-      // Don't throw to prevent breaking the main operation
-    }
+    await this.log({
+      action: 'CREATE',
+      entity_type: 'youth',
+      entity_id: youthId,
+      entity_name: youthName,
+      details: batchId ? `Youth record created via batch import (batch: ${batchId})` : 'Youth record created manually',
+      batch_id: batchId
+    });
   },
 
   async logYouthUpdate(youthId: string, youthName: string, changes: Record<string, any>) {
-    try {
-      const changedFields = Object.keys(changes).join(', ');
-      await this.log({
-        action: 'UPDATE',
-        entity_type: 'youth',
-        entity_id: youthId,
-        entity_name: youthName,
-        details: `Updated fields: ${changedFields}`
-      });
-    } catch (error) {
-      console.error('activityLogger.logYouthUpdate: Failed to log youth update:', error);
-    }
+    console.log('Youth update action:', youthId, youthName, 'changes:', Object.keys(changes));
+    
+    const changedFields = Object.keys(changes).join(', ');
+    await this.log({
+      action: 'UPDATE',
+      entity_type: 'youth',
+      entity_id: youthId,
+      entity_name: youthName,
+      details: `Updated fields: ${changedFields}`
+    });
   },
 
   async logYouthDelete(youthId: string, youthName: string, batchId?: string) {
-    try {
-      await this.log({
-        action: 'DELETE',
-        entity_type: 'youth',
-        entity_id: youthId,
-        entity_name: youthName,
-        details: batchId ? `Youth record deleted via batch operation (batch: ${batchId})` : 'Youth record deleted manually',
-        batch_id: batchId
-      });
-    } catch (error) {
-      console.error('activityLogger.logYouthDelete: Failed to log youth deletion:', error);
-    }
+    console.log('Youth delete action:', youthId, youthName, batchId ? `(batch: ${batchId})` : '(manual)');
+    
+    await this.log({
+      action: 'DELETE',
+      entity_type: 'youth',
+      entity_id: youthId,
+      entity_name: youthName,
+      details: batchId ? `Youth record deleted via batch operation (batch: ${batchId})` : 'Youth record deleted manually',
+      batch_id: batchId
+    });
   },
 
   async logBatchImport(batchId: string, recordCount: number) {
-    try {
-      await this.log({
-        action: 'IMPORT',
-        entity_type: 'youth',
-        entity_id: batchId,
-        entity_name: `Batch ${batchId}`,
-        details: `Imported ${recordCount} youth records`,
-        batch_id: batchId
-      });
-    } catch (error) {
-      console.error('activityLogger.logBatchImport: Failed to log batch import:', error);
-    }
+    console.log('Batch import action:', batchId, 'count:', recordCount);
+    
+    await this.log({
+      action: 'IMPORT',
+      entity_type: 'youth',
+      entity_id: batchId,
+      entity_name: `Batch ${batchId}`,
+      details: `Imported ${recordCount} youth records`,
+      batch_id: batchId
+    });
   },
 
   // Consolidated data operations
@@ -217,7 +224,14 @@ export const activityLogger = {
     });
   },
 
+  // These methods will return empty arrays since activity_logs doesn't exist
   async getActivityLogs(limit = 100) {
+    const isEnabled = await checkActivityLogsCollection();
+    if (!isEnabled) {
+      console.log('Activity logs not available');
+      return { items: [], totalItems: 0, totalPages: 0 };
+    }
+    
     try {
       return await pbClient.collection('activity_logs').getList(1, limit, {
         sort: '-created'
@@ -229,6 +243,12 @@ export const activityLogger = {
   },
 
   async getBatchLogs() {
+    const isEnabled = await checkActivityLogsCollection();
+    if (!isEnabled) {
+      console.log('Batch logs not available');
+      return [];
+    }
+
     try {
       const logs = await pbClient.collection('activity_logs').getFullList({
         filter: 'batch_id != ""',
@@ -255,6 +275,12 @@ export const activityLogger = {
   },
 
   async getConsolidatedLogs() {
+    const isEnabled = await checkActivityLogsCollection();
+    if (!isEnabled) {
+      console.log('Consolidated logs not available');
+      return [];
+    }
+
     try {
       const logs = await pbClient.collection('activity_logs').getFullList({
         filter: 'entity_type = "consolidated"',
@@ -281,6 +307,12 @@ export const activityLogger = {
   },
 
   async getUserLogs() {
+    const isEnabled = await checkActivityLogsCollection();
+    if (!isEnabled) {
+      console.log('User logs not available');
+      return [];
+    }
+
     try {
       const logs = await pbClient.collection('activity_logs').getFullList({
         filter: 'entity_type = "user" || entity_type = "session"',
