@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -7,7 +8,21 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trash2, History, AlertTriangle } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
-import { activityLogger, ActivityLog } from "@/lib/activity-logger";
+
+interface ActivityLog {
+  id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  entity_name: string;
+  user_id: string;
+  user_name: string;
+  details: string;
+  batch_id: string;
+  timestamp: string;
+  created: string;
+  updated: string;
+}
 
 interface BatchManagementDialogProps {
   open: boolean;
@@ -24,44 +39,9 @@ export function BatchManagementDialog({ open, onClose, onDataChange }: BatchMana
   const fetchLogs = async () => {
     try {
       setIsLoading(true);
-      const [activity, batches] = await Promise.all([
-        activityLogger.getActivityLogs(50),
-        activityLogger.getBatchLogs()
-      ]);
-      
-      // Convert PocketBase records to ActivityLog format
-      const activityItems = (activity.items || []).map((item: any) => ({
-        id: item.id,
-        action: item.action,
-        entity_type: item.entity_type,
-        entity_id: item.entity_id,
-        entity_name: item.entity_name,
-        user_id: item.user_id,
-        user_name: item.user_name,
-        details: item.details,
-        batch_id: item.batch_id,
-        timestamp: item.timestamp,
-        created: item.created,
-        updated: item.updated
-      })) as ActivityLog[];
-
-      const batchItems = (batches || []).map((item: any) => ({
-        id: item.id,
-        action: item.action,
-        entity_type: item.entity_type,
-        entity_id: item.entity_id,
-        entity_name: item.entity_name,
-        user_id: item.user_id,
-        user_name: item.user_name,
-        details: item.details,
-        batch_id: item.batch_id,
-        timestamp: item.timestamp,
-        created: item.created,
-        updated: item.updated
-      })) as ActivityLog[];
-
-      setActivityLogs(activityItems);
-      setBatchLogs(batchItems);
+      // Since activity logs don't exist, return empty arrays
+      setActivityLogs([]);
+      setBatchLogs([]);
     } catch (error) {
       console.error("Error fetching logs:", error);
       toast.error("Failed to load activity logs");
@@ -77,15 +57,8 @@ export function BatchManagementDialog({ open, onClose, onDataChange }: BatchMana
 
     try {
       setIsLoading(true);
-      const result = await activityLogger.deleteBatch(batchId);
-      
-      if (result.success) {
-        toast.success(`Successfully deleted batch with ${result.deletedCount} records`);
-        await fetchLogs();
-        onDataChange();
-      } else {
-        toast.error("Failed to delete batch");
-      }
+      // Since activity logs don't exist, we can't actually delete batches
+      toast.error("Batch deletion is not available - activity logging is disabled");
     } catch (error) {
       console.error("Error deleting batch:", error);
       toast.error("Failed to delete batch");
@@ -157,98 +130,27 @@ export function BatchManagementDialog({ open, onClose, onDataChange }: BatchMana
 
         <ScrollArea className="max-h-[60vh]">
           {activeTab === 'activity' && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Entity</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Details</TableHead>
-                  <TableHead>Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {activityLogs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>
-                      <Badge className={getActionBadgeColor(log.action)}>
-                        {log.action}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{log.entity_name}</div>
-                        <div className="text-sm text-muted-foreground">{log.entity_type}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{log.user_name}</TableCell>
-                    <TableCell className="max-w-xs">
-                      <div className="truncate" title={log.details}>
-                        {log.details}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {formatDate(log.created || log.timestamp)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Activity Logs Not Available</h3>
+                <p className="text-muted-foreground">
+                  Activity logging has been disabled as the activity_logs collection does not exist.
+                </p>
+              </div>
+            </div>
           )}
 
           {activeTab === 'batches' && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Batch ID</TableHead>
-                  <TableHead>Import Date</TableHead>
-                  <TableHead>Records</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {uniqueBatches.map((batchId) => {
-                  const { importLog, deleteLog, isDeleted } = getBatchInfo(batchId);
-                  const recordCount = importLog?.details.match(/\d+/)?.[0] || '0';
-                  
-                  return (
-                    <TableRow key={batchId}>
-                      <TableCell className="font-mono text-sm">{batchId}</TableCell>
-                      <TableCell>
-                        {importLog ? formatDate(importLog.created || importLog.timestamp) : 'N/A'}
-                      </TableCell>
-                      <TableCell>{recordCount} records</TableCell>
-                      <TableCell>{importLog?.user_name || 'Unknown'}</TableCell>
-                      <TableCell>
-                        {isDeleted ? (
-                          <Badge className="bg-red-100 text-red-800">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            Deleted
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-green-100 text-green-800">Active</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {!isDeleted && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDeleteBatch(batchId)}
-                            className="text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-3 w-3 mr-1" />
-                            Delete
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Batch Management Not Available</h3>
+                <p className="text-muted-foreground">
+                  Batch management has been disabled as the activity_logs collection does not exist.
+                </p>
+              </div>
+            </div>
           )}
         </ScrollArea>
 

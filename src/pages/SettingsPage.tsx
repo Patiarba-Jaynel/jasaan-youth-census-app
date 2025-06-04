@@ -44,7 +44,6 @@ import {
   Activity,
 } from "lucide-react";
 import { pbClient } from "@/lib/pb-client";
-import { activityLogger } from "@/lib/activity-logger";
 
 interface User {
   id: string;
@@ -156,8 +155,8 @@ const SettingsPage = () => {
 
   const loadActivityLogs = async () => {
     try {
-      const logs = await activityLogger.getUserLogs();
-      setActivityLogs(logs);
+      // Since activity logs don't exist, set empty array
+      setActivityLogs([]);
     } catch (error) {
       console.error("Error loading activity logs:", error);
       toast.error("Failed to load activity logs");
@@ -196,9 +195,6 @@ const SettingsPage = () => {
       console.log("Sending user data to PocketBase:", userData);
       const createdUser = await pbClient.collection("users").create(userData);
       console.log("User created successfully:", createdUser);
-
-      // Log the user creation
-      await activityLogger.logUserCreate(createdUser.id, createdUser.name, createdUser.email);
 
       toast.success("User created successfully");
       setIsUserDialogOpen(false);
@@ -250,9 +246,6 @@ const SettingsPage = () => {
         .update(editingUser.id, updateData);
       console.log("User updated successfully:", updatedUser);
 
-      // Log the user update
-      await activityLogger.logUserUpdate(editingUser.id, editingUser.name, updateData);
-
       toast.success("User updated successfully");
       setIsUserDialogOpen(false);
       setEditingUser(null);
@@ -285,11 +278,6 @@ const SettingsPage = () => {
     try {
       const userToDelete = users.find(u => u.id === userId);
       await pbClient.collection("users").delete(userId);
-      
-      // Log the user deletion
-      if (userToDelete) {
-        await activityLogger.logUserDelete(userId, userToDelete.name);
-      }
 
       toast.success("User deleted successfully");
       await loadUsers();
@@ -331,9 +319,6 @@ const SettingsPage = () => {
         .collection("users")
         .update(currentUser.id, updateData);
       console.log("Profile updated successfully:", updatedUser);
-
-      // Log the profile update
-      await activityLogger.logUserUpdate(currentUser.id, currentUser.name, updateData);
 
       toast.success("Profile updated successfully");
       setIsProfileDialogOpen(false);
@@ -603,35 +588,11 @@ const SettingsPage = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3 max-h-96 overflow-y-auto">
-                      {activityLogs.slice(0, 10).map((log) => (
-                        <div
-                          key={log.id}
-                          className="flex items-start space-x-3 p-3 bg-muted/50 rounded-lg"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge variant="outline" className="text-xs">
-                                {log.action}
-                              </Badge>
-                              <span className="text-sm font-medium">
-                                {log.entity_name}
-                              </span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              {log.details}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              by {log.user_name} •{" "}
-                              {new Date(log.created).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                      {activityLogs.length === 0 && (
-                        <p className="text-center text-muted-foreground py-4">
-                          No activity logs found
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground">
+                          Activity logging has been disabled as the activity_logs collection does not exist.
                         </p>
-                      )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

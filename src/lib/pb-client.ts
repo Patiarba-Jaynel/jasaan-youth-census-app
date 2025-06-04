@@ -1,6 +1,5 @@
 
 import PocketBase from 'pocketbase';
-import { activityLogger } from './activity-logger';
 
 // Create a PocketBase client instance
 const pb = new PocketBase('https://pocket.jwisnetwork.com');
@@ -79,14 +78,12 @@ export const pbClient = {
     }
   },
   
-  // Youth census records with activity logging
+  // Youth census records
   youth: {
     create: async (data: Omit<YouthRecord, 'id' | 'created' | 'updated'>) => {
       console.log('Creating youth record with data:', data);
       const record = await pb.collection('youth').create(data);
       console.log('Created youth record:', record);
-      await activityLogger.logYouthCreate(record.id, data.name, data.batch_id);
-      console.log('Logged youth creation activity');
       return record;
     },
     createMany: async (records: Omit<YouthRecord, 'id' | 'created' | 'updated'>[], batchId?: string) => {
@@ -96,15 +93,10 @@ export const pbClient = {
           const recordWithBatch = batchId ? { ...record, batch_id: batchId } : record;
           const createdRecord = await pb.collection('youth').create(recordWithBatch);
           createdRecords.push(createdRecord);
-          await activityLogger.logYouthCreate(createdRecord.id, record.name, batchId);
         } catch (error) {
           console.error("Error creating record:", error);
           throw error;
         }
-      }
-      
-      if (batchId) {
-        await activityLogger.logBatchImport(batchId, createdRecords.length);
       }
       
       return createdRecords;
@@ -117,14 +109,11 @@ export const pbClient = {
     },
     update: async (id: string, data: Partial<YouthRecord>) => {
       const record = await pb.collection('youth').update(id, data);
-      const currentRecord = await pb.collection('youth').getOne(id);
-      await activityLogger.logYouthUpdate(id, currentRecord.name, data);
       return record;
     },
     delete: async (id: string) => {
       const record = await pb.collection('youth').getOne(id);
       await pb.collection('youth').delete(id);
-      await activityLogger.logYouthDelete(id, record.name);
       return record;
     }
   },
@@ -171,17 +160,6 @@ export const pbClient = {
         const record = await pb.collection('consolidated_data').create(sanitizedData);
         console.log('Successfully created consolidated record:', record);
         
-        // Log the activity
-        try {
-          await activityLogger.logConsolidatedCreate(
-            record.id, 
-            sanitizedData.barangay, 
-            `${sanitizedData.age_bracket} - ${sanitizedData.gender} (${sanitizedData.count} records)`
-          );
-        } catch (logError) {
-          console.warn('Failed to log activity:', logError);
-        }
-        
         return record;
       } catch (error) {
         console.error('Error creating consolidated record:', error);
@@ -200,15 +178,10 @@ export const pbClient = {
           const recordWithBatch = batchId ? { ...record, batch_id: batchId } : record;
           const createdRecord = await pb.collection('consolidated_data').create(recordWithBatch);
           createdRecords.push(createdRecord);
-          await activityLogger.logConsolidatedCreate(createdRecord.id, record.barangay, `${record.age_bracket} - ${record.gender} (${record.count} records) - Batch: ${batchId}`);
         } catch (error) {
           console.error("Error creating consolidated record:", error);
           throw error;
         }
-      }
-      
-      if (batchId) {
-        await activityLogger.logConsolidatedImport(batchId, createdRecords.length);
       }
       
       return createdRecords;
@@ -318,13 +291,6 @@ export const pbClient = {
         const updatedRecord = await pb.collection('consolidated_data').update(id, sanitizedData);
         console.log('Successfully updated consolidated record:', updatedRecord);
         
-        // Log the activity
-        try {
-          await activityLogger.logConsolidatedUpdate(id, currentRecord.barangay, sanitizedData);
-        } catch (logError) {
-          console.warn('Failed to log update activity:', logError);
-        }
-        
         return updatedRecord;
       } catch (error) {
         console.error('Error updating consolidated record:', error);
@@ -344,7 +310,7 @@ export const pbClient = {
           throw new Error('Invalid record ID');
         }
         
-        // Get the record first to ensure it exists and for logging
+        // Get the record first to ensure it exists
         let recordToDelete;
         try {
           recordToDelete = await pb.collection('consolidated_data').getOne(id);
@@ -359,13 +325,6 @@ export const pbClient = {
         // Perform the deletion
         await pb.collection('consolidated_data').delete(id);
         console.log('Successfully deleted consolidated record');
-        
-        // Log the activity
-        try {
-          await activityLogger.logConsolidatedDelete(id, recordToDelete.barangay);
-        } catch (logError) {
-          console.warn('Failed to log delete activity:', logError);
-        }
         
         return recordToDelete;
       } catch (error) {
