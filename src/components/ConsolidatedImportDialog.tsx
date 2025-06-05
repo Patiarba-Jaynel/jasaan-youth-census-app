@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState } from 'react';
@@ -34,62 +35,29 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
   const [error, setError] = useState<string | null>(null);
 
   const downloadTemplate = () => {
-    const template = [{
-      BARANGAY: "APLAYA",
-      "UNDER 1 M": 62,
-      "UNDER 1 F": 61,
-      "UNDER 1 TOTAL": 123,
-      "1-4 M": 273,
-      "1-4 F": 265,
-      "1-4 TOTAL": 538,
-      "5-9 M": 297,
-      "5-9 F": 310,
-      "5-9 TOTAL": 607,
-      "10-14 M": 380,
-      "10-14 F": 299,
-      "10-14 TOTAL": 679,
-      "15-19 M": 365,
-      "15-19 F": 319,
-      "15-19 TOTAL": 684,
-      "20-24 M": 277,
-      "20-24 F": 339,
-      "20-24 TOTAL": 616,
-      "25-29 M": 295,
-      "25-29 F": 0,
-      "25-29 TOTAL": 295,
-      "TOTAL M": 1949,
-      "TOTAL F": 1593,
-      "TOTAL": 3542
-    }];
-
-    // Add a few more sample rows
-    enumOptions.barangay.slice(1, 4).forEach(barangay => {
-      template.push({
-        BARANGAY: barangay,
-        "UNDER 1 M": 0,
-        "UNDER 1 F": 0,
-        "UNDER 1 TOTAL": 0,
-        "1-4 M": 0,
-        "1-4 F": 0,
-        "1-4 TOTAL": 0,
-        "5-9 M": 0,
-        "5-9 F": 0,
-        "5-9 TOTAL": 0,
-        "10-14 M": 0,
-        "10-14 F": 0,
-        "10-14 TOTAL": 0,
-        "15-19 M": 0,
-        "15-19 F": 0,
-        "15-19 TOTAL": 0,
-        "20-24 M": 0,
-        "20-24 F": 0,
-        "20-24 TOTAL": 0,
-        "25-29 M": 0,
-        "25-29 F": 0,
-        "25-29 TOTAL": 0,
-        "TOTAL M": 0,
-        "TOTAL F": 0,
-        "TOTAL": 0
+    // Create template that matches the collection structure
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+    
+    const template = [];
+    
+    // Create sample records for different age brackets and genders
+    const ageBrackets = ["Under 1", "1-4", "5-9", "10-14", "15-19", "20-24", "25-29"];
+    const genders = ["Male", "Female"];
+    
+    // Add sample data for first few barangays
+    enumOptions.barangay.slice(0, 3).forEach(barangay => {
+      ageBrackets.forEach(ageBracket => {
+        genders.forEach(gender => {
+          template.push({
+            barangay: barangay,
+            age_bracket: ageBracket,
+            gender: gender,
+            year: currentYear,
+            month: currentMonth,
+            count: Math.floor(Math.random() * 50) // Sample data
+          });
+        });
       });
     });
 
@@ -102,65 +70,75 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
 
   const validateData = (data: any[]): ValidationError[] => {
     const errors: ValidationError[] = [];
-    const requiredColumns = [
-      "BARANGAY", "UNDER 1 M", "UNDER 1 F", "1-4 M", "1-4 F", 
-      "5-9 M", "5-9 F", "10-14 M", "10-14 F", "15-19 M", "15-19 F",
-      "20-24 M", "20-24 F", "25-29 M", "25-29 F"
+    const validAgeBrackets = ["Under 1", "1-4", "5-9", "10-14", "15-19", "20-24", "25-29"];
+    const validGenders = ["Male", "Female"];
+    const validMonths = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
     ];
 
     data.forEach((row, index) => {
       // Check if barangay is valid
-      if (!enumOptions.barangay.includes(row.BARANGAY)) {
+      if (!row.barangay || !enumOptions.barangay.includes(row.barangay)) {
         errors.push({
           row: index + 1,
-          field: "BARANGAY",
+          field: "barangay",
           issue: `Invalid barangay name. Must be one of: ${enumOptions.barangay.join(', ')}`,
-          value: row.BARANGAY
+          value: row.barangay
         });
       }
 
-      // Check required columns
-      requiredColumns.forEach(column => {
-        if (column === "BARANGAY") return;
-        
-        const value = row[column];
-        if (value === undefined || value === null || value === '') {
-          errors.push({
-            row: index + 1,
-            field: column,
-            issue: "Missing required value",
-            value: value
-          });
-        } else if (isNaN(Number(value)) || Number(value) < 0) {
-          errors.push({
-            row: index + 1,
-            field: column,
-            issue: "Must be a non-negative number",
-            value: value
-          });
-        }
-      });
+      // Check age_bracket
+      if (!row.age_bracket || !validAgeBrackets.includes(row.age_bracket)) {
+        errors.push({
+          row: index + 1,
+          field: "age_bracket",
+          issue: `Invalid age bracket. Must be one of: ${validAgeBrackets.join(', ')}`,
+          value: row.age_bracket
+        });
+      }
 
-      // Validate totals if provided
-      const ageGroups = ["UNDER 1", "1-4", "5-9", "10-14", "15-19", "20-24", "25-29"];
-      ageGroups.forEach(ageGroup => {
-        const maleKey = `${ageGroup} M`;
-        const femaleKey = `${ageGroup} F`;
-        const totalKey = `${ageGroup} TOTAL`;
-        
-        const maleVal = Number(row[maleKey]) || 0;
-        const femaleVal = Number(row[femaleKey]) || 0;
-        const totalVal = Number(row[totalKey]) || 0;
-        
-        if (totalVal !== 0 && totalVal !== (maleVal + femaleVal)) {
-          errors.push({
-            row: index + 1,
-            field: totalKey,
-            issue: `Total (${totalVal}) doesn't match sum of Male (${maleVal}) + Female (${femaleVal})`,
-            value: totalVal
-          });
-        }
-      });
+      // Check gender
+      if (!row.gender || !validGenders.includes(row.gender)) {
+        errors.push({
+          row: index + 1,
+          field: "gender",
+          issue: `Invalid gender. Must be 'Male' or 'Female'`,
+          value: row.gender
+        });
+      }
+
+      // Check year
+      const year = Number(row.year);
+      if (!year || isNaN(year) || year < 2020 || year > 2030) {
+        errors.push({
+          row: index + 1,
+          field: "year",
+          issue: "Year must be a number between 2020 and 2030",
+          value: row.year
+        });
+      }
+
+      // Check month
+      if (!row.month || !validMonths.includes(row.month)) {
+        errors.push({
+          row: index + 1,
+          field: "month",
+          issue: `Invalid month. Must be one of: ${validMonths.join(', ')}`,
+          value: row.month
+        });
+      }
+
+      // Check count
+      const count = Number(row.count);
+      if (isNaN(count) || count < 0) {
+        errors.push({
+          row: index + 1,
+          field: "count",
+          issue: "Count must be a non-negative number",
+          value: row.count
+        });
+      }
     });
 
     return errors;
@@ -187,11 +165,21 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
         console.log('Parsed data:', jsonData);
+        
+        // Transform the data to match collection structure
+        const transformedData = (jsonData as any[]).map(row => ({
+          barangay: String(row.barangay || '').trim(),
+          age_bracket: String(row.age_bracket || '').trim(),
+          gender: String(row.gender || '').trim(),
+          year: parseInt(String(row.year)) || new Date().getFullYear(),
+          month: String(row.month || '').trim(),
+          count: parseInt(String(row.count)) || 0
+        }));
          
-        setParsedData(jsonData as any[]);
+        setParsedData(transformedData);
 
-        // Validate the data
-        const errors = validateData(jsonData as any[]);
+        // Validate the transformed data
+        const errors = validateData(transformedData);
         setValidationErrors(errors);
 
         if (errors.length === 0) {
@@ -238,7 +226,9 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-medium">Download Template</h3>
-                  <p className="text-sm text-gray-600">Get the correct Excel format for importing consolidated data</p>
+                  <p className="text-sm text-gray-600">
+                    Get the correct Excel format with columns: barangay, age_bracket, gender, year, month, count
+                  </p>
                 </div>
                 <Button onClick={downloadTemplate} variant="outline" className="flex items-center gap-2">
                   <Download size={16} />
@@ -296,6 +286,41 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
                       {validationErrors.length > 10 && (
                         <div className="text-sm text-gray-500">...and {validationErrors.length - 10} more errors</div>
                       )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Preview of transformed data */}
+              {parsedData.length > 0 && validationErrors.length === 0 && (
+                <Card>
+                  <CardContent className="pt-4">
+                    <h3 className="font-medium mb-3">Preview (First 5 records)</h3>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-2">Barangay</th>
+                            <th className="text-left p-2">Age Bracket</th>
+                            <th className="text-left p-2">Gender</th>
+                            <th className="text-left p-2">Year</th>
+                            <th className="text-left p-2">Month</th>
+                            <th className="text-left p-2">Count</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {parsedData.slice(0, 5).map((record, index) => (
+                            <tr key={index} className="border-b">
+                              <td className="p-2">{record.barangay}</td>
+                              <td className="p-2">{record.age_bracket}</td>
+                              <td className="p-2">{record.gender}</td>
+                              <td className="p-2">{record.year}</td>
+                              <td className="p-2">{record.month}</td>
+                              <td className="p-2">{record.count}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </CardContent>
                 </Card>
