@@ -2,7 +2,7 @@ import PocketBase from 'pocketbase';
 import { activityLogger } from './activity-logger';
 
 // Create a PocketBase client instance
-const pb = new PocketBase('https://pocket.jwisnetwork.com');
+const pb = new PocketBase('https://popcomjasaan-pocketbase.duckdns.org');
 
 export interface YouthRecord {
   id: string;
