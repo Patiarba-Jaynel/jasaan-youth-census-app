@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState } from 'react';
@@ -35,14 +34,14 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
   const [error, setError] = useState<string | null>(null);
 
   const downloadTemplate = () => {
-    // Create template that matches the collection structure
+    // Create template that matches the collection structure exactly
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().toLocaleString('default', { month: 'long' });
     
     const template = [];
     
     // Create sample records for different age brackets and genders
-    const ageBrackets = ["Under 1", "1-4", "5-9", "10-14", "15-19", "20-24", "25-29"];
+    const ageBrackets = ["0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85+"];
     const genders = ["Male", "Female"];
     
     // Add sample data for first few barangays
@@ -70,7 +69,7 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
 
   const validateData = (data: any[]): ValidationError[] => {
     const errors: ValidationError[] = [];
-    const validAgeBrackets = ["Under 1", "1-4", "5-9", "10-14", "15-19", "20-24", "25-29"];
+    const validAgeBrackets = ["0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85+"];
     const validGenders = ["Male", "Female"];
     const validMonths = [
       "January", "February", "March", "April", "May", "June",
@@ -166,7 +165,7 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
 
         console.log('Parsed data:', jsonData);
         
-        // Transform the data to match collection structure
+        // Transform the data to match collection structure exactly - no batch_id
         const transformedData = (jsonData as any[]).map(row => ({
           barangay: String(row.barangay || '').trim(),
           age_bracket: String(row.age_bracket || '').trim(),

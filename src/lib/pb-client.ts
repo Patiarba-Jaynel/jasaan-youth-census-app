@@ -39,7 +39,6 @@ export interface ConsolidatedData {
   year: number;
   month: string;
   count: number;
-  batch_id?: string;
   created: string;
   updated: string;
 }
@@ -219,12 +218,11 @@ export const pbClient = {
       }
     },
     
-    createMany: async (records: Omit<ConsolidatedData, 'id' | 'created' | 'updated'>[], batchId?: string) => {
+    createMany: async (records: Omit<ConsolidatedData, 'id' | 'created' | 'updated'>[]) => {
       const createdRecords = [];
       for (const record of records) {
         try {
-          const recordWithBatch = batchId ? { ...record, batch_id: batchId } : record;
-          const createdRecord = await pb.collection('consolidated_data').create(recordWithBatch);
+          const createdRecord = await pbClient.consolidated.create(record);
           createdRecords.push(createdRecord);
         } catch (error) {
           console.error("Error creating consolidated record:", error);

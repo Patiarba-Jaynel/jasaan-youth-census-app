@@ -80,13 +80,10 @@ const ConsolidatedDashboardPage = () => {
     try {
       setIsLoading(true);
       
-      // Generate a unique batch ID
-      const batchId = `consolidated_batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Import records without batch tracking
+      await pbClient.consolidated.createMany(records);
       
-      // Import records with batch tracking
-      await pbClient.consolidated.createMany(records, batchId);
-      
-      toast.success(`Successfully imported ${records.length} consolidated records (Batch: ${batchId})`);
+      toast.success(`Successfully imported ${records.length} consolidated records`);
       
       // Refresh data
       await fetchData();
