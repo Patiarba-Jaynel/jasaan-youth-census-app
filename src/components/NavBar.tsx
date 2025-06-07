@@ -33,7 +33,7 @@ export function NavBar() {
     { href: "/about", label: "About" },
     ...(isLoggedIn
       ? []
-      : [{ href: "/census", label: "Census Form" }]),
+      : [{ href: "/census", label: "Login" }]),
   ];
 
   const NavLinks = ({ mobile = false }) => (
