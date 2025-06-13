@@ -2,7 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { enumOptions } from "@/lib/schema";
 
@@ -18,20 +24,45 @@ interface ConsolidatedData {
 
 interface ConsolidatedDataFormProps {
   initialData?: ConsolidatedData;
-  onSubmit: (data: Omit<ConsolidatedData, 'id'>) => void;
+  onSubmit: (data: Omit<ConsolidatedData, "id">) => void;
   onCancel: () => void;
   isEditing?: boolean;
 }
 
 const AGE_BRACKETS = [
-  "0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39",
-  "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74",
-  "75-79", "80-84", "85+"
+  "0-4",
+  "5-9",
+  "10-14",
+  "15-19",
+  "20-24",
+  "25-29",
+  "30-34",
+  "35-39",
+  "40-44",
+  "45-49",
+  "50-54",
+  "55-59",
+  "60-64",
+  "65-69",
+  "70-74",
+  "75-79",
+  "80-84",
+  "85+",
 ];
 
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 // Dynamic year generation - automatically includes current year + 6 future years
@@ -44,13 +75,13 @@ const generateYears = () => {
   return years;
 };
 
-export function ConsolidatedDataForm({ 
-  initialData, 
-  onSubmit, 
-  onCancel, 
-  isEditing = false 
+export function ConsolidatedDataForm({
+  initialData,
+  onSubmit,
+  onCancel,
+  isEditing = false,
 }: ConsolidatedDataFormProps) {
-  const [formData, setFormData] = useState<Omit<ConsolidatedData, 'id'>>({
+  const [formData, setFormData] = useState<Omit<ConsolidatedData, "id">>({
     barangay: initialData?.barangay || "",
     age_bracket: initialData?.age_bracket || "",
     gender: initialData?.gender || "",
@@ -61,33 +92,51 @@ export function ConsolidatedDataForm({
 
   // Sort barangays alphabetically and filter out empty strings
   const sortedBarangays = [
-    "Aplaya", "Bobuntugan", "Jasaan Proper", "Kinuguitan", "Luz Banzon",
-    "Natubo", "Pontanar", "San Antonio", "Solana", "Upper Jasaan"
-  ].filter(b => b && b.trim() !== "").sort();
+    "Aplaya",
+    "Bobuntugan",
+    "Jasaan Proper",
+    "Luz Banzon",
+    "Natubo",
+    "Pontanar",
+    "San Antonio",
+    "Solana",
+    "Upper Jasaan",
+  ]
+    .filter((b) => b && b.trim() !== "")
+    .sort();
   const YEARS = generateYears();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    console.log('Form submission started with data:', formData);
-    
+
+    console.log("Form submission started with data:", formData);
+
     // Validate required fields
-    if (!formData.barangay || !formData.age_bracket || !formData.gender || !formData.year || !formData.month) {
-      console.error('Form validation failed - missing required fields:', {
+    if (
+      !formData.barangay ||
+      !formData.age_bracket ||
+      !formData.gender ||
+      !formData.year ||
+      !formData.month
+    ) {
+      console.error("Form validation failed - missing required fields:", {
         barangay: !formData.barangay,
         age_bracket: !formData.age_bracket,
         gender: !formData.gender,
         year: !formData.year,
-        month: !formData.month
+        month: !formData.month,
       });
       return;
     }
-    
+
     if (formData.count < 0) {
-      console.error('Form validation failed - count cannot be negative:', formData.count);
+      console.error(
+        "Form validation failed - count cannot be negative:",
+        formData.count
+      );
       return;
     }
-    
+
     // Prepare clean data for submission
     const submitData = {
       barangay: String(formData.barangay).trim(),
@@ -95,30 +144,37 @@ export function ConsolidatedDataForm({
       gender: String(formData.gender).trim(),
       year: Number(formData.year),
       month: String(formData.month).trim(),
-      count: Number(formData.count) || 0
+      count: Number(formData.count) || 0,
     };
-    
-    console.log('Submitting clean form data:', submitData);
+
+    console.log("Submitting clean form data:", submitData);
     onSubmit(submitData);
   };
 
-  const handleChange = (field: keyof typeof formData, value: string | number) => {
+  const handleChange = (
+    field: keyof typeof formData,
+    value: string | number
+  ) => {
     console.log(`Field ${field} changed to:`, value);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log('Count input changed to:', value);
-    
+    console.log("Count input changed to:", value);
+
     // Allow empty string or valid non-negative numbers
-    if (value === '' || (value === '0') || (!isNaN(Number(value)) && Number(value) >= 0)) {
-      setFormData(prev => ({
+    if (
+      value === "" ||
+      value === "0" ||
+      (!isNaN(Number(value)) && Number(value) >= 0)
+    ) {
+      setFormData((prev) => ({
         ...prev,
-        count: value === '' ? 0 : Number(value)
+        count: value === "" ? 0 : Number(value),
       }));
     }
   };
@@ -126,13 +182,16 @@ export function ConsolidatedDataForm({
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
-        <CardTitle>{isEditing ? 'Edit' : 'Add'} Consolidated Record</CardTitle>
+        <CardTitle>{isEditing ? "Edit" : "Add"} Consolidated Record</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="barangay">Barangay *</Label>
-            <Select value={formData.barangay} onValueChange={(value) => handleChange('barangay', value)}>
+            <Select
+              value={formData.barangay}
+              onValueChange={(value) => handleChange("barangay", value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select barangay" />
               </SelectTrigger>
@@ -148,12 +207,17 @@ export function ConsolidatedDataForm({
 
           <div>
             <Label htmlFor="age_bracket">Age Bracket *</Label>
-            <Select value={formData.age_bracket} onValueChange={(value) => handleChange('age_bracket', value)}>
+            <Select
+              value={formData.age_bracket}
+              onValueChange={(value) => handleChange("age_bracket", value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select age bracket" />
               </SelectTrigger>
               <SelectContent>
-                {AGE_BRACKETS.filter(bracket => bracket && bracket.trim() !== "").map((bracket) => (
+                {AGE_BRACKETS.filter(
+                  (bracket) => bracket && bracket.trim() !== ""
+                ).map((bracket) => (
                   <SelectItem key={bracket} value={bracket}>
                     {bracket}
                   </SelectItem>
@@ -164,7 +228,10 @@ export function ConsolidatedDataForm({
 
           <div>
             <Label htmlFor="gender">Gender *</Label>
-            <Select value={formData.gender} onValueChange={(value) => handleChange('gender', value)}>
+            <Select
+              value={formData.gender}
+              onValueChange={(value) => handleChange("gender", value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select gender" />
               </SelectTrigger>
@@ -177,12 +244,15 @@ export function ConsolidatedDataForm({
 
           <div>
             <Label htmlFor="year">Year *</Label>
-            <Select value={formData.year.toString()} onValueChange={(value) => handleChange('year', parseInt(value))}>
+            <Select
+              value={formData.year.toString()}
+              onValueChange={(value) => handleChange("year", parseInt(value))}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select year" />
               </SelectTrigger>
               <SelectContent>
-                {YEARS.filter(year => year && !isNaN(year)).map((year) => (
+                {YEARS.filter((year) => year && !isNaN(year)).map((year) => (
                   <SelectItem key={year} value={year.toString()}>
                     {year}
                   </SelectItem>
@@ -193,16 +263,21 @@ export function ConsolidatedDataForm({
 
           <div>
             <Label htmlFor="month">Month *</Label>
-            <Select value={formData.month} onValueChange={(value) => handleChange('month', value)}>
+            <Select
+              value={formData.month}
+              onValueChange={(value) => handleChange("month", value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select month" />
               </SelectTrigger>
               <SelectContent>
-                {MONTHS.filter(month => month && month.trim() !== "").map((month) => (
-                  <SelectItem key={month} value={month}>
-                    {month}
-                  </SelectItem>
-                ))}
+                {MONTHS.filter((month) => month && month.trim() !== "").map(
+                  (month) => (
+                    <SelectItem key={month} value={month}>
+                      {month}
+                    </SelectItem>
+                  )
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -212,7 +287,7 @@ export function ConsolidatedDataForm({
             <Input
               id="count"
               type="number"
-              value={formData.count === 0 ? '' : formData.count}
+              value={formData.count === 0 ? "" : formData.count}
               onChange={handleCountChange}
               min="0"
               step="1"
@@ -222,14 +297,25 @@ export function ConsolidatedDataForm({
           </div>
 
           <div className="flex gap-2">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="flex-1"
-              disabled={!formData.barangay || !formData.age_bracket || !formData.gender || !formData.year || !formData.month}
+              disabled={
+                !formData.barangay ||
+                !formData.age_bracket ||
+                !formData.gender ||
+                !formData.year ||
+                !formData.month
+              }
             >
-              {isEditing ? 'Update' : 'Add'} Record
+              {isEditing ? "Update" : "Add"} Record
             </Button>
-            <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              className="flex-1"
+            >
               Cancel
             </Button>
           </div>
