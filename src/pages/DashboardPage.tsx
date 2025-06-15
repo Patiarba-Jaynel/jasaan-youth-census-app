@@ -67,7 +67,7 @@ const DashboardPage = () => {
       {}
     );
 
-    // Group by classification - Updated to use acronyms
+    // Group by classification - Show only acronyms
     const classificationDistribution = records.reduce(
       (acc: { [key: string]: number }, record) => {
         if (!acc[record.youth_classification]) {
@@ -116,20 +116,10 @@ const DashboardPage = () => {
     );
 
     setClassificationData(
-      Object.keys(classificationDistribution).map((key) => {
-        // Updated labels to show acronyms
-        const labels: { [key: string]: string } = {
-          ISY: "ISY (In-School Youth)",
-          OSY: "OSY (Out-of-School Youth)", 
-          WY: "WY (Working Youth)",
-          YSN: "YSN (Youth Special Needs)",
-        };
-
-        return {
-          name: labels[key] || key,
-          value: classificationDistribution[key],
-        };
-      })
+      Object.keys(classificationDistribution).map((key) => ({
+        name: key, // Just show the acronym (ISY, OSY, WY, YSN)
+        value: classificationDistribution[key],
+      }))
     );
 
     setAgeGroupData(
