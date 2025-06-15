@@ -42,7 +42,7 @@ export function AnalyticsCard({
   dataKey,
   nameKey,
   className,
-  colors = ["#D7262C", "#F0C808", "#1B365D", "#FFFFFF", "#000000", "#F5F5F5"],
+  colors = ["#D7262C", "#F0C808", "#22c55e", "#3b82f6", "#8b5cf6", "#f59e0b"],
 }: AnalyticsCardProps) {
   return (
     <Card className={className}>
