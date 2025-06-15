@@ -146,12 +146,10 @@ export function EditRecordDialog({
     onSave(formattedData);
   };
 
-  // Get options from schema - include "Other" option where applicable
-  const barangayOptions = [
-    "Aplaya", "Bobontugan", "Corrales", "Jampason", "Kimaya",
-    "Lower Jasaan (Pob.)", "Luz Banzon", "San Antonio", 
-    "San Nicolas", "Solana", "Upper Jasaan (Pob.)"
-  ];
+  // Use the same barangays as the youth census form - sorted alphabetically
+  const sortedBarangays = enumOptions.barangay
+    .filter((b) => b && b.trim() !== "")
+    .sort();
 
   // Add "Other" to education and work status options
   const educationOptions = [...enumOptions.highest_education, "Other"];
@@ -316,9 +314,9 @@ export function EditRecordDialog({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {barangayOptions.map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {option}
+                            {sortedBarangays.map((barangay) => (
+                              <SelectItem key={barangay} value={barangay}>
+                                {barangay}
                               </SelectItem>
                             ))}
                           </SelectContent>
