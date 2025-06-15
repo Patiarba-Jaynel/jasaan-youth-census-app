@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { NavBar } from "@/components/NavBar";
@@ -80,12 +81,10 @@ const ConsolidatedDashboardPage = () => {
     try {
       setIsLoading(true);
       
-      // Import records without batch tracking
       await pbClient.consolidated.createMany(records);
       
       toast.success(`Successfully imported ${records.length} consolidated records`);
       
-      // Refresh data
       await fetchData();
     } catch (error) {
       console.error("Error importing records:", error);
@@ -102,19 +101,22 @@ const ConsolidatedDashboardPage = () => {
       return;
     }
 
-    const csvContent = [
-      ['Barangay', 'Age Bracket', 'Gender', 'Year', 'Month', 'Count'].join(','),
+    // Create CSV content with proper escaping and formatting
+    const headers = ['Barangay', 'Age Bracket', 'Gender', 'Year', 'Month', 'Count'];
+    const csvRows = [
+      headers.join(','),
       ...consolidatedData.map(record => [
-        record.barangay,
-        record.age_bracket,
-        record.gender,
-        record.year,
-        record.month,
-        record.count
+        `"${record.barangay}"`,
+        `"${record.age_bracket}"`, // Keep age bracket as string by wrapping in quotes
+        `"${record.gender}"`,
+        record.year, // Year as number
+        `"${record.month}"`,
+        record.count // Count as number
       ].join(','))
-    ].join('\n');
+    ];
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

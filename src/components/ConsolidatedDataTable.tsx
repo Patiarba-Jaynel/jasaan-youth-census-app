@@ -87,10 +87,10 @@ export function ConsolidatedDataTable({ data = [], onRecordUpdate }: Consolidate
         (record.gender || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (record.month || '').toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesBarangay = !filterBarangay || record.barangay === filterBarangay;
-      const matchesGender = !filterGender || record.gender === filterGender;
-      const matchesYear = !filterYear || String(record.year) === filterYear;
-      const matchesMonth = !filterMonth || record.month === filterMonth;
+      const matchesBarangay = !filterBarangay || filterBarangay === "all-barangays" || record.barangay === filterBarangay;
+      const matchesGender = !filterGender || filterGender === "all-genders" || record.gender === filterGender;
+      const matchesYear = !filterYear || filterYear === "all-years" || String(record.year) === filterYear;
+      const matchesMonth = !filterMonth || filterMonth === "all-months" || record.month === filterMonth;
       
       return matchesSearch && matchesBarangay && matchesGender && matchesYear && matchesMonth;
     });

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { pbClient } from "@/lib/pb-client";
 import { toast } from "@/components/ui/sonner";
+import { enumOptions } from "@/lib/schema";
 
 interface ConsolidatedData {
   id: string;
@@ -141,17 +143,8 @@ export function EditConsolidatedDialog({
     }
   };
 
-  const barangays = [
-    "Aplaya",
-    "Bobuntugan",
-    "Jasaan Proper",
-    "Luz Banzon",
-    "Natubo",
-    "Pontanar",
-    "San Antonio",
-    "Solana",
-    "Upper Jasaan",
-  ].filter((b) => b && b.trim() !== "");
+  // Use the same barangays as the youth census form
+  const barangays = enumOptions.barangay.filter((b) => b && b.trim() !== "");
 
   const ageBrackets = [
     "0-4",

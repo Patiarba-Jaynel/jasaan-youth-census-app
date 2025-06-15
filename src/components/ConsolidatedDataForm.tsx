@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,18 +91,8 @@ export function ConsolidatedDataForm({
     count: initialData?.count || 0,
   });
 
-  // Sort barangays alphabetically and filter out empty strings
-  const sortedBarangays = [
-    "Aplaya",
-    "Bobuntugan",
-    "Jasaan Proper",
-    "Luz Banzon",
-    "Natubo",
-    "Pontanar",
-    "San Antonio",
-    "Solana",
-    "Upper Jasaan",
-  ]
+  // Use the same barangays as the youth census form
+  const sortedBarangays = enumOptions.barangay
     .filter((b) => b && b.trim() !== "")
     .sort();
   const YEARS = generateYears();
