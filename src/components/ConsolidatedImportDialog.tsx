@@ -1,4 +1,5 @@
 
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState } from 'react';
@@ -41,8 +42,8 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
     
     const template = [];
     
-    // Create sample records for different age brackets and genders
-    const ageBrackets = ["0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85+"];
+    // Create sample records for different age brackets and genders - with parentheses to prevent date conversion
+    const ageBrackets = ["(0-4)", "(5-9)", "(10-14)", "(15-19)", "(20-24)", "(25-29)", "(30-34)", "(35-39)", "(40-44)", "(45-49)", "(50-54)", "(55-59)", "(60-64)", "(65-69)", "(70-74)", "(75-79)", "(80-84)", "(85+)"];
     const genders = ["Male", "Female"];
     
     // Add sample data for first few barangays
@@ -89,11 +90,14 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
     XLSX.writeFile(workbook, "consolidated_data_template.xlsx");
   };
 
-  // Normalize age bracket to handle different formats
+  // Normalize age bracket to handle different formats including parentheses
   const normalizeAgeBracket = (value: any): string => {
     if (!value) return '';
     
     let str = String(value).trim();
+    
+    // Remove parentheses if present
+    str = str.replace(/[()]/g, '');
     
     // Handle Excel date conversion back to age bracket
     if (str.includes('/') || str.includes('-') && str.length > 5) {
@@ -293,7 +297,7 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
                 <div>
                   <h3 className="font-medium">Download Template</h3>
                   <p className="text-sm text-gray-600">
-                    Get the correct Excel format with columns: barangay, age_bracket, gender, year, month, count
+                    Get the correct Excel format with columns: barangay, age_bracket (with parentheses to prevent date conversion), gender, year, month, count
                   </p>
                 </div>
                 <Button onClick={downloadTemplate} variant="outline" className="flex items-center gap-2">
@@ -410,3 +414,4 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
     </Dialog>
   );
 };
+
