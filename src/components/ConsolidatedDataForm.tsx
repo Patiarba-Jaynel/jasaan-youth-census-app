@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,6 +98,11 @@ export function ConsolidatedDataForm({
     .sort();
   const YEARS = generateYears();
 
+  // Helper function to convert to title case for display
+  const toTitleCase = (str: string) => {
+    return str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -191,7 +195,7 @@ export function ConsolidatedDataForm({
               <SelectContent>
                 {sortedBarangays.map((barangay) => (
                   <SelectItem key={barangay} value={barangay}>
-                    {barangay}
+                    {toTitleCase(barangay)}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -145,6 +145,11 @@ export function EditConsolidatedDialog({
   // Use the same barangays as the youth census form
   const barangays = enumOptions.barangay.filter((b) => b && b.trim() !== "");
 
+  // Helper function to convert to title case for display
+  const toTitleCase = (str: string) => {
+    return str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  };
+
   const ageBrackets = [
     "UNDER 1",
     "1-4",
@@ -217,7 +222,7 @@ export function EditConsolidatedDialog({
               <SelectContent>
                 {barangays.map((barangay) => (
                   <SelectItem key={barangay} value={barangay}>
-                    {barangay}
+                    {toTitleCase(barangay)}
                   </SelectItem>
                 ))}
               </SelectContent>
