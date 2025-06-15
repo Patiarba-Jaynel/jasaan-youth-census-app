@@ -54,22 +54,22 @@ export function normalizeBarangay(value: string): string {
   const normalized = value.toLowerCase().trim();
   
   const barangayMap: { [key: string]: string } = {
-    "aplaya": "APLAYA",
-    "bobontugan": "BOBONTUGAN", 
-    "corrales": "CORRALES",
-    "i.s. cruz": "I.S. CRUZ",
-    "is cruz": "I.S. CRUZ",
-    "danao": "DANAO",
-    "jampason": "JAMPASON",
-    "kimaya": "KIMAYA",
-    "lower jasaan": "LOWER JASAAN",
-    "luz banzon": "LUZ BANZON",
-    "natubo": "NATUBO",
-    "san antonio": "SAN ANTONIO",
-    "san isidro": "SAN ISIDRO",
-    "san nicolas": "SAN NICOLAS",
-    "solana": "SOLANA",
-    "upper jasaan": "UPPER JASAAN"
+    "aplaya": "Aplaya",
+    "bobontugan": "Bobontugan", 
+    "corrales": "Corrales",
+    "i.s. cruz": "I.S. Cruz",
+    "is cruz": "I.S. Cruz",
+    "danao": "Danao",
+    "jampason": "Jampason",
+    "kimaya": "Kimaya",
+    "lower jasaan": "Lower Jasaan",
+    "luz banzon": "Luz Banzon",
+    "natubo": "Natubo",
+    "san antonio": "San Antonio",
+    "san isidro": "San Isidro",
+    "san nicolas": "San Nicolas",
+    "solana": "Solana",
+    "upper jasaan": "Upper Jasaan"
   };
   
   return barangayMap[normalized] || value.toUpperCase();
