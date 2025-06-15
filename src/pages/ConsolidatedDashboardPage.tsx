@@ -107,7 +107,7 @@ const ConsolidatedDashboardPage = () => {
       headers.join(','),
       ...consolidatedData.map(record => [
         `"${record.barangay}"`,
-        `"${record.age_bracket.replace(/"/g, '""')}"`, // Escape quotes and force text format
+        `"(${record.age_bracket})"`, // Wrap age bracket with parentheses to prevent date conversion
         `"${record.gender}"`,
         record.year, // Year as number
         `"${record.month}"`,
