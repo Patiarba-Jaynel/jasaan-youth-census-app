@@ -1,3 +1,4 @@
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState } from 'react';
@@ -61,10 +62,66 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
     });
 
     const worksheet = XLSX.utils.json_to_sheet(template);
+    
+    // Set column widths and format age_bracket as text to prevent Excel conversion
+    const columnWidths = [
+      { wch: 15 }, // barangay
+      { wch: 12 }, // age_bracket
+      { wch: 8 },  // gender
+      { wch: 6 },  // year
+      { wch: 12 }, // month
+      { wch: 8 }   // count
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    // Force age_bracket column to be text format
+    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+    for (let row = 1; row <= range.e.r; row++) {
+      const cellRef = XLSX.utils.encode_cell({ r: row, c: 1 }); // Column B (age_bracket)
+      if (worksheet[cellRef]) {
+        worksheet[cellRef].t = 's'; // Force string type
+      }
+    }
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Consolidated Data Template");
 
     XLSX.writeFile(workbook, "consolidated_data_template.xlsx");
+  };
+
+  // Normalize age bracket to handle different formats
+  const normalizeAgeBracket = (value: any): string => {
+    if (!value) return '';
+    
+    let str = String(value).trim();
+    
+    // Handle Excel date conversion back to age bracket
+    if (str.includes('/') || str.includes('-') && str.length > 5) {
+      console.log('Detected potential date conversion for age bracket:', str);
+      // Try to extract numbers from date-like strings
+      const numbers = str.match(/\d+/g);
+      if (numbers && numbers.length >= 2) {
+        const firstNum = parseInt(numbers[0]);
+        const secondNum = parseInt(numbers[1]);
+        if (firstNum < 100 && secondNum < 100) {
+          str = `${Math.min(firstNum, secondNum)}-${Math.max(firstNum, secondNum)}`;
+        }
+      }
+    }
+    
+    // Handle various age bracket formats
+    if (str.match(/^\d+\s*-\s*\d+$/)) {
+      // Format like "0-4", "5 - 9", etc.
+      const parts = str.split(/\s*-\s*/);
+      return `${parts[0]}-${parts[1]}`;
+    } else if (str.match(/^\d+\+$/)) {
+      // Format like "85+"
+      return str;
+    } else if (str === '85+' || str === '85 +') {
+      return '85+';
+    }
+    
+    return str;
   };
 
   const validateData = (data: any[]): ValidationError[] => {
@@ -158,23 +215,33 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = XLSX.read(data, { type: 'array', cellDates: false, cellText: false });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false, defval: '' });
 
-        console.log('Parsed data:', jsonData);
+        console.log('Raw parsed data:', jsonData);
         
-        // Transform the data to match collection structure exactly - no batch_id
-        const transformedData = (jsonData as any[]).map(row => ({
-          barangay: String(row.barangay || '').trim(),
-          age_bracket: String(row.age_bracket || '').trim(),
-          gender: String(row.gender || '').trim(),
-          year: parseInt(String(row.year)) || new Date().getFullYear(),
-          month: String(row.month || '').trim(),
-          count: parseInt(String(row.count)) || 0
-        }));
+        // Transform the data to match collection structure with improved age_bracket handling
+        const transformedData = (jsonData as any[]).map((row, index) => {
+          const normalizedAgeBracket = normalizeAgeBracket(row.age_bracket);
+          
+          console.log(`Row ${index + 1} age_bracket transformation:`, {
+            original: row.age_bracket,
+            normalized: normalizedAgeBracket
+          });
+
+          return {
+            barangay: String(row.barangay || '').trim(),
+            age_bracket: normalizedAgeBracket,
+            gender: String(row.gender || '').trim(),
+            year: parseInt(String(row.year)) || new Date().getFullYear(),
+            month: String(row.month || '').trim(),
+            count: parseInt(String(row.count)) || 0
+          };
+        });
          
+        console.log('Transformed data:', transformedData);
         setParsedData(transformedData);
 
         // Validate the transformed data
