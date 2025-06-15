@@ -150,9 +150,9 @@ export function EditRecordDialog({
     .filter((b) => b && b.trim() !== "")
     .sort();
 
-  // Helper function to capitalize only the first letter of the entire string
-  const capitalizeFirst = (str: string) => {
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  // Helper function to convert to proper title case for display
+  const toTitleCase = (str: string) => {
+    return str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
   };
 
   // Add "Other" to education and work status options
@@ -320,7 +320,7 @@ export function EditRecordDialog({
                           <SelectContent>
                             {sortedBarangays.map((barangay) => (
                               <SelectItem key={barangay} value={barangay}>
-                                {capitalizeFirst(barangay)}
+                                {toTitleCase(barangay)}
                               </SelectItem>
                             ))}
                           </SelectContent>
