@@ -31,7 +31,8 @@ interface ConsolidatedDataFormProps {
 }
 
 const AGE_BRACKETS = [
-  "0-4",
+  "UNDER 1",
+  "1-4",
   "5-9",
   "10-14",
   "15-19",
@@ -48,7 +49,8 @@ const AGE_BRACKETS = [
   "70-74",
   "75-79",
   "80-84",
-  "85+",
+  "85-89",
+  "90-above",
 ];
 
 const MONTHS = [

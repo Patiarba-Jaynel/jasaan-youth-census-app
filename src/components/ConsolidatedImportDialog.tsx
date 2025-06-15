@@ -1,5 +1,4 @@
 
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState } from 'react';
@@ -43,7 +42,7 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
     const template = [];
     
     // Create sample records for different age brackets and genders - with parentheses to prevent date conversion
-    const ageBrackets = ["(0-4)", "(5-9)", "(10-14)", "(15-19)", "(20-24)", "(25-29)", "(30-34)", "(35-39)", "(40-44)", "(45-49)", "(50-54)", "(55-59)", "(60-64)", "(65-69)", "(70-74)", "(75-79)", "(80-84)", "(85+)"];
+    const ageBrackets = ["(UNDER 1)", "(1-4)", "(5-9)", "(10-14)", "(15-19)", "(20-24)", "(25-29)", "(30-34)", "(35-39)", "(40-44)", "(45-49)", "(50-54)", "(55-59)", "(60-64)", "(65-69)", "(70-74)", "(75-79)", "(80-84)", "(85-89)", "(90-above)"];
     const genders = ["Male", "Female"];
     
     // Add sample data for first few barangays
@@ -113,16 +112,40 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
       }
     }
     
-    // Handle various age bracket formats
+    // Handle various age bracket formats and map to new format
     if (str.match(/^\d+\s*-\s*\d+$/)) {
       // Format like "0-4", "5 - 9", etc.
       const parts = str.split(/\s*-\s*/);
-      return `${parts[0]}-${parts[1]}`;
-    } else if (str.match(/^\d+\+$/)) {
-      // Format like "85+"
-      return str;
-    } else if (str === '85+' || str === '85 +') {
-      return '85+';
+      const start = parseInt(parts[0]);
+      const end = parseInt(parts[1]);
+      
+      // Map old format to new format
+      if (start === 0 && end <= 4) return "1-4";
+      if (start === 5 && end === 9) return "5-9";
+      if (start === 10 && end === 14) return "10-14";
+      if (start === 15 && end === 19) return "15-19";
+      if (start === 20 && end === 24) return "20-24";
+      if (start === 25 && end === 29) return "25-29";
+      if (start === 30 && end === 34) return "30-34";
+      if (start === 35 && end === 39) return "35-39";
+      if (start === 40 && end === 44) return "40-44";
+      if (start === 45 && end === 49) return "45-49";
+      if (start === 50 && end === 54) return "50-54";
+      if (start === 55 && end === 59) return "55-59";
+      if (start === 60 && end === 64) return "60-64";
+      if (start === 65 && end === 69) return "65-69";
+      if (start === 70 && end === 74) return "70-74";
+      if (start === 75 && end === 79) return "75-79";
+      if (start === 80 && end === 84) return "80-84";
+      if (start === 85 && end <= 89) return "85-89";
+      
+      return `${start}-${end}`;
+    } else if (str.match(/^\d+\+$/) || str === '85+' || str === '85 +') {
+      return '90-above';
+    } else if (str.toLowerCase().includes('under') || str === '0' || str === 'UNDER 1') {
+      return 'UNDER 1';
+    } else if (str === '90-above' || str.toLowerCase().includes('above')) {
+      return '90-above';
     }
     
     return str;
@@ -130,7 +153,7 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
 
   const validateData = (data: any[]): ValidationError[] => {
     const errors: ValidationError[] = [];
-    const validAgeBrackets = ["0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85+"];
+    const validAgeBrackets = ["UNDER 1", "1-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80-84", "85-89", "90-above"];
     const validGenders = ["Male", "Female"];
     const validMonths = [
       "January", "February", "March", "April", "May", "June",
@@ -414,4 +437,3 @@ export const ConsolidatedImportDialog: React.FC<ConsolidatedImportDialogProps> =
     </Dialog>
   );
 };
-

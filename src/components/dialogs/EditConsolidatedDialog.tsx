@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -147,7 +146,8 @@ export function EditConsolidatedDialog({
   const barangays = enumOptions.barangay.filter((b) => b && b.trim() !== "");
 
   const ageBrackets = [
-    "0-4",
+    "UNDER 1",
+    "1-4",
     "5-9",
     "10-14",
     "15-19",
@@ -164,7 +164,8 @@ export function EditConsolidatedDialog({
     "70-74",
     "75-79",
     "80-84",
-    "85+",
+    "85-89",
+    "90-above",
   ].filter((bracket) => bracket && bracket.trim() !== "");
 
   const months = [
