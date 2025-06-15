@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -151,9 +150,9 @@ export function EditRecordDialog({
     .filter((b) => b && b.trim() !== "")
     .sort();
 
-  // Helper function to convert to title case for display
-  const toTitleCase = (str: string) => {
-    return str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  // Helper function to capitalize only the first letter of the entire string
+  const capitalizeFirst = (str: string) => {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   };
 
   // Add "Other" to education and work status options
@@ -321,7 +320,7 @@ export function EditRecordDialog({
                           <SelectContent>
                             {sortedBarangays.map((barangay) => (
                               <SelectItem key={barangay} value={barangay}>
-                                {toTitleCase(barangay)}
+                                {capitalizeFirst(barangay)}
                               </SelectItem>
                             ))}
                           </SelectContent>
