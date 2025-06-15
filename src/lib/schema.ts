@@ -51,9 +51,9 @@ export const enumOptions = {
   voted_last_national_election: ["Yes", "No"] as const,
   assembly_attendance: ["Never", "Sometimes", "Always"] as const,
   barangay: [
-    "APLAYA", "BOBONTUGAN", "CORRALES", "I.S. CRUZ", "DANAO", "JAMPASON",
-    "KIMAYA", "LOWER JASAAN", "LUZ BANZON", "NATUBO", "SAN ANTONIO",
-    "SAN ISIDRO", "SAN NICOLAS", "SOLANA", "UPPER JASAAN"
+    "Aplaya", "Bobontugan", "Corrales", "I.S. Cruz", "Danao", "Jampason", "Kimaya",
+    "Lower Jasaan", "Luz Banzon", "Natubo", "San Antonio", "San Isidro",
+    "San Nicolas", "Solana", "Upper Jasaan"
   ] as const,
   // Add aliases for form compatibility
   highest_education: [
