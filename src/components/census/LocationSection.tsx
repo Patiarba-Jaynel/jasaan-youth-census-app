@@ -13,6 +13,11 @@ export const LocationSection = ({ control }: LocationSectionProps) => {
   // Sort barangays alphabetically
   const sortedBarangays = [...enumOptions.barangay].sort();
 
+  // Helper function to convert to title case for display
+  const toTitleCase = (str: string) => {
+    return str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  };
+
   return (
     <div className="md:col-span-2">
       <h3 className="text-lg font-medium mb-4">Location Information</h3>
@@ -71,7 +76,7 @@ export const LocationSection = ({ control }: LocationSectionProps) => {
                 <SelectContent>
                   {sortedBarangays.map((barangay) => (
                     <SelectItem key={barangay} value={barangay}>
-                      {barangay}
+                      {toTitleCase(barangay)}
                     </SelectItem>
                   ))}
                 </SelectContent>

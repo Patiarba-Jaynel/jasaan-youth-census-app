@@ -151,6 +151,11 @@ export function EditRecordDialog({
     .filter((b) => b && b.trim() !== "")
     .sort();
 
+  // Helper function to convert to title case for display
+  const toTitleCase = (str: string) => {
+    return str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  };
+
   // Add "Other" to education and work status options
   const educationOptions = [...enumOptions.highest_education, "Other"];
   const workStatusOptions = [...enumOptions.work_status, "Other"];
@@ -316,7 +321,7 @@ export function EditRecordDialog({
                           <SelectContent>
                             {sortedBarangays.map((barangay) => (
                               <SelectItem key={barangay} value={barangay}>
-                                {barangay}
+                                {toTitleCase(barangay)}
                               </SelectItem>
                             ))}
                           </SelectContent>
