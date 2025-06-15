@@ -101,13 +101,13 @@ const ConsolidatedDashboardPage = () => {
       return;
     }
 
-    // Create CSV content with proper escaping and formatting
+    // Create CSV content with proper escaping to prevent Excel from converting age brackets to dates
     const headers = ['Barangay', 'Age Bracket', 'Gender', 'Year', 'Month', 'Count'];
     const csvRows = [
       headers.join(','),
       ...consolidatedData.map(record => [
         `"${record.barangay}"`,
-        `"${record.age_bracket}"`, // Keep age bracket as string by wrapping in quotes
+        `"${record.age_bracket.replace(/"/g, '""')}"`, // Escape quotes and force text format
         `"${record.gender}"`,
         record.year, // Year as number
         `"${record.month}"`,
@@ -115,7 +115,7 @@ const ConsolidatedDashboardPage = () => {
       ].join(','))
     ];
 
-    const csvContent = csvRows.join('\n');
+    const csvContent = '\uFEFF' + csvRows.join('\n'); // Add BOM for proper UTF-8 encoding
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
