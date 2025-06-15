@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -69,13 +70,13 @@ export function AnalyticsCard({
                 </Bar>
               </BarChart>
             ) : type === "pie" ? (
-              <PieChart>
+              <PieChart margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  labelLine={true}
-                  outerRadius={100}
+                  labelLine={false}
+                  outerRadius={80}
                   fill="#8884d8"
                   dataKey={dataKey}
                   nameKey={nameKey}
